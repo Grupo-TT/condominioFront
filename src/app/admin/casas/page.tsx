@@ -6,7 +6,7 @@ import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
+import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -70,6 +70,20 @@ import {
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
 
+// Tipo para el formulario de nuevo propietario
+interface FormData {
+  primerNombre: string
+  segundoNombre: string
+  primerApellido: string
+  segundoApellido: string
+  tipoDocumento: string
+  numeroDocumento: string
+  correoElectronico: string
+  telefono: string
+  rolEnCasa: string
+  casaAsociada: string
+}
+
 // Componente separado para el formulario
 function NuevoPropietarioForm({ 
   formData, 
@@ -77,8 +91,8 @@ function NuevoPropietarioForm({
   onSubmit, 
   onCancel 
 }: {
-  formData: any
-  onInputChange: (field: string, value: any) => void
+  formData: FormData
+  onInputChange: (field: string, value: string) => void
   onSubmit: (e: React.FormEvent) => void
   onCancel: () => void
 }) {
@@ -436,7 +450,7 @@ export default function CasasPage() {
     }
   }, [])
 
-  const handleInputChange = useCallback((field: string, value: any) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -657,7 +671,7 @@ export default function CasasPage() {
         enableSorting: false,
       },
     ],
-    []
+    [handleDelete]
   )
 
   const table = useReactTable({
