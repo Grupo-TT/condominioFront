@@ -1,6 +1,5 @@
 // Tipos para miembros de una casa
 export interface Miembro {
-  tipo: 'adulto' | 'niño'
   genero: 'masculino' | 'femenino'
 }
 

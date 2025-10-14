@@ -6,9 +6,9 @@ import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, MoreVertical, Pencil, Trash2, Search, X } from 'lucide-react'
+import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Home07Icon } from '@hugeicons/core-free-icons'
+import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -242,10 +242,10 @@ const casasData: Casa[] = [
     numero: '15',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'niño', genero: 'masculino' },
-      { tipo: 'niño', genero: 'masculino' }
+      { genero: 'masculino' },
+      { genero: 'masculino' },
+      { genero: 'masculino' },
+      { genero: 'masculino' }
     ],
     mascotas: [
       { tipo: 'perro' },
@@ -262,8 +262,8 @@ const casasData: Casa[] = [
     numero: '12',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'perro' }
@@ -276,10 +276,10 @@ const casasData: Casa[] = [
     numero: '11',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'niño', genero: 'femenino' },
-      { tipo: 'niño', genero: 'femenino' },
-      { tipo: 'niño', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' },
+      { genero: 'femenino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'gato' },
@@ -293,8 +293,8 @@ const casasData: Casa[] = [
     numero: '10',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'perro' },
@@ -308,8 +308,8 @@ const casasData: Casa[] = [
     numero: '19',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'perro' },
@@ -323,8 +323,8 @@ const casasData: Casa[] = [
     numero: '14',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'perro' },
@@ -338,8 +338,8 @@ const casasData: Casa[] = [
     numero: '16',
     propietario: 'Jose Pérez Hurtado',
     miembros: [
-      { tipo: 'adulto', genero: 'masculino' },
-      { tipo: 'adulto', genero: 'femenino' }
+      { genero: 'masculino' },
+      { genero: 'femenino' }
     ],
     mascotas: [
       { tipo: 'perro' },
@@ -358,30 +358,14 @@ function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
         <div
           key={idx}
           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            miembro.tipo === 'adulto'
-              ? miembro.genero === 'masculino'
-                ? 'bg-blue-100'
-                : 'bg-pink-100'
-              : miembro.genero === 'masculino'
-              ? 'bg-red-100'
-              : 'bg-pink-200'
+            miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
           }`}
         >
-          <svg
-            className={`w-6 h-6 ${
-              miembro.tipo === 'adulto'
-                ? miembro.genero === 'masculino'
-                  ? 'text-blue-600'
-                  : 'text-pink-600'
-                : miembro.genero === 'masculino'
-                ? 'text-red-600'
-                : 'text-pink-700'
-            }`}
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-          </svg>
+          <HugeiconsIcon
+            icon={User03Icon}
+            size={20}
+            className={miembro.genero === 'masculino' ? 'text-blue-600' : 'text-pink-600'}
+          />
         </div>
       ))}
     </div>
@@ -395,26 +379,21 @@ function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
       {mascotas.map((mascota, idx) => (
         <div
           key={idx}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            mascota.tipo === 'perro' ? 'bg-yellow-100' : 'bg-purple-100'
-          }`}
+          className="w-10 h-10 rounded-full flex items-center justify-center"
+          style={{
+            backgroundColor: mascota.tipo === 'perro' ? '#A3917020' : '#595D7520'
+          }}
         >
           {mascota.tipo === 'perro' ? (
-            <svg
-              className="w-6 h-6 text-yellow-600"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M18 4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM6 4C4.9 4 4 4.9 4 6s.9 2 2 2 2-.9 2-2-.9-2-2-2zm9 8.5V11c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v1.5c-.6.3-1 .9-1 1.5 0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2 0-.6-.4-1.2-1-1.5z" />
-            </svg>
+            <Dog 
+              className="w-5 h-5" 
+              style={{ color: '#A39170' }}
+            />
           ) : (
-            <svg
-              className="w-6 h-6 text-purple-600"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M4.5 11c-.8 0-1.5.7-1.5 1.5S3.7 14 4.5 14s1.5-.7 1.5-1.5S5.3 11 4.5 11zm15 0c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5zm-5 0c-.8 0-1.5.7-1.5 1.5s.7 1.5 1.5 1.5 1.5-.7 1.5-1.5-.7-1.5-1.5-1.5zm-5 0c-.8 0-1.5.7-1.5 1.5S8.7 14 9.5 14s1.5-.7 1.5-1.5S10.3 11 9.5 11zM12 17c-2.4 0-4.4 1.3-5.5 3.2.2.3.5.6.8.8 1.2-1.5 2.9-2.5 4.7-2.5s3.5 1 4.7 2.5c.3-.2.6-.5.8-.8C16.4 18.3 14.4 17 12 17z" />
-            </svg>
+            <Cat 
+              className="w-5 h-5" 
+              style={{ color: '#595D75' }}
+            />
           )}
         </div>
       ))}
@@ -546,10 +525,7 @@ export default function CasasPage() {
             <div>
               <button
                 onClick={() => {
-                  // Navegar a la vista detalle del propietario
-                  console.log('Ir a detalles del propietario:', row.original.id)
-                  // TODO: Implementar navegación cuando esté lista la vista
-                  // router.push(`/admin/propietarios/${row.original.id}`)
+                  window.location.href = `/admin/casas/${row.original.id}`
                 }}
                 className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
               >
@@ -612,7 +588,7 @@ export default function CasasPage() {
           const uso = row.original.uso
           return (
             <Badge
-              variant={uso === 'Residencial' ? 'secondary' : 'warning'}
+              variant={uso === 'Residencial' ? 'outline' : 'secondary'}
               appearance="light"
               size="md"
             >
