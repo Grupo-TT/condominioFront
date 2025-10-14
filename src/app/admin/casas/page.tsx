@@ -87,14 +87,10 @@ interface FormData {
 // Componente separado para el formulario
 function NuevoPropietarioForm({ 
   formData, 
-  onInputChange, 
-  onSubmit, 
-  onCancel 
+  onInputChange
 }: {
   formData: FormData
   onInputChange: (field: string, value: string) => void
-  onSubmit: (e: React.FormEvent) => void
-  onCancel: () => void
 }) {
   return (
     <div className="space-y-6 px-4">
@@ -778,8 +774,6 @@ export default function CasasPage() {
                     <NuevoPropietarioForm
                       formData={formData}
                       onInputChange={handleInputChange}
-                      onSubmit={handleSubmit}
-                      onCancel={() => handleSheetOpenChange(false)}
                     />
                   </div>
                   
