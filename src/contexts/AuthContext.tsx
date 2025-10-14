@@ -26,9 +26,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await authService.login(credentials);
       if (response.user) {
-        setUser(response.user);
+        // Convertir el formato de respuesta al formato del contexto
+        const user = {
+          ...response.user,
+          role: response.user.roles[0] || 'user' // Tomar el primer rol o usar 'user' por defecto
+        };
+        setUser(user);
         // Redirigir al dashboard correspondiente según el rol
-        const dashboardRoute = getDashboardRoute(response.user.role);
+        const dashboardRoute = getDashboardRoute(user.role);
         router.push(dashboardRoute);
       }
     } catch (error) {
