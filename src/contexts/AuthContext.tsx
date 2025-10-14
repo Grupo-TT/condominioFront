@@ -2,25 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, LoginCredentials } from '@/lib/services/auth.service';
+import { authService } from '@/lib/services/auth.service';
+import { LoginCredentials, User, AuthContextType } from '@/types/auth.types';
 import { useRouter } from 'next/navigation';
 import { getDashboardRoute, getCorrectRoute } from '@/lib/utils/role-routes';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  navigateToRoute: (routeName: string) => void;
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

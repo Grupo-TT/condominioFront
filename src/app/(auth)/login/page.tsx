@@ -21,11 +21,13 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [correoElectronico, setCorreoElectronico] = useState('');
-  const [contrasenia, setContrasenia] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -36,7 +38,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login({ correoElectronico, contrasenia });
+      await login({ username, password, rememberMe });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
@@ -87,8 +89,8 @@ export default function LoginPage() {
                     id="email"
                     type="email"
                     placeholder="usuario@example.com"
-                    value={correoElectronico}
-                    onChange={(e) => setCorreoElectronico(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
                   />
@@ -108,12 +110,28 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
-                    value={contrasenia}
-                    onChange={(e) => setContrasenia(e.target.value)}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
                   />
                 </Field>
+
+                {/* Checkbox "Recordarme" */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="rememberMe" 
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    disabled={isLoading}
+                  />
+                  <label
+                    htmlFor="rememberMe"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Recordarme por 7 días
+                  </label>
+                </div>
 
                 {/* Botón de Submit */}
                 <Field>
