@@ -27,7 +27,7 @@ export function useCasas(): UseCasasReturn {
     } catch (err) {
       console.error('Hook: Error al cargar casas:', err)
       setError('Error al cargar las casas. Intenta de nuevo.')
-      setCasas([]) // Limpiar datos en caso de error
+      setCasas([])
     } finally {
       setLoading(false)
     }

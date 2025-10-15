@@ -1,6 +1,5 @@
 import { apiClient } from '../config/axios.config'
 
-// Tipos para la respuesta de la API
 interface CasaFromAPI {
   numeroCasa: number
   propietario: {
@@ -46,7 +45,6 @@ interface CasasApiResponse {
   data: CasaFromAPI[]
 }
 
-// Función para construir el nombre completo del propietario
 function buildNombreCompleto(propietario: CasaFromAPI['propietario']): string {
   const partes = [
     propietario.primerNombre,
