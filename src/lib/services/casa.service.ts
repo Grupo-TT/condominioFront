@@ -91,5 +91,24 @@ export const casaService = {
       console.error('Error al obtener las casas:', error)
       throw error
     }
-  }
+  },
+  async getMembersByCasa(idCasa: string | number) {
+    const res = await apiClient.get<MiembrosApiResponse>(`/Miembros/ViewMembers/${idCasa}`)
+    return res.data.data ?? []
+  },
 }
+
+// Tipos respuesta miembros
+interface MiembroCasa {
+  nombreCompleto: string
+  tipoMiembro: 'PROPIETARIO' | 'ARRENDATARIO' | 'FAMILIAR' | 'OTRO' | string
+  numeroDocumento: number | string
+  telefono: number | string
+  email?: string
+}
+interface MiembrosApiResponse {
+  message: string
+  data: MiembroCasa[]
+}
+
+// (getMembersByCasa se añadió al objeto casaService anterior)
