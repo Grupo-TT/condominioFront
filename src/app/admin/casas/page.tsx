@@ -69,6 +69,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
+import { useCasas } from '@/hooks/useCasas'
 
 // Tipo para el formulario de nuevo propietario
 interface FormData {
@@ -249,120 +250,6 @@ function NuevoPropietarioForm({
   )
 }
 
-// Datos de ejemplo basados en la imagen
-const casasData: Casa[] = [
-  {
-    id: '1',
-    numero: '15',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'En Mora',
-    uso: 'Residencial'
-  },
-  {
-    id: '2',
-    numero: '12',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' }
-    ],
-    estado: 'Al Día',
-    uso: 'Arrendada'
-  },
-  {
-    id: '3',
-    numero: '11',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '4',
-    numero: '10',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '5',
-    numero: '19',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '6',
-    numero: '14',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '7',
-    numero: '16',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  }
-]
 
 // Componente para renderizar iconos de miembros
 function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
@@ -416,6 +303,9 @@ function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
 }
 
 export default function CasasPage() {
+  // Hook para obtener las casas de la API
+  const { casas, loading, error, refetch } = useCasas()
+  
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -491,12 +381,12 @@ export default function CasasPage() {
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
-      return casasData
+      return casas
     }
 
     const searchLower = searchTerm.toLowerCase()
     
-    return casasData.filter(casa => {
+    return casas.filter(casa => {
       // Filtrar por tipo de uso
       if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
         return false
@@ -514,7 +404,7 @@ export default function CasasPage() {
 
       return true
     })
-  }, [searchTerm, filterType])
+  }, [casas, searchTerm, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -729,8 +619,47 @@ export default function CasasPage() {
             </div>
           </div>
 
-          {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
+          {/* Estados de carga y error */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                <p className="text-gray-500">Cargando casas...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="text-red-400 mr-3">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">Error al cargar las casas</h3>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={refetch} 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-700 border-red-300 hover:bg-red-50"
+                >
+                  Reintentar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Solo mostrar el contenido si no está cargando y no hay error */}
+          {!loading && !error && (
+            <>
+              {/* Filtros y controles */}
+              <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="todas">Todas</TabsTrigger>
@@ -938,6 +867,8 @@ export default function CasasPage() {
           )}
         </TabsContent>
       </Tabs>
+            </>
+          )}
         </div>
       </div>
     </>
