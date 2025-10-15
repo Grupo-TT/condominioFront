@@ -26,6 +26,14 @@ apiClient.interceptors.request.use(
   }
 );
 
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("Error en la API:", error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor de RESPONSE: maneja token expirado
 apiClient.interceptors.response.use(
   (response) => response,

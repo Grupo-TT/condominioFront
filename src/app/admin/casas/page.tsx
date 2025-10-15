@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -69,27 +69,18 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
+import { usuariosApi } from '@/lib/api/usuarios'
+import { Usuario } from "@/types/usuario.types";
+import { casasApi } from '@/lib/api/casas'
 
-// Tipo para el formulario de nuevo propietario
-interface FormData {
-  primerNombre: string
-  segundoNombre: string
-  primerApellido: string
-  segundoApellido: string
-  tipoDocumento: string
-  numeroDocumento: string
-  correoElectronico: string
-  telefono: string
-  rolEnCasa: string
-  casaAsociada: string
-}
 
-// Componente separado para el formulario
-function NuevoPropietarioForm({ 
-  formData, 
-  onInputChange
+function NuevoPropietarioForm({
+  formData,
+  errors,
+  onInputChange,
 }: {
-  formData: FormData
+  formData: Usuario
+  errors: Record<string, string>
   onInputChange: (field: string, value: string) => void
 }) {
   return (
@@ -98,53 +89,34 @@ function NuevoPropietarioForm({
       <div className="space-y-6">
         <h3 className="text-sm font-medium text-gray-500">Información Personal</h3>
         <div className="grid grid-cols-2 gap-6">
-          <div className="grid gap-2">
-            <Label htmlFor="primerNombre">Primer Nombre</Label>
-            <Input
-              id="primerNombre"
-              placeholder="Ej: José"
-              value={formData.primerNombre}
-              onChange={(e) => onInputChange('primerNombre', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="segundoNombre">Segundo Nombre</Label>
-            <Input
-              id="segundoNombre"
-              placeholder="Ej: Carlos"
-              value={formData.segundoNombre}
-              onChange={(e) => onInputChange('segundoNombre', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="primerApellido">Primer Apellido</Label>
-            <Input
-              id="primerApellido"
-              placeholder="Ej: Pérez"
-              value={formData.primerApellido}
-              onChange={(e) => onInputChange('primerApellido', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="segundoApellido">Segundo Apellido</Label>
-            <Input
-              id="segundoApellido"
-              placeholder="Ej: Hurtado"
-              value={formData.segundoApellido}
-              onChange={(e) => onInputChange('segundoApellido', e.target.value)}
-            />
-          </div>
+          {[
+            { id: 'primerNombre', label: 'Primer Nombre', placeholder: 'Ej: José', },
+            { id: 'segundoNombre', label: 'Segundo Nombre', placeholder: 'Ej: Carlos' },
+            { id: 'primerApellido', label: 'Primer Apellido', placeholder: 'Ej: Pérez' },
+            { id: 'segundoApellido', label: 'Segundo Apellido', placeholder: 'Ej: Hurtado' },
+          ].map((field) => (
+            <div key={field.id} className="grid gap-2">
+              <Label htmlFor={field.id}>{field.label}</Label>
+              <Input 
+                id={field.id}
+                placeholder={field.placeholder}
+                value={formData[field.id as keyof typeof formData] ?? ''}
+                onChange={(e) => onInputChange(field.id, e.target.value)}
+              // required={field.required}
+              />
+              {errors[field.id] && <p className="text-sm text-red-600">{errors[field.id]}</p>}
+            </div>
+          ))}
+
+          {/* Tipo de Documento */}
           <div className="grid gap-2">
             <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
             <Select
               value={formData.tipoDocumento}
               onValueChange={(value) => onInputChange('tipoDocumento', value)}
-              required
             >
               <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar tipo" className="text-left" />
+                <SelectValue placeholder="Seleccionar tipo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
@@ -152,16 +124,21 @@ function NuevoPropietarioForm({
                 <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
               </SelectContent>
             </Select>
+            {errors.tipoDocumento && <p className="text-sm text-red-600">{errors.tipoDocumento}</p>}
           </div>
+
+          {/* Número de Documento */}
           <div className="grid gap-2">
             <Label htmlFor="numeroDocumento">Número de Documento</Label>
-            <Input
+            <Input 
+              type='number'
               id="numeroDocumento"
               placeholder="Ej: 12345678"
               value={formData.numeroDocumento}
               onChange={(e) => onInputChange('numeroDocumento', e.target.value)}
-              required
+
             />
+            {errors.numeroDocumento && <p className="text-sm text-red-600">{errors.numeroDocumento}</p>}
           </div>
         </div>
       </div>
@@ -180,8 +157,9 @@ function NuevoPropietarioForm({
               placeholder="Ej: jose.perez@email.com"
               value={formData.correoElectronico}
               onChange={(e) => onInputChange('correoElectronico', e.target.value)}
-              required
+
             />
+            {errors.correoElectronico && <p className="text-sm text-red-600">{errors.correoElectronico}</p>}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="telefono">Teléfono</Label>
@@ -191,8 +169,9 @@ function NuevoPropietarioForm({
               placeholder="Ej: 3001234567"
               value={formData.telefono}
               onChange={(e) => onInputChange('telefono', e.target.value)}
-              required
+
             />
+            {errors.telefono && <p className="text-sm text-red-600">{errors.telefono}</p>}
           </div>
         </div>
       </div>
@@ -208,27 +187,27 @@ function NuevoPropietarioForm({
             <Select
               value={formData.rolEnCasa}
               onValueChange={(value) => onInputChange('rolEnCasa', value)}
-              required
             >
               <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar rol" className="text-left" />
+                <SelectValue placeholder="Seleccionar rol" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="propietario">Propietario</SelectItem>
                 <SelectItem value="arrendatario">Arrendatario</SelectItem>
-                <SelectItem value="familiar">Familiar</SelectItem> 
+                <SelectItem value="familiar">Familiar</SelectItem>
               </SelectContent>
             </Select>
+            {errors.rolEnCasa && <p className="text-sm text-red-600">{errors.rolEnCasa}</p>}
           </div>
+
           <div className="grid gap-2">
             <Label htmlFor="casaAsociada">Casa Asociada</Label>
             <Select
-              value={formData.casaAsociada}
+              value={String(formData.casaAsociada)}
               onValueChange={(value) => onInputChange('casaAsociada', value)}
-              required
             >
               <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar casa" className="text-left" />
+                <SelectValue placeholder="Seleccionar casa" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">Casa 1</SelectItem>
@@ -238,6 +217,7 @@ function NuevoPropietarioForm({
                 <SelectItem value="5">Casa 5</SelectItem>
               </SelectContent>
             </Select>
+            {errors.casaAsociada && <p className="text-sm text-red-600">{errors.casaAsociada}</p>}
           </div>
         </div>
       </div>
@@ -245,119 +225,121 @@ function NuevoPropietarioForm({
   )
 }
 
+
+
 // Datos de ejemplo basados en la imagen
 const casasData: Casa[] = [
-  {
-    id: '1',
-    numero: '15',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'En Mora',
-    uso: 'Residencial'
-  },
-  {
-    id: '2',
-    numero: '12',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' }
-    ],
-    estado: 'Al Día',
-    uso: 'Arrendada'
-  },
-  {
-    id: '3',
-    numero: '11',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '4',
-    numero: '10',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '5',
-    numero: '19',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '6',
-    numero: '14',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '7',
-    numero: '16',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  }
+  // {
+  //   id: '1',
+  //   numero: '15',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'masculino' },
+  //     { genero: 'masculino' },
+  //     { genero: 'masculino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' },
+  //     { tipo: 'perro' },
+  //     { tipo: 'perro' },
+  //     { tipo: 'gato' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'En Mora',
+  //   uso: 'Residencial'
+  // },
+  // {
+  //   id: '2',
+  //   numero: '12',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Arrendada'
+  // },
+  // {
+  //   id: '3',
+  //   numero: '11',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' },
+  //     { genero: 'femenino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'gato' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Residencial'
+  // },
+  // {
+  //   id: '4',
+  //   numero: '10',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Residencial'
+  // },
+  // {
+  //   id: '5',
+  //   numero: '19',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Residencial'
+  // },
+  // {
+  //   id: '6',
+  //   numero: '14',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Residencial'
+  // },
+  // {
+  //   id: '7',
+  //   numero: '16',
+  //   propietario: 'Jose Pérez Hurtado',
+  //   miembros: [
+  //     { genero: 'masculino' },
+  //     { genero: 'femenino' }
+  //   ],
+  //   mascotas: [
+  //     { tipo: 'perro' },
+  //     { tipo: 'gato' }
+  //   ],
+  //   estado: 'Al Día',
+  //   uso: 'Residencial'
+  // }
 ]
 
 // Componente para renderizar iconos de miembros
@@ -367,9 +349,8 @@ function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
       {miembros.map((miembro, idx) => (
         <div
           key={idx}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
-          }`}
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
+            }`}
         >
           <HugeiconsIcon
             icon={User03Icon}
@@ -395,13 +376,13 @@ function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
           }}
         >
           {mascota.tipo === 'perro' ? (
-            <Dog 
-              className="w-5 h-5" 
+            <Dog
+              className="w-5 h-5"
               style={{ color: '#A39170' }}
             />
           ) : (
-            <Cat 
-              className="w-5 h-5" 
+            <Cat
+              className="w-5 h-5"
               style={{ color: '#595D75' }}
             />
           )}
@@ -412,6 +393,30 @@ function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
 }
 
 export default function CasasPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [casas, setCasas] = useState<Casa[]>(casasData)
+
+  
+
+  useEffect(() => {
+    const cargarCasas = async () => {
+      try {
+        const data = await casasApi.obtenerTodas();
+        setCasas(data);
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron cargar las casas");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarCasas();
+  }, []);
+
+  
+  //
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -421,23 +426,6 @@ export default function CasasPage() {
   const [filterType, setFilterType] = useState<'todas' | 'residencial' | 'arrendada'>('todas')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    // Información personal
-    primerNombre: '',
-    segundoNombre: '',
-    primerApellido: '',
-    segundoApellido: '',
-    tipoDocumento: '',
-    numeroDocumento: '',
-    // Información de contacto
-    correoElectronico: '',
-    telefono: '',
-    // Información de propiedad
-    rolEnCasa: '',
-    casaAsociada: ''
-  })
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -453,25 +441,84 @@ export default function CasasPage() {
     }))
   }, [])
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  // Estado del formulario
+  const [formData, setFormData] = useState<Usuario>({
+    // Información personal
+    primerNombre: '',
+    segundoNombre: '',
+    primerApellido: '',
+    segundoApellido: '',
+    tipoDocumento: 'CC', // default to a valid value
+    numeroDocumento: 0,
+    // Información de contacto
+    correoElectronico: '',
+    telefono: 0,
+    // Información de propiedad
+    rolEnCasa: 'Propietario', // default to a valid value
+    casaAsociada: 1 // default to a valid value
+  })
+
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validateForm = useCallback(() => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.primerNombre.trim()) newErrors.primerNombre = 'El primer nombre es obligatorio'
+    if (!formData.primerApellido.trim()) newErrors.primerApellido = 'El primer apellido es obligatorio'
+    if (!formData.tipoDocumento) newErrors.tipoDocumento = 'Selecciona un tipo de documento'
+    if (!/^\d+$/.test(String(formData.numeroDocumento))) newErrors.numeroDocumento = 'Número de documento inválido'
+    if (!/\S+@\S+\.\S+/.test(formData.correoElectronico)) newErrors.correoElectronico = 'Correo electrónico inválido'
+    if (!/^\d{7,10}$/.test(String(formData.telefono))) newErrors.telefono = 'Teléfono inválido (7 a 10 dígitos)'
+    if (!formData.rolEnCasa) newErrors.rolEnCasa = 'Selecciona un rol en la casa'
+    if (!formData.casaAsociada) newErrors.casaAsociada = 'Selecciona una casa asociada'
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }, [formData])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Aquí agregarías la lógica para crear el nuevo propietario
-    console.log('Nuevo propietario:', formData)
-    // Resetear formulario y cerrar sheet
+    try {
+      await usuariosApi.crearUsuario({
+        primerNombre: formData.primerNombre,
+        segundoNombre: formData.segundoNombre,
+        primerApellido: formData.primerApellido,
+        segundoApellido: formData.segundoApellido,
+        tipoDocumento: formData.tipoDocumento,
+        numeroDocumento: formData.numeroDocumento,
+        correoElectronico: formData.correoElectronico,
+        telefono: formData.telefono,
+        rolEnCasa: formData.rolEnCasa,
+        casaAsociada: formData.casaAsociada,
+      })
+    } catch (error) {
+      console.error('Error al crear el propietario:', error)
+      alert('Hubo un error al crear el propietario. Inténtalo de nuevo.')
+
+      return
+    }
+    if (!validateForm()) return
+
+    console.log('✅ Nuevo propietario registrado:', formData)
+    alert('Propietario creado exitosamente ${nuevoPropietario.primerNombre} ${nuevoPropietario.primerApellido} ha sido registrado.')
+
     setFormData({
       primerNombre: '',
       segundoNombre: '',
       primerApellido: '',
       segundoApellido: '',
       tipoDocumento: '',
-      numeroDocumento: '',
+      numeroDocumento: 0,
       correoElectronico: '',
-      telefono: '',
+      telefono: 0,
       rolEnCasa: '',
-      casaAsociada: ''
+      casaAsociada: 0,
     })
+    setErrors({})
     setIsSheetOpen(false)
-  }, [formData])
+  }
+
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setIsSheetOpen(open)
@@ -491,7 +538,7 @@ export default function CasasPage() {
     }
 
     const searchLower = searchTerm.toLowerCase()
-    
+
     return casasData.filter(casa => {
       // Filtrar por tipo de uso
       if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
@@ -524,10 +571,10 @@ export default function CasasPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={Home07Icon} 
-                size={20} 
-                color="currentColor" 
+              <HugeiconsIcon
+                icon={Home07Icon}
+                size={20}
+                color="currentColor"
                 strokeWidth={1.5}
                 className="text-gray-600"
               />
@@ -579,9 +626,8 @@ export default function CasasPage() {
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
-                }`}
+                className={`w-2 h-2 rounded-full ${estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
+                  }`}
               />
               {estado}
             </Badge>
@@ -720,218 +766,217 @@ export default function CasasPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Casas</h1>
               <p className="text-gray-500 mt-1">
-              Gestiona la información de propietarios, miembros y mascotas de cada casa.
+                Gestiona la información de propietarios, miembros y mascotas de cada casa.
               </p>
             </div>
           </div>
 
           {/* Filtros y controles */}
           <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="residencial">Residenciales</TabsTrigger>
-            <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
-          </TabsList>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-              <Input
-                placeholder="Buscar casas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10"
-                ref={searchInputRef}
-              />
-              {searchTerm !== '' && (
-                <Button 
-                  onClick={handleClearSearch} 
-                  variant="ghost" 
-                  size="icon"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100" 
-                >
-                  <X size={14} />
-                </Button>
-              )}
+            <div className="flex items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="todas">Todas</TabsTrigger>
+                <TabsTrigger value="residencial">Residenciales</TabsTrigger>
+                <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-3">
+                <div className="relative w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Input
+                    placeholder="Buscar casas..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                    ref={searchInputRef}
+                  />
+                  {searchTerm !== '' && (
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100"
+                    >
+                      <X size={14} />
+                    </Button>
+                  )}
+                </div>
+                <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+                  <SheetTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Nuevo Propietario
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[600px] sm:w-[720px] data-[state=open]:duration-300 data-[state=closed]:duration-250">
+                    <SheetHeader>
+                      <SheetTitle>Nuevo Propietario</SheetTitle>
+                      <SheetDescription>
+                        Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                      <div className="flex-1 overflow-y-auto">
+                        <NuevoPropietarioForm
+                          formData={formData}
+                          onInputChange={handleInputChange} errors={errors} />
+                      </div>
+
+                      <SheetFooter className="flex flex-row gap-3 mt-auto">
+                        <Button variant="outline" className="flex-1">Cancelar</Button>
+                        {/* <SheetTrigger asChild> */}
+                        <Button type="submit" className="flex-1">Crear Propietario</Button>
+
+                        {/* </SheetTrigger> */}
+                      </SheetFooter>
+                    </form>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-              <SheetTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nuevo Propietario
-                </Button>
-                      </SheetTrigger>
-                      <SheetContent side="right" className="w-[600px] sm:w-[720px] data-[state=open]:duration-300 data-[state=closed]:duration-250">
-                <SheetHeader>
-                  <SheetTitle>Nuevo Propietario</SheetTitle>
-                  <SheetDescription>
-                    Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
-                  </SheetDescription>
-                </SheetHeader>
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
-                  <div className="flex-1 overflow-y-auto">
-                    <NuevoPropietarioForm
-                      formData={formData}
-                      onInputChange={handleInputChange}
+
+            <TabsContent value="todas">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
                     />
                   </div>
-                  
-                  <SheetFooter className="flex flex-row gap-3 mt-auto">
-                      <Button variant="outline" className="flex-1">Cancelar</Button>
-                    <SheetClose asChild>
-                      <Button type="submit" className="flex-1">Crear Propietario</Button>
-                      
-                    </SheetClose>
-                  </SheetFooter>
-                </form>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas que coincidan con "${searchTerm}"`
+                      : filterType === 'residencial'
+                        ? 'No hay casas residenciales registradas'
+                        : filterType === 'arrendada'
+                          ? 'No hay casas arrendadas registradas'
+                          : 'No hay casas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-        <TabsContent value="todas">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas que coincidan con "${searchTerm}"`
-                  : filterType === 'residencial' 
-                    ? 'No hay casas residenciales registradas'
-                    : filterType === 'arrendada'
-                      ? 'No hay casas arrendadas registradas'
-                      : 'No hay casas registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
+            <TabsContent value="residencial">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas residenciales que coincidan con "${searchTerm}"`
+                      : 'No hay casas residenciales registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-        <TabsContent value="residencial">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas residenciales que coincidan con "${searchTerm}"`
-                  : 'No hay casas residenciales registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="arrendada">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
-                  : 'No hay casas arrendadas registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="arrendada">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
+                      : 'No hay casas arrendadas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>
