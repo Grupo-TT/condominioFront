@@ -27,6 +27,7 @@ const data = {
   user: {
     name: "Admin",
     email: "admin@flordigital.com",
+    avatar: "",
   },
   // Sección: Inicio
   navInicio: [

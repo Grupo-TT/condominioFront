@@ -252,14 +252,14 @@ export default function CasaDetailPage() {
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" className="text-red-600 hover:text-red-700 gap-2">
                     <Trash2 className="w-4 h-4" />
-                    Eliminar
+                    Remover
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar casa?</AlertDialogTitle>
+                    <AlertDialogTitle>¿Remover Propietario?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará permanentemente el propietario{' '}
+                        Esta acción no se puede deshacer. Se removera permanentemente el propietario{' '}
                         <strong>{casa.propietario}</strong> de la casa{' '}
                         <strong>{casa.numero}</strong> y toda su información asociada.
                     </AlertDialogDescription>
