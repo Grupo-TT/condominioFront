@@ -69,181 +69,11 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
+import { PropietarioFormData } from '@/lib/validations/propietario.validation'
+import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
 
-// Tipo para el formulario de nuevo propietario
-interface FormData {
-  primerNombre: string
-  segundoNombre: string
-  primerApellido: string
-  segundoApellido: string
-  tipoDocumento: string
-  numeroDocumento: string
-  correoElectronico: string
-  telefono: string
-  rolEnCasa: string
-  casaAsociada: string
-}
-
-// Componente separado para el formulario
-function NuevoPropietarioForm({ 
-  formData, 
-  onInputChange
-}: {
-  formData: FormData
-  onInputChange: (field: string, value: string) => void
-}) {
-  return (
-    <div className="space-y-6 px-4">
-      {/* Información Personal */}
-      <div className="space-y-6">
-        <h3 className="text-sm font-medium text-gray-500">Información Personal</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="grid gap-2">
-            <Label htmlFor="primerNombre">Primer Nombre</Label>
-            <Input
-              id="primerNombre"
-              placeholder="Ej: José"
-              value={formData.primerNombre}
-              onChange={(e) => onInputChange('primerNombre', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="segundoNombre">Segundo Nombre</Label>
-            <Input
-              id="segundoNombre"
-              placeholder="Ej: Carlos"
-              value={formData.segundoNombre}
-              onChange={(e) => onInputChange('segundoNombre', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="primerApellido">Primer Apellido</Label>
-            <Input
-              id="primerApellido"
-              placeholder="Ej: Pérez"
-              value={formData.primerApellido}
-              onChange={(e) => onInputChange('primerApellido', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="segundoApellido">Segundo Apellido</Label>
-            <Input
-              id="segundoApellido"
-              placeholder="Ej: Hurtado"
-              value={formData.segundoApellido}
-              onChange={(e) => onInputChange('segundoApellido', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="tipoDocumento">Tipo de Documento</Label>
-            <Select
-              value={formData.tipoDocumento}
-              onValueChange={(value) => onInputChange('tipoDocumento', value)}
-              required
-            >
-              <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar tipo" className="text-left" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-                <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="numeroDocumento">Número de Documento</Label>
-            <Input
-              id="numeroDocumento"
-              placeholder="Ej: 12345678"
-              value={formData.numeroDocumento}
-              onChange={(e) => onInputChange('numeroDocumento', e.target.value)}
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Información de Contacto */}
-      <div className="space-y-6">
-        <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
-        <div className="grid grid-cols-1 gap-6">
-          <div className="grid gap-2">
-            <Label htmlFor="correoElectronico">Correo Electrónico</Label>
-            <Input
-              id="correoElectronico"
-              type="email"
-              placeholder="Ej: jose.perez@email.com"
-              value={formData.correoElectronico}
-              onChange={(e) => onInputChange('correoElectronico', e.target.value)}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="telefono">Teléfono</Label>
-            <Input
-              id="telefono"
-              type="tel"
-              placeholder="Ej: 3001234567"
-              value={formData.telefono}
-              onChange={(e) => onInputChange('telefono', e.target.value)}
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Información de Propiedad */}
-      <div className="space-y-6">
-        <h3 className="text-sm font-medium text-gray-500">Información de Propiedad</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="grid gap-2">
-            <Label htmlFor="rolEnCasa">Rol en la Casa</Label>
-            <Select
-              value={formData.rolEnCasa}
-              onValueChange={(value) => onInputChange('rolEnCasa', value)}
-              required
-            >
-              <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar rol" className="text-left" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="propietario">Propietario</SelectItem>
-                <SelectItem value="arrendatario">Arrendatario</SelectItem>
-                <SelectItem value="familiar">Familiar</SelectItem> 
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="casaAsociada">Casa Asociada</Label>
-            <Select
-              value={formData.casaAsociada}
-              onValueChange={(value) => onInputChange('casaAsociada', value)}
-              required
-            >
-              <SelectTrigger className="w-full text-left">
-                <SelectValue placeholder="Seleccionar casa" className="text-left" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Casa 1</SelectItem>
-                <SelectItem value="2">Casa 2</SelectItem>
-                <SelectItem value="3">Casa 3</SelectItem>
-                <SelectItem value="4">Casa 4</SelectItem>
-                <SelectItem value="5">Casa 5</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+// Usar el tipo importado del archivo de validaciones
+type FormData = PropietarioFormData
 
 // Datos de ejemplo basados en la imagen
 const casasData: Casa[] = [
@@ -422,22 +252,7 @@ export default function CasasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Estado del formulario
-  const [formData, setFormData] = useState({
-    // Información personal
-    primerNombre: '',
-    segundoNombre: '',
-    primerApellido: '',
-    segundoApellido: '',
-    tipoDocumento: '',
-    numeroDocumento: '',
-    // Información de contacto
-    correoElectronico: '',
-    telefono: '',
-    // Información de propiedad
-    rolEnCasa: '',
-    casaAsociada: ''
-  })
+  // No necesitamos estado local del formulario, React Hook Form maneja todo
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -446,32 +261,12 @@ export default function CasasPage() {
     }
   }, [])
 
-  const handleInputChange = useCallback((field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }, [])
-
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = useCallback((data: FormData) => {
     // Aquí agregarías la lógica para crear el nuevo propietario
-    console.log('Nuevo propietario:', formData)
-    // Resetear formulario y cerrar sheet
-    setFormData({
-      primerNombre: '',
-      segundoNombre: '',
-      primerApellido: '',
-      segundoApellido: '',
-      tipoDocumento: '',
-      numeroDocumento: '',
-      correoElectronico: '',
-      telefono: '',
-      rolEnCasa: '',
-      casaAsociada: ''
-    })
+    console.log('Nuevo propietario:', data)
+    // Solo cerrar sheet si el formulario es válido
     setIsSheetOpen(false)
-  }, [formData])
+  }, [])
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setIsSheetOpen(open)
@@ -762,29 +557,23 @@ export default function CasasPage() {
                   Nuevo Propietario
                 </Button>
                       </SheetTrigger>
-                      <SheetContent side="right" className="w-[600px] sm:w-[720px] data-[state=open]:duration-300 data-[state=closed]:duration-250">
+                      <SheetContent 
+                        side="right" 
+                        className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
+                        style={{ width: '650px', maxWidth: 'none' }}
+                      >
                 <SheetHeader>
                   <SheetTitle>Nuevo Propietario</SheetTitle>
                   <SheetDescription>
                     Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
                   </SheetDescription>
                 </SheetHeader>
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
-                  <div className="flex-1 overflow-y-auto">
-                    <NuevoPropietarioForm
-                      formData={formData}
-                      onInputChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  <SheetFooter className="flex flex-row gap-3 mt-auto">
-                      <Button variant="outline" className="flex-1">Cancelar</Button>
-                    <SheetClose asChild>
-                      <Button type="submit" className="flex-1">Crear Propietario</Button>
-                      
-                    </SheetClose>
-                  </SheetFooter>
-                </form>
+                <div className="flex flex-col h-full">
+                  <PropietarioForm
+                    onSubmit={handleSubmit}
+                    onCancel={() => setIsSheetOpen(false)}
+                  />
+                </div>
               </SheetContent>
             </Sheet>
           </div>
