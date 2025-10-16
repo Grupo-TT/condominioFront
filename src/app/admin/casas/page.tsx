@@ -368,13 +368,10 @@ export default function CasasPage() {
   }, [])
 
   const handleDelete = useCallback((casaId: string) => {
-    // Aquí agregarías la lógica para eliminar el propietario
     console.log('Eliminar propietario de casa:', casaId)
-    // Por ahora solo mostramos un mensaje
     alert(`Propietario de la casa ${casaId} eliminado`)
   }, [])
 
-  // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
       return casas
@@ -383,12 +380,10 @@ export default function CasasPage() {
     const searchLower = searchTerm.toLowerCase()
     
     return casas.filter(casa => {
-      // Filtrar por tipo de uso
       if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
         return false
       }
 
-      // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
           casa.propietario.toLowerCase().includes(searchLower) ||
@@ -402,7 +397,6 @@ export default function CasasPage() {
     })
   }, [casas, searchTerm, filterType])
 
-  // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
 
   const columns = useMemo<ColumnDef<Casa>[]>(
@@ -443,8 +437,10 @@ export default function CasasPage() {
         accessorKey: 'miembros',
         id: 'miembros',
         header: ({ column }) => <DataGridColumnHeader title="Miembros" column={column} />,
-        cell: ({ row }) => <MiembrosIcons miembros={row.original.miembros} />,
-        size: 200,
+        cell: ({ row }) => (
+          <div className="text-gray-900 font-medium">{row.original.miembros.length}</div>
+        ),
+        size: 120,
         enableSorting: false,
       },
       {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { casaService } from '@/lib/services/casa.service'
 import { Casa } from '@/types/casa.types'
+import axios from 'axios'
 
 interface UseCasasReturn {
   casas: Casa[]
@@ -24,9 +25,13 @@ export function useCasas(): UseCasasReturn {
       
       console.log('Hook: Casas cargadas exitosamente:', casasData)
       setCasas(casasData)
+      if ((casasData?.length ?? 0) === 0) console.log('API: 0 casas (lista vacía)')
     } catch (err) {
       console.error('Hook: Error al cargar casas:', err)
-      setError('Error al cargar las casas. Intenta de nuevo.')
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as any)?.message || err.message
+        : 'Error al cargar las casas. Intenta de nuevo.'
+      setError(msg)
       setCasas([])
     } finally {
       setLoading(false)

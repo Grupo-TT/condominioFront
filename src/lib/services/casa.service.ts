@@ -60,9 +60,7 @@ function adaptCasaFromAPI(casaApi: CasaFromAPI) {
     id: String(casaApi.propietario?.casa?.id ?? casaApi.numeroCasa),
     numero: String(casaApi.numeroCasa),
     propietario: buildNombreCompleto(casaApi.propietario),
-    miembros: Array.from({ length: casaApi.cantidadMiembros || 0 }, (_, i) => ({
-      genero: (i % 2 === 0 ? 'masculino' : 'femenino') as 'masculino' | 'femenino'
-    })),
+    miembros: Array.from({ length: casaApi.cantidadMiembros || 0 }, () => ({})),
     mascotas: Array.from({ length: casaApi.cantidadMascotas || 0 }, () => ({
       tipo: 'perro' as const
     })),
@@ -98,7 +96,6 @@ export const casaService = {
   },
 }
 
-// Tipos respuesta miembros
 interface MiembroCasa {
   nombreCompleto: string
   tipoMiembro: 'PROPIETARIO' | 'ARRENDATARIO' | 'FAMILIAR' | 'OTRO' | string
@@ -106,6 +103,7 @@ interface MiembroCasa {
   telefono: number | string
   email?: string
 }
+
 interface MiembrosApiResponse {
   message: string
   data: MiembroCasa[]
