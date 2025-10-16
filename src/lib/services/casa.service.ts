@@ -108,5 +108,3 @@ interface MiembrosApiResponse {
   message: string
   data: MiembroCasa[]
 }
-
-// (getMembersByCasa se añadió al objeto casaService anterior)
