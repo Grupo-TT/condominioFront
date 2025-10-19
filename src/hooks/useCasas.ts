@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { casaService } from '@/lib/services/casa.service'
+import { authService } from '@/lib/services/auth.service'
+import { adaptCasaFromAPI } from '@/lib/services/casa.service'
 import { Casa } from '@/types/casa.types'
 import axios from 'axios'
 
@@ -21,10 +23,16 @@ export function useCasas(): UseCasasReturn {
       setError(null)
       
       console.log('Hook: Iniciando carga de casas...')
+
+      const token = authService.getToken()
+      console.log('Token actual:', token)
+
       const casasData = await casaService.getAll()
+
+      setCasas(casasData.map(adaptCasaFromAPI))
       
-      console.log('Hook: Casas cargadas exitosamente:', casasData)
-      setCasas(casasData)
+      console.log('Hook: Casas cargadas exitosamente:', casasData)  
+
       if ((casasData?.length ?? 0) === 0) console.log('API: 0 casas (lista vacía)')
     } catch (err) {
       console.error('Hook: Error al cargar casas:', err)

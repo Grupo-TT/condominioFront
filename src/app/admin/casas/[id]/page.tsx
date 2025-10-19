@@ -1,4 +1,4 @@
-/*'use client'
+'use client'
 
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useMiembros } from '@/hooks/useMiembros'
+import { useMiembros } from '@/hooks/useCasa'
 
 // Datos de ejemplo - en una aplicación real esto vendría de una API
 const casasData = {
@@ -122,20 +122,17 @@ const casasData = {
   },
 }
 
-const params = useParams()
-const casaId = params.id as string
-
-const {
-  miembros,
-  loading: loadingMiembros,
-  error: errorMiembros,
-  refetch,
-} = useMiembros(casaId)
-
 export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
   const casaId = params.id as string
+
+  const {
+    miembros,
+    loading: loadingMiembros,
+    error: errorMiembros,
+    refetch,
+  } = useMiembros(casaId)
   
   const casa = casasData[casaId as keyof typeof casasData]
 
@@ -230,9 +227,9 @@ export default function CasaDetailPage() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col">*/
+      <div className="flex flex-1 flex-col">
         {/* Header */}
-        /*<div className="bg-white px-6 py-6">
+        <div className="bg-white px-6 py-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
               <HugeiconsIcon
@@ -288,31 +285,31 @@ export default function CasaDetailPage() {
               </AlertDialog>
             </div>
           </div>
-        </div>*/
+        </div>
 
-        //{/* Content */}
-        //<div className="flex-1 overflow-y-auto px-6 pb-6">
-          //{/* Tarjeta principal con toda la información */}
-          /*<div className="bg-gray-50 rounded-xl border border-gray-200 p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">*/
-              //{/* NOMBRE */}
-              /*<div className="space-y-2">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          {/* Tarjeta principal con toda la información */}
+          <div className="bg-gray-50 rounded-xl border border-gray-200 p-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {/* NOMBRE */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   NOMBRE
                 </label>
                 <p className="text-lg font-bold text-gray-900">{casa.propietario}</p>
               </div>
 
-              //{/* EMAIL *///}
-              /*<div className="space-y-2">
+              {/* EMAIL */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   EMAIL
                 </label>
                 <p className="text-lg font-bold text-gray-900">{casa.correo}</p>
               </div>
 
-              {/* DOCUMENTO *///}
-              /*<div className="space-y-2">
+              {/* DOCUMENTO */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   DOCUMENTO
                 </label>
@@ -321,16 +318,16 @@ export default function CasaDetailPage() {
                 </p>
               </div>
 
-              {/* TELEFONO *///}
-              /*<div className="space-y-2">
+              {/* TELEFONO */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   TELEFONO
                 </label>
                 <p className="text-lg font-bold text-gray-900">{casa.telefono}</p>
               </div>
 
-              {/* ESTADO *///}
-              /*<div className="space-y-2">
+              {/* ESTADO */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   ESTADO
                 </label>
@@ -344,8 +341,8 @@ export default function CasaDetailPage() {
                 </div>
               </div>
 
-              {/* ROL *///}
-              /*<div className="space-y-2">
+              {/* ROL */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   ROL
                 </label>
@@ -359,8 +356,8 @@ export default function CasaDetailPage() {
                 </div>
               </div>
 
-              {/* MIEMBROS *///}
-              /*<div className="space-y-2">
+              {/* MIEMBROS */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   MIEMBROS
                 </label>
@@ -374,8 +371,8 @@ export default function CasaDetailPage() {
                 </div>
               </div>
 
-              {/* MASCOTAS *///}
-              /*<div className="space-y-2">
+              {/* MASCOTAS */}
+              <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   MASCOTAS
                 </label>
@@ -387,8 +384,8 @@ export default function CasaDetailPage() {
             </div>
           </div>
 
-          {/* Tabs de información adicional *///}
-          /*<div className="mt-4">
+          {/* Tabs de información adicional */}
+          <div className="mt-4">
             <Tabs defaultValue="miembros-mascotas" className="w-full">
               <div className="border-b border-gray-200">
                 <TabsList className="h-auto bg-transparent p-0">
@@ -425,14 +422,14 @@ export default function CasaDetailPage() {
               
               <TabsContent value="miembros-mascotas" className="mt-6">
                 <div className="space-y-6">
-                      {/* Miembros *///}
-                      /*<div>
+                      {/* Miembros */}
+                      <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {casa.miembros.filter(miembro => miembro.relacion !== 'Propietario' && miembro.relacion !== 'Propietaria').map((miembro, index) => (
                             <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                {/* Header con icono y nombre *///}
-                                /*<div className="flex items-center gap-3 mb-3">
+                                {/* Header con icono y nombre */}
+                                <div className="flex items-center gap-3 mb-3">
                                   {miembro.genero === 'masculino' ? (
                                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                       <HugeiconsIcon
@@ -461,7 +458,7 @@ export default function CasaDetailPage() {
                                 </div>
                               </div>
 
-                              {/* Información *//*}
+                              {/* Información */}
                               <div className="space-y-2">
                                 <div className="flex gap-4">
                                   <div className="flex-1">
@@ -487,14 +484,14 @@ export default function CasaDetailPage() {
                         </div>
                       </div>
 
-                      {/* Mascotas *//*}
+                      {/* Mascotas */}
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
                         {casa.mascotas.length > 0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {casa.mascotas.map((mascota, index) => (
                               <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                {/* Header con icono, nombre y raza *//*}
+                                {/* Header con icono, nombre y raza */}
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="flex items-center gap-3 flex-1 min-w-0">
                                     {mascota.tipo === 'Perro' ? (
@@ -520,7 +517,7 @@ export default function CasaDetailPage() {
                                     </div>
                                   </div>
                                   
-                                  {/* Raza en la parte derecha *//*}
+                                  {/* Raza en la parte derecha */}
                                   <div className="text-right flex-shrink-0">
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Raza</span>
                                     <p className="text-sm text-gray-900">{mascota.raza}</p>
@@ -580,128 +577,6 @@ export default function CasaDetailPage() {
             </Tabs>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}*/
-
-'use client'
-import { useState, useMemo } from 'react'
-import { useCasas } from '@/hooks/useCasas'
-import { useMiembros } from '@/hooks/useMiembros'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
-
-export default function CasaDetalle() {
-  const { casas, loading: loadingCasas, error: errorCasas } = useCasas()
-  const [selectedCasaId, setSelectedCasaId] = useState<string | null>(null)
-
-  const casaSeleccionada = useMemo(() => {
-    return casas.find(c => c.id === selectedCasaId)
-  }, [casas, selectedCasaId])
-
-  const { miembros, loading: loadingMiembros, error: errorMiembros } = useMiembros(
-    selectedCasaId || ''
-  )
-
-  if (loadingCasas) {
-    return <div className="p-4 text-center text-muted-foreground">Cargando casas...</div>
-  }
-
-  if (errorCasas) {
-    return <div className="p-4 text-center text-red-500">{errorCasas}</div>
-  }
-
-  if (!selectedCasaId) {
-    return (
-      <div className="space-y-4 p-4">
-        <h2 className="text-xl font-bold">Listado de Casas</h2>
-        {casas.map(casa => (
-          <Card
-            key={casa.id}
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setSelectedCasaId(casa.id)}
-          >
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-semibold">Casa N° {casa.numero}</p>
-                  <p className="text-sm text-muted-foreground">{casa.propietario}</p>
-                </div>
-                <Badge
-                  variant={casa.estado === 'Al Día' ? 'success' : 'destructive'}
-                  className="text-xs"
-                >
-                  {casa.estado}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
-
-  if (!casaSeleccionada) {
-    return (
-      <div className="p-4 text-center text-muted-foreground">
-        No se encontró información de la casa seleccionada.
-      </div>
-    )
-  }
-
-  return (
-    <div className="p-4 space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => setSelectedCasaId(null)}>
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Volver
-      </Button>
-
-      <div>
-        <h2 className="text-xl font-bold mb-2">Casa N° {casaSeleccionada.numero}</h2>
-        <p className="text-muted-foreground mb-1">Propietario: {casaSeleccionada.propietario}</p>
-        <Badge
-          variant={casaSeleccionada.estado === 'Al Día' ? 'success' : 'destructive'}
-          className="text-xs"
-        >
-          {casaSeleccionada.estado}
-        </Badge>
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-2">Miembros</h3>
-        {loadingMiembros ? (
-          <p className="text-sm text-muted-foreground">Cargando miembros...</p>
-        ) : errorMiembros ? (
-          <p className="text-sm text-red-500">{errorMiembros}</p>
-        ) : miembros.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay miembros registrados.</p>
-        ) : (
-          <ul className="list-disc pl-5 space-y-1">
-            {miembros.map((m, i) => (
-              <li key={i} className="text-sm">
-                {m.nombreCompleto} — {m.tipoMiembro}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div>
-        <h3 className="font-semibold mb-2">Mascotas</h3>
-        {casaSeleccionada.mascotas.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No hay mascotas registradas.</p>
-        ) : (
-          <ul className="list-disc pl-5 space-y-1">
-            {casaSeleccionada.mascotas.map((_, index) => (
-              <li key={index} className="text-sm">
-                Mascota {index + 1}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </div>
   )

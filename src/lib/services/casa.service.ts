@@ -46,6 +46,8 @@ interface CasasApiResponse {
 }
 
 function buildNombreCompleto(propietario: CasaFromAPI['propietario']): string {
+  if (!propietario) return 'Sin propietario';
+
   const partes = [
     propietario.primerNombre,
     propietario.segundoNombre,
@@ -55,7 +57,7 @@ function buildNombreCompleto(propietario: CasaFromAPI['propietario']): string {
   return partes.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
 }
 
-function adaptCasaFromAPI(casaApi: CasaFromAPI) {
+export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
   return {
     id: String(casaApi.propietario?.casa?.id ?? casaApi.numeroCasa),
     numero: String(casaApi.numeroCasa),
@@ -70,30 +72,27 @@ function adaptCasaFromAPI(casaApi: CasaFromAPI) {
 }
 
 export const casaService = {
-  async getAll() {
+  async getAll(
+  ) {
     try {
-      console.log('Llamando a la API de casas...')
-      
       const response = await apiClient.get<CasasApiResponse>('/Casa/All')
-      
-      console.log('Respuesta de la API:', response.data)
-      
-      const casasFromAPI = response.data.data || []
-      
-      const casasAdaptadas = casasFromAPI.map(adaptCasaFromAPI)
-      
-      console.log('Casas adaptadas:', casasAdaptadas)
-      
-      return casasAdaptadas
+      return response.data.data || []
     } catch (error) {
       console.error('Error al obtener las casas:', error)
       throw error
     }
   },
-  async getMembersByCasa(idCasa: string | number) {
-    const res = await apiClient.get<MiembrosApiResponse>(`/Miembros/ViewMembers/${idCasa}`)
-    return res.data.data ?? []
-  },
+  async getMembersByCasa(
+    idCasa: string | number
+  ) {
+    try {
+      const res = await apiClient.get<MiembrosApiResponse>(`/Miembros/ViewMembers/${idCasa}`)
+      return res.data.data || []
+    } catch (error) {
+      console.error('Error al obtener los miembros:', error)
+      throw error
+    }
+  }
 }
 
 interface MiembroCasa {
