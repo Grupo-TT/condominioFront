@@ -6,7 +6,20 @@ export const propietarioService = {
   // POST /personas/registrar
   create: async (data: PropietarioFormData) => {
     try {
-      const response = await apiClient.post("/persona/register", data);
+      const propietario = {
+        primerNombre: data.primerNombre.trim().toLowerCase(),
+        segundoNombre: data.segundoNombre?.trim().toLowerCase() ?? "",
+        primerApellido: data.primerApellido.trim().toLowerCase(),
+        segundoApellido: data.segundoApellido?.trim().toLowerCase() ?? "",
+        tipoDocumento: data.tipoDocumento,
+        numeroDocumento: data.numeroDocumento,
+        correoElectronico: data.email.trim().toLowerCase,
+        telefono: data.telefono,
+        rolEnCasa: data.rolEnCasa,
+        idCasa: data.idCasa
+      };
+      console.log(propietario)
+      const response = await apiClient.post("/persona/register", propietario);
       return response;
     } catch (error) {
       console.error("Error en propietarioService.create:", error);

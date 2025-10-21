@@ -48,7 +48,7 @@ export const propietarioSchema = z.object({
     .min(7, "El número de documento debe tener mínimo 7 dígitos")
     .max(11, "El número de documento debe tener máximo 11 dígitos"),
 
-  correoElectronico: z
+  email: z
     .string()
     .min(1, "Correo electrónico es obligatorio")
     .email("Debe ingresar un correo electrónico válido")
@@ -74,7 +74,7 @@ export const propietarioSchema = z.object({
     ),
 
 
-  casaAsociada: z
+  idCasa: z
     .union([z.string(), z.undefined()])
     .transform((val) => val === undefined ? "" : val)
     .pipe(

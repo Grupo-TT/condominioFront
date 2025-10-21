@@ -40,16 +40,17 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
     resolver: zodResolver(propietarioSchema),
     mode: "onChange",
     defaultValues: {
+
       primerNombre: '',
       segundoNombre: '',
       primerApellido: '',
       segundoApellido: '',
       tipoDocumento: '',
       numeroDocumento: '',
-      correoElectronico: '',
+      email: '',
       telefono: '',
       rolEnCasa: '',
-      casaAsociada: '',
+      idCasa: '',
     }
   })
 
@@ -194,12 +195,12 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
               <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
               <div className="grid grid-cols-1 gap-6">
                 <Controller
-                  name="correoElectronico"
+                  name="email"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <FormInput
                       {...field}
-                      name="correoElectronico"
+                      name="email"
                       label="Correo Electrónico"
                       required={true}
                       placeholder="Ej: jose.perez@email.com"
@@ -258,12 +259,12 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                 />
 
                 <Controller
-                  name="casaAsociada"
+                  name="idCasa"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <FormSelect
                       {...field}
-                      name="casaAsociada"
+                      name="idCasa"
                       label="Casa Asociada"
                       required={true}
                       placeholder="Seleccionar casa"

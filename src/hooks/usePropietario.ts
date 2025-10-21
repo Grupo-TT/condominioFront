@@ -24,9 +24,16 @@ export const usePropietario = (): UsePropietarioReturn => {
       const response = await propietarioService.create(data)
       console.log("Propietario creado:", response.data)
       setSuccess(true)
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error al crear el propietario:", err)
-      const errorMessage = err.response?.data?.message || err.message || "Error al crear el propietario"
+      let errorMessage = "Error al crear el propietario"
+      if (err && typeof err === "object") {
+        if ('response' in err && typeof err.response === "object" && err.response && 'data' in err.response && typeof err.response.data === "object" && err.response.data && 'message' in err.response.data) {
+          errorMessage = (err.response as { data?: { message?: string } }).data?.message || errorMessage
+        } else if ('message' in err && typeof err.message === "string") {
+          errorMessage = err.message
+        }
+      }
       setError(errorMessage)
       throw err // Re-lanzar para que el componente pueda manejarlo
     } finally {
