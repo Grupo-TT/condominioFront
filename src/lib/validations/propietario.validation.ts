@@ -36,7 +36,7 @@ export const propietarioSchema = z.object({
     .pipe(
       z.string()
         .min(1, "Debe seleccionar un tipo de documento")
-        .refine((val) => val === "CC" || val === "CE", {
+        .refine((val) => val === "CEDULA_DE_CIUDADANIA" || val === "CEDULA_DE_EXTRANJERIA", {
           message: "Debe seleccionar un tipo de documento válido"
         })
     ),
@@ -68,10 +68,11 @@ export const propietarioSchema = z.object({
     .pipe(
       z.string()
         .min(1, "Debe seleccionar un rol en la casa")
-        .refine((val) => val === "propietario" || val === "arrendatario", {
+        .refine((val) => val === "PROPIETARIO" || val === "ARRENDATARIO", {
           message: "Debe seleccionar un rol válido"
         })
     ),
+
 
   casaAsociada: z
     .union([z.string(), z.undefined()])
@@ -86,4 +87,4 @@ export const propietarioSchema = z.object({
 })
 
 // Tipo inferido del schema
-export type PropietarioFormData = typeof propietarioSchema._type
+export type PropietarioFormData = z.infer<typeof propietarioSchema>

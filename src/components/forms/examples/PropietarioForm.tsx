@@ -16,13 +16,13 @@ interface PropietarioFormProps {
 }
 
 const tipoDocumentoOptions: SelectOption[] = [
-  { value: "CC", label: "Cédula de Ciudadanía" },
-  { value: "CE", label: "Cédula de Extranjería" }
+  { value: "CEDULA_DE_CIUDADANIA", label: "Cédula de Ciudadanía" },
+  { value: "CEDULA_DE_EXTRANJERIA", label: "Cédula de Extranjería" }
 ]
 
 const rolOptions: SelectOption[] = [
-  { value: "propietario", label: "Propietario" },
-  { value: "arrendatario", label: "Arrendatario" }
+  { value: "PROPIETARIO", label: "Propietario" },
+  { value: "ARRENDATARIO", label: "Arrendatario" }
 ]
 
 const casaOptions: SelectOption[] = [
@@ -54,9 +54,10 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
   })
 
   const handleFormSubmit = (data: PropietarioFormData) => {
+    console.log(data)
     onSubmit(data)
     form.reset()
-    setShowAllErrors(false)
+    setShowAllErrors(true)
   }
 
 

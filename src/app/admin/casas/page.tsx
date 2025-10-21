@@ -69,126 +69,132 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
-import { PropietarioFormData } from '@/lib/validations/propietario.validation'
+import { PropietarioFormData, propietarioSchema } from '@/lib/validations/propietario.validation'
 import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
+import { useForm } from 'react-hook-form'
+import { apiClient } from '@/lib/config/axios.config'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { propietarioService } from '@/lib/services/propietario.service'
+import { casaService } from '@/lib/services/casa.service'
+import { error } from 'node:console'
 
 // Usar el tipo importado del archivo de validaciones
 type FormData = PropietarioFormData
 
 // Datos de ejemplo basados en la imagen
-const casasData: Casa[] = [
-  {
-    id: '1',
-    numero: '15',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'En Mora',
-    uso: 'Residencial'
-  },
-  {
-    id: '2',
-    numero: '12',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' }
-    ],
-    estado: 'Al Día',
-    uso: 'Arrendada'
-  },
-  {
-    id: '3',
-    numero: '11',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '4',
-    numero: '10',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '5',
-    numero: '19',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '6',
-    numero: '14',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '7',
-    numero: '16',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  }
-]
+const casasData: Casa[] = []
+//   {
+//     id: '1',
+//     numero: '15',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'masculino' },
+//       { genero: 'masculino' },
+//       { genero: 'masculino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' },
+//       { tipo: 'perro' },
+//       { tipo: 'perro' },
+//       { tipo: 'gato' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'En Mora',
+//     uso: 'Residencial'
+//   },
+//   {
+//     id: '2',
+//     numero: '12',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Arrendada'
+//   },
+//   {
+//     id: '3',
+//     numero: '11',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' },
+//       { genero: 'femenino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'gato' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Residencial'
+//   },
+//   {
+//     id: '4',
+//     numero: '10',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Residencial'
+//   },
+//   {
+//     id: '5',
+//     numero: '19',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Residencial'
+//   },
+//   {
+//     id: '6',
+//     numero: '14',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Residencial'
+//   },
+//   {
+//     id: '7',
+//     numero: '16',
+//     propietario: 'Jose Pérez Hurtado',
+//     miembros: [
+//       { genero: 'masculino' },
+//       { genero: 'femenino' }
+//     ],
+//     mascotas: [
+//       { tipo: 'perro' },
+//       { tipo: 'gato' }
+//     ],
+//     estado: 'Al Día',
+//     uso: 'Residencial'
+//   }
+// ]
 
 // Componente para renderizar iconos de miembros
 function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
@@ -197,9 +203,8 @@ function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
       {miembros.map((miembro, idx) => (
         <div
           key={idx}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
-          }`}
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
+            }`}
         >
           <HugeiconsIcon
             icon={User03Icon}
@@ -225,13 +230,13 @@ function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
           }}
         >
           {mascota.tipo === 'perro' ? (
-            <Dog 
-              className="w-5 h-5" 
+            <Dog
+              className="w-5 h-5"
               style={{ color: '#A39170' }}
             />
           ) : (
-            <Cat 
-              className="w-5 h-5" 
+            <Cat
+              className="w-5 h-5"
               style={{ color: '#595D75' }}
             />
           )}
@@ -252,7 +257,9 @@ export default function CasasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // No necesitamos estado local del formulario, React Hook Form maneja todo
+  const [casas, setCasas] = useState<Casa>()
+  const [loading, setLoading] = useState(false)
+
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -261,12 +268,34 @@ export default function CasasPage() {
     }
   }, [])
 
-  const handleSubmit = useCallback((data: FormData) => {
-    // Aquí agregarías la lógica para crear el nuevo propietario
-    console.log('Nuevo propietario:', data)
-    // Solo cerrar sheet si el formulario es válido
-    setIsSheetOpen(false)
-  }, [])
+  // const handleSubmit = useCallback((data: FormData) => {
+  //   // Aquí agregarías la lógica para crear el nuevo propietario
+  //   const res = propietarioService.create(data)
+  //   console.log('Nuevo propietario:', res)
+  //   // Solo cerrar sheet si el formulario es válido
+  //   setIsSheetOpen(false)
+  // }, [])
+
+  const handleCrearPropietario = async (data: PropietarioFormData) => {
+    try {
+      setLoading(true)
+      const res = await propietarioService.create(data)
+      console.log("Propietario creado:", res.data)
+
+      // Cerrar el sheet
+      setIsSheetOpen(false)
+      // Recargar la lista de casas si es necesario
+      // fetchCasas()
+    } catch (err) {
+      console.error("Error al crear el propietario ❌ ", err)
+      // Mostrar mensaje de error al usuario
+      // @ts-expect-error err type is unknown, but we attempt to get response data/message
+      const errorMessage = err?.response?.data?.message || err?.message || "Error al crear el propietario"
+      console.log(`Error: ${errorMessage}`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setIsSheetOpen(open)
@@ -286,7 +315,7 @@ export default function CasasPage() {
     }
 
     const searchLower = searchTerm.toLowerCase()
-    
+
     return casasData.filter(casa => {
       // Filtrar por tipo de uso
       if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
@@ -319,10 +348,10 @@ export default function CasasPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={Home07Icon} 
-                size={20} 
-                color="currentColor" 
+              <HugeiconsIcon
+                icon={Home07Icon}
+                size={20}
+                color="currentColor"
                 strokeWidth={1.5}
                 className="text-gray-600"
               />
@@ -374,9 +403,8 @@ export default function CasasPage() {
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
-                }`}
+                className={`w-2 h-2 rounded-full ${estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
+                  }`}
               />
               {estado}
             </Badge>
@@ -515,212 +543,212 @@ export default function CasasPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Casas</h1>
               <p className="text-gray-500 mt-1">
-              Gestiona la información de propietarios, miembros y mascotas de cada casa.
+                Gestiona la información de propietarios, miembros y mascotas de cada casa.
               </p>
             </div>
           </div>
 
           {/* Filtros y controles */}
           <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="residencial">Residenciales</TabsTrigger>
-            <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
-          </TabsList>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-              <Input
-                placeholder="Buscar casas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10"
-                ref={searchInputRef}
-              />
-              {searchTerm !== '' && (
-                <Button 
-                  onClick={handleClearSearch} 
-                  variant="ghost" 
-                  size="icon"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100" 
-                >
-                  <X size={14} />
-                </Button>
-              )}
-            </div>
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-              <SheetTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nuevo Propietario
-                </Button>
-                      </SheetTrigger>
-                      <SheetContent 
-                        side="right" 
-                        className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-                        style={{ width: '650px', maxWidth: 'none' }}
-                      >
-                <SheetHeader>
-                  <SheetTitle>Nuevo Propietario</SheetTitle>
-                  <SheetDescription>
-                    Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col h-full">
-                  <PropietarioForm
-                    onSubmit={handleSubmit}
-                    onCancel={() => setIsSheetOpen(false)}
+            <div className="flex items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="todas">Todas</TabsTrigger>
+                <TabsTrigger value="residencial">Residenciales</TabsTrigger>
+                <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-3">
+                <div className="relative w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Input
+                    placeholder="Buscar casas..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                    ref={searchInputRef}
                   />
+                  {searchTerm !== '' && (
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100"
+                    >
+                      <X size={14} />
+                    </Button>
+                  )}
                 </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-
-        <TabsContent value="todas">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
+                <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+                  <SheetTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Nuevo Propietario
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent
+                    side="right"
+                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
+                    style={{ width: '650px', maxWidth: 'none' }}
+                  >
+                    <SheetHeader>
+                      <SheetTitle>Nuevo Propietario</SheetTitle>
+                      <SheetDescription>
+                        Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="flex flex-col h-full">
+                      <PropietarioForm
+                        onSubmit={handleCrearPropietario}
+                        onCancel={() => setIsSheetOpen(false)}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas que coincidan con "${searchTerm}"`
-                  : filterType === 'residencial' 
-                    ? 'No hay casas residenciales registradas'
-                    : filterType === 'arrendada'
-                      ? 'No hay casas arrendadas registradas'
-                      : 'No hay casas registradas'
-                }
-              </p>
             </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="residencial">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas residenciales que coincidan con "${searchTerm}"`
-                  : 'No hay casas residenciales registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
+            <TabsContent value="todas">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas que coincidan con "${searchTerm}"`
+                      : filterType === 'residencial'
+                        ? 'No hay casas residenciales registradas'
+                        : filterType === 'arrendada'
+                          ? 'No hay casas arrendadas registradas'
+                          : 'No hay casas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-        <TabsContent value="arrendada">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
-                  : 'No hay casas arrendadas registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="residencial">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas residenciales que coincidan con "${searchTerm}"`
+                      : 'No hay casas residenciales registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="arrendada">
+              {hasResults ? (
+                /* Tabla */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
+                      : 'No hay casas arrendadas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>
