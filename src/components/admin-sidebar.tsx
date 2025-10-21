@@ -55,6 +55,16 @@ const data = {
       title: "Bienes Comunes",
       url: "/admin/bienes-comunes",
       icon: Package,
+      items: [
+        {
+          title: "Reservas",
+          url: "/admin/bienes-comunes/reservas",
+        },
+        {
+          title: "Recursos",
+          url: "/admin/bienes-comunes/recursos",
+        },
+      ],
     },
     {
       title: "Asamblea",
