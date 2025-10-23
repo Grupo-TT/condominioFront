@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -10,8 +11,19 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { CalendarProvider } from '@/calendar/contexts/calendar-context'
+import { ClientContainer } from '@/calendar/components/client-container'
+import { ReservasList } from '@/components/reservas-list'
+import { PROPIETARIOS_MOCK, RESERVAS_MOCK } from '@/data/reservas.mock'
+import { addColorToReservas } from '@/utils/reservas-utils'
+import type { TCalendarView } from '@/calendar/types'
 
 export default function ReservasPage() {
+  const [currentView, setCurrentView] = useState<TCalendarView>('month')
+
+  // Aplicar colores dinámicamente según el tipo de recurso
+  const reservasConColor = useMemo(() => addColorToReservas(RESERVAS_MOCK), [])
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -42,9 +54,9 @@ export default function ReservasPage() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Contenido con padding */}
-        <div className="flex flex-1 flex-col gap-6 p-6">
+        <div className="flex flex-1 flex-col gap-6 p-6 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -55,20 +67,20 @@ export default function ReservasPage() {
             </div>
           </div>
 
-          {/* Contenido principal - por ahora vacío */}
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="text-gray-400 mb-2">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          {/* Layout de dos columnas: Calendario + Lista de Reservas */}
+          <CalendarProvider users={PROPIETARIOS_MOCK} events={reservasConColor}>
+            <div className="flex flex-col xl:flex-row gap-6 overflow-hidden min-h-0" style={{ height: 'calc(100vh - 210px)', maxHeight: '875px' }}>
+              {/* Calendario de Reservas */}
+              <div className="flex-1 min-w-0 max-w-full xl:max-w-[calc(100%-444px)]">
+                <ClientContainer view={currentView} onViewChange={setCurrentView} />
+              </div>
+
+              {/* Lista de Reservas */}
+              <div className="border rounded-xl p-4 bg-white overflow-hidden flex flex-col xl:w-[420px] xl:flex-shrink-0">
+                <ReservasList reservas={reservasConColor} />
+              </div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
-              Módulo de Reservas
-            </h3>
-            <p className="text-gray-500 text-sm">
-              Aquí podrás gestionar las reservas de espacios comunes del condominio.
-            </p>
-          </div>
+          </CalendarProvider>
         </div>
       </div>
     </>
