@@ -53,11 +53,11 @@ export default function CasaDetailPage() {
   
   const { miembros, loading, error } = useMiembros(numeroCasa)
 
-  console.log("Eliminar casa:", casaSeleccionada?.numeroCasa)
-
+  const propietarioMiembro = useMemo(() => {
+    return miembros.find((m: any) => m.tipoMiembro === 'PROPIETARIO')
+  }, [miembros])  
 
   const handleDelete = () => {
-    console.log('Eliminar casa:', casaSeleccionada?.numeroCasa)
     // Aquí agregarías la lógica para eliminar la casa
     router.push('/admin/casas')
   } 
@@ -234,7 +234,7 @@ export default function CasaDetailPage() {
                   DOCUMENTO
                 </label>
                 <p className="text-lg font-bold text-gray-900">
-                  {casaSeleccionada?.propietario.nombreCompleto}
+                {propietarioMiembro?.numeroDocumento || casaSeleccionada?.propietario?.numeroDocumento || 'No disponible'}
                 </p>
               </div>
 
@@ -375,7 +375,7 @@ export default function CasaDetailPage() {
                                   <div className="flex-1">
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
                                     <p className="text-sm text-gray-900">
-                                       {miembro.numeroDocumento} {miembro.numeroDocumento}
+                                       {miembro.numeroDocumento}
                                     </p>
                                   </div>
                                   <div className="flex-1">
