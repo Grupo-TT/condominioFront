@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -29,13 +29,13 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { SquareMinus, SquarePlus, Home, Search, X } from 'lucide-react'
+import { SquareMinus, SquarePlus, Search, X } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
 import { cuotasData } from '@/data/cuotas.mock'
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
-import { FormInput, FormFieldWithTooltip } from '@/components/forms'
+import { FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -48,7 +48,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -59,14 +58,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { registrarPago } from '@/lib/services/cuotas.service'
 
 
 // Componente para la sub-tabla de obligaciones
-function ObligacionesSubTable({ 
-  obligaciones, 
-  casa, 
-  onObligacionClick 
-}: { 
+function ObligacionesSubTable({
+  obligaciones,
+  casa,
+  onObligacionClick
+}: {
   obligaciones: Obligacion[]
   casa: CuotaCasa
   onObligacionClick: (casa: CuotaCasa, obligacion: Obligacion) => void
@@ -129,9 +129,9 @@ function ObligacionesSubTable({
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             className="gap-2 items-center justify-center border-primary bg-primary/10 text-primary hover:bg-primary/20"
             onClick={() => onObligacionClick(casa, row.original)}
           >
@@ -145,7 +145,7 @@ function ObligacionesSubTable({
         enableSorting: false,
       },
     ],
-    []
+    [casa, onObligacionClick]
   )
 
   const table = useReactTable({
@@ -165,7 +165,7 @@ function ObligacionesSubTable({
   })
 
   return (
-    <div 
+    <div
       className="bg-muted/30 p-4 [&_thead]:bg-gray-100 [&_thead_th]:text-gray-700 [&_thead_th]:font-medium [&_table]:rounded-lg [&_table]:overflow-hidden"
       style={{
         animation: 'slideDown 0.2s ease-out',
@@ -220,7 +220,6 @@ export default function CuotasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [selectedCasa, setSelectedCasa] = useState<CuotaCasa | null>(null)
   const [selectedObligacion, setSelectedObligacion] = useState<Obligacion | null>(null)
-  const [montoPago, setMontoPago] = useState('')
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
@@ -237,7 +236,7 @@ export default function CuotasPage() {
     }
 
     const searchLower = searchTerm.toLowerCase()
-    
+
     return cuotasData.filter(casa => {
       // Filtrar por tipo
       if (filterType === 'al-dia' && casa.saldoPendiente > 0) {
@@ -265,6 +264,7 @@ export default function CuotasPage() {
 
   // Formulario con validaciones
   const form = useForm<PagoFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(pagoSchema) as any,
     mode: "onChange",
     defaultValues: {
@@ -274,32 +274,33 @@ export default function CuotasPage() {
   })
 
   // Función para abrir el sheet desde una casa
-  const handleCasaClick = (casa: CuotaCasa) => {
+  const handleCasaClick = useCallback((casa: CuotaCasa) => {
     setSelectedCasa(casa)
     setSelectedObligacion(null) // No preseleccionar obligación
-    setMontoPago('')
     form.reset({
       obligacionId: '',
       monto: 0,
     })
     setShowAllErrors(false)
     setIsSheetOpen(true)
-  }
+  }, [form])
 
   // Función para abrir el sheet desde una obligación específica
-  const handleObligacionClick = (casa: CuotaCasa, obligacion: Obligacion) => {
+  const handleObligacionClick = useCallback((casa: CuotaCasa, obligacion: Obligacion) => {
     setSelectedCasa(casa)
     setSelectedObligacion(obligacion) // Preseleccionar la obligación
-    setMontoPago(obligacion.saldoPendiente.toString())
     form.reset({
       obligacionId: obligacion.id,
       monto: obligacion.saldoPendiente,
     })
     setShowAllErrors(false)
     setIsSheetOpen(true)
-  }
+  }, [form])
 
-  const handleFormSubmit = (data: PagoFormData) => {
+  const handleFormSubmit = async (data: PagoFormData) => {
+    console.log("Datos del formulario:", data);
+    console.log("Casa seleccionada:", selectedCasa);
+    
     // Validación adicional: verificar que el monto no supere el saldo pendiente
     const obligacion = selectedCasa?.obligaciones.find(o => o.id === data.obligacionId)
     if (obligacion && data.monto > obligacion.saldoPendiente) {
@@ -310,30 +311,67 @@ export default function CuotasPage() {
       return
     }
 
-    // Aquí iría la lógica para registrar el pago
-    console.log('Registrar pago:', {
-      casa: selectedCasa,
-      obligacion: obligacion,
-      monto: data.monto
-    })
-    handleCancelar()
+    if (!selectedCasa) {
+      console.error("No hay casa seleccionada");
+      alert("Error: No hay casa seleccionada");
+      return;
+    }
+
+    try {
+      console.log("Enviando pago con datos:", {
+        casaId: selectedCasa.id,
+        obligacionId: data.obligacionId,
+        monto: data.monto,
+      });
+      
+      await registrarPago({
+        soporte: selectedCasa.id,
+        obligacionId: data.obligacionId,
+        monto: data.monto,
+      });
+  
+      alert("Pago registrado correctamente ✅");
+      setIsSheetOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error("Error al registrar pago", error);
+      alert("Error al registrar el pago. Por favor, inténtalo de nuevo.");
+    }
   }
 
-  // Función para registrar el pago
-  const handleRegistrarPago = () => {
-    setShowAllErrors(true)
-    form.handleSubmit(handleFormSubmit)()
-  }
+  // // Función para registrar el pago
+  // const handleRegistrarPago = () => {
+  //   setShowAllErrors(true)
+  //   form.handleSubmit(handleFormSubmit)()
+  // }
 
   // Función para cancelar
   const handleCancelar = () => {
     setIsSheetOpen(false)
     setSelectedCasa(null)
     setSelectedObligacion(null)
-    setMontoPago('')
     form.reset()
+    console.log("Registro de pago cancelado.")
     setShowAllErrors(false)
   }
+
+
+  // useEffect(() => {
+  //   getCasas().then(setCasas);
+  // }, []);
+
+  // useEffect(() => {
+  //   if (casaId) {
+  //     getEstadoCuenta(casaId).then((data) =>
+  //       setSaldoPendiente(data.saldoPendiente)
+  //     );
+  //   } else {
+  //     setSaldoPendiente(null);
+  //   }
+  // }, [casaId]);
+
+
+
 
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
@@ -427,9 +465,9 @@ export default function CuotasPage() {
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <Button 
-            size="sm" 
-            variant="primary" 
+          <Button
+            size="sm"
+            variant="primary"
             className="gap-2 items-center justify-center"
             onClick={() => handleCasaClick(row.original)}
           >
@@ -443,7 +481,7 @@ export default function CuotasPage() {
         enableSorting: false,
       },
     ],
-    []
+    [handleCasaClick, handleObligacionClick]
   )
 
   const table = useReactTable({
@@ -511,7 +549,7 @@ export default function CuotasPage() {
                 <TabsTrigger value="al-dia">Al Día</TabsTrigger>
                 <TabsTrigger value="pendientes">Pendientes</TabsTrigger>
               </TabsList>
-              
+
               <div className="flex items-center gap-3">
                 <div className="relative w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -524,11 +562,11 @@ export default function CuotasPage() {
                     className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -574,7 +612,7 @@ export default function CuotasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay casas que coincidan con "${searchTerm}"`
                       : 'No hay casas registradas'
                     }
@@ -620,7 +658,7 @@ export default function CuotasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay casas al día que coincidan con "${searchTerm}"`
                       : 'No hay casas al día registradas'
                     }
@@ -666,7 +704,7 @@ export default function CuotasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
                       : 'No hay casas con pagos pendientes'
                     }
@@ -680,8 +718,8 @@ export default function CuotasPage() {
 
       {/* Sheet para registrar pagos */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
           style={{ width: '500px', maxWidth: 'none' }}
         >
@@ -692,165 +730,165 @@ export default function CuotasPage() {
                 Registra un nuevo pago para la casa seleccionada.
               </SheetDescription>
             </SheetHeader>
-          
-          <form 
-            id="pago-form"
-            onSubmit={form.handleSubmit(handleFormSubmit)} 
-            className="flex flex-col h-full"
-          >
-            <div className="flex-1 overflow-y-auto">
-              <div className="space-y-6 px-4">
-                {/* Información de la casa */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Casa seleccionada</Label>
-                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-12 -translate-x-12"></div>
-                    
-                    {/* Content */}
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                          <HugeiconsIcon icon={Home01Icon} className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-bold text-gray-900">Casa No. {selectedCasa?.numeroCasa}</h3>
-                          <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario}</p>
+
+            <form
+              id="pago-form"
+              onSubmit={form.handleSubmit(handleFormSubmit)}
+              className="flex flex-col h-full"
+            >
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-6 px-4">
+                  {/* Información de la casa */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Casa seleccionada</Label>
+                    <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
+                      {/* Background pattern */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-12 -translate-x-12"></div>
+
+                      {/* Content */}
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                            <HugeiconsIcon icon={Home01Icon} className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="text-xl font-bold text-gray-900">Casa No. {selectedCasa?.numeroCasa}</h3>
+                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Selector de obligación */}
-                <div className="space-y-2">
-                  <Label htmlFor="obligacion" className="text-sm font-medium text-gray-700">
-                    Obligación a pagar
-                  </Label>
+                  {/* Selector de obligación */}
+                  <div className="space-y-2">
+                    <Label htmlFor="obligacion" className="text-sm font-medium text-gray-700">
+                      Obligación a pagar
+                    </Label>
+                    <Controller
+                      name="obligacionId"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            const obligacion = selectedCasa?.obligaciones.find(o => o.id === value)
+                            setSelectedObligacion(obligacion || null)
+                            if (obligacion) {
+                              form.setValue('monto', obligacion.saldoPendiente)
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-16">
+                            <SelectValue placeholder="Selecciona una obligación pendiente">
+                              {selectedObligacion && (
+                                <div className="flex flex-col items-start text-left py-1">
+                                  <span className="font-medium text-gray-900">{selectedObligacion.titulo}</span>
+                                  <span className="text-sm text-gray-500 mt-1">
+                                    {new Intl.NumberFormat('es-CO', {
+                                      style: 'currency',
+                                      currency: 'COP',
+                                    }).format(selectedObligacion.saldoPendiente)}
+                                  </span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedCasa?.obligaciones.map((obligacion) => (
+                              <SelectItem key={obligacion.id} value={obligacion.id} className="py-3">
+                                <div className="flex flex-col items-start">
+                                  <span className="font-medium text-gray-900">{obligacion.titulo}</span>
+                                  <span className="text-sm text-gray-500 mt-1">
+                                    {new Intl.NumberFormat('es-CO', {
+                                      style: 'currency',
+                                      currency: 'COP',
+                                    }).format(obligacion.saldoPendiente)}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  {/* Monto a pagar */}
                   <Controller
-                    name="obligacionId"
+                    name="monto"
                     control={form.control}
                     render={({ field, fieldState }) => (
-                      <Select 
-                        value={field.value} 
-                        onValueChange={(value) => {
-                          field.onChange(value)
-                          const obligacion = selectedCasa?.obligaciones.find(o => o.id === value)
-                          setSelectedObligacion(obligacion || null)
-                          if (obligacion) {
-                            form.setValue('monto', obligacion.saldoPendiente)
-                            setMontoPago(obligacion.saldoPendiente.toString())
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="h-16">
-                          <SelectValue placeholder="Selecciona una obligación pendiente">
-                            {selectedObligacion && (
-                              <div className="flex flex-col items-start text-left py-1">
-                                <span className="font-medium text-gray-900">{selectedObligacion.titulo}</span>
-                                <span className="text-sm text-gray-500 mt-1">
-                                  {new Intl.NumberFormat('es-CO', {
-                                    style: 'currency',
-                                    currency: 'COP',
-                                  }).format(selectedObligacion.saldoPendiente)}
-                                </span>
-                              </div>
-                            )}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {selectedCasa?.obligaciones.map((obligacion) => (
-                            <SelectItem key={obligacion.id} value={obligacion.id} className="py-3">
-                              <div className="flex flex-col items-start">
-                                <span className="font-medium text-gray-900">{obligacion.titulo}</span>
-                                <span className="text-sm text-gray-500 mt-1">
-                                  {new Intl.NumberFormat('es-CO', {
-                                    style: 'currency',
-                                    currency: 'COP',
-                                  }).format(obligacion.saldoPendiente)}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-2">
+                        <Label htmlFor="monto" className="text-sm font-medium text-gray-700">
+                          Monto a pagar
+                          <span className="text-red-500 ml-1">*</span>
+                        </Label>
+                        <FormFieldWithTooltip
+                          label=""
+                          invalid={fieldState.invalid}
+                          error={showAllErrors ? fieldState.error?.message : undefined}
+                          className="-mt-3"
+                        >
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                              $
+                            </span>
+                            <Input
+                              id="monto"
+                              type="number"
+                              placeholder="0"
+                              value={field.value?.toString() || ''}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                field.onChange(value ? parseFloat(value) : 0)
+                              }}
+                              className={`w-full h-12 pl-8 text-lg font-medium ${fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
+                                }`}
+                            />
+                          </div>
+                        </FormFieldWithTooltip>
+                      </div>
                     )}
                   />
-                </div>
 
-                {/* Monto a pagar */}
-                <Controller
-                  name="monto"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <div className="space-y-2">
-                      <Label htmlFor="monto" className="text-sm font-medium text-gray-700">
-                        Monto a pagar
-                        <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <FormFieldWithTooltip
-                        label=""
-                        invalid={fieldState.invalid}
-                        error={showAllErrors ? fieldState.error?.message : undefined}
-                        className="-mt-3"
-                      >
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                            $
-                          </span>
-                          <Input
-                            id="monto"
-                            type="number"
-                            placeholder="0"
-                            value={field.value?.toString() || ''}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              field.onChange(value ? parseFloat(value) : 0)
-                              setMontoPago(value)
-                            }}
-                            className={`w-full h-12 pl-8 text-lg font-medium ${
-                              fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
-                            }`}
-                          />
-                        </div>
-                      </FormFieldWithTooltip>
+                  {selectedObligacion && (
+                    <div className="text-sm text-gray-500">
+                      Saldo pendiente: {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                      }).format(selectedObligacion.saldoPendiente)}
                     </div>
                   )}
-                />
-                
-                {selectedObligacion && (
-                  <div className="text-sm text-gray-500">
-                    Saldo pendiente: {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                    }).format(selectedObligacion.saldoPendiente)}
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
 
-          <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
-            <SheetClose asChild>
-              <Button 
-                variant="outline" 
-                onClick={handleCancelar}
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+              <SheetClose asChild>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelar}
+                  className="flex-1"
+                  type="button"
+                >
+                  Cancelar
+                </Button>
+              </SheetClose>
+              <Button
+                form='pago-form'
+                type="submit"
+                onClick={() => {
+                  setShowAllErrors(true);
+                }}
                 className="flex-1"
-                type="button"
               >
-                Cancelar
+                Registrar Pago
               </Button>
-            </SheetClose>
-            <Button 
-              onClick={handleRegistrarPago} 
-              className="flex-1"
-              type="button"
-            >
-              Registrar Pago
-            </Button>
-          </SheetFooter>
+            </SheetFooter>
           </TooltipProvider>
         </SheetContent>
       </Sheet>
