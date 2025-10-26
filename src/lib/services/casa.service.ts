@@ -3,41 +3,19 @@ import { apiClient } from '../config/axios.config'
 interface CasaFromAPI {
   numeroCasa: number
   propietario: {
-    id: number
-    primerNombre: string
-    segundoNombre: string
-    primerApellido: string
-    segundoApellido: string
-    tipoDocumento: string
-    numeroDocumento: number
+    nombreCompleto: string
     telefono: number
-    user: {
-      id: number
-      email: string
-      contrasenia: string
-      accountNoExpired: boolean
-      accountNoLocked: boolean
-      credentialNoExpired: boolean
-      roles: Array<{
-        id: number
-        roleEnum: string
-        permissions: Array<{
-          id: number
-          name: string
-        }>
-      }>
-      enabled: boolean
-    }
-    estado: boolean
-    junta: boolean
-    comiteConvivencia: boolean
-    casa: {
-      id: number
-      numeroCasa: number
-    }
+    correo: string
   }
   cantidadMiembros: number
   cantidadMascotas: number
+  mascotas: {
+    "TipoMascota.PERRO"?: number
+    "TipoMascota.GATO"?: number
+    "TipoMascota.OTRO"?: number
+  }
+  estadoFinancieroCasa: string
+  usoCasa: string
 }
 
 interface CasasApiResponse {
@@ -45,29 +23,31 @@ interface CasasApiResponse {
   data: CasaFromAPI[]
 }
 
-function buildNombreCompleto(propietario: CasaFromAPI['propietario']): string {
-  if (!propietario) return 'Sin propietario';
-
-  const partes = [
-    propietario.primerNombre,
-    propietario.segundoNombre,
-    propietario.primerApellido,
-    propietario.segundoApellido
-  ]
-  return partes.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
-}
-
 export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
+
+  const mascotas = {
+    perro: casaApi.mascotas?.["TipoMascota.PERRO"] ?? 0,
+    gato: casaApi.mascotas?.["TipoMascota.GATO"] ?? 0,
+    otro: casaApi.mascotas?.["TipoMascota.OTRO"] ?? 0,
+  }
+
   return {
-    id: String(casaApi.propietario?.casa?.id ?? casaApi.numeroCasa),
-    numero: String(casaApi.numeroCasa),
-    propietario: buildNombreCompleto(casaApi.propietario),
-    miembros: Array.from({ length: casaApi.cantidadMiembros || 0 }, () => ({})),
-    mascotas: Array.from({ length: casaApi.cantidadMascotas || 0 }, () => ({
-      tipo: 'perro' as const
-    })),
-    estado: casaApi.propietario?.estado ? ('Al Día' as const) : ('En Mora' as const),
-    uso: 'Residencial' as const
+    numeroCasa: String(casaApi.numeroCasa),
+    propietario: casaApi.propietario
+    ?{
+      nombreCompleto: casaApi.propietario.nombreCompleto,
+      telefono: casaApi.propietario.telefono,
+      correo: casaApi.propietario.correo,
+    } : {
+      nombreCompleto: 'Sin propietario',
+      telefono: 0,
+      correo: '',
+    },
+    cantidadMiembros: casaApi.cantidadMiembros || 0,
+    cantidadMascotas: casaApi.cantidadMascotas || 0,
+    mascotas,
+    estadoFinancieroCasa: (casaApi.estadoFinancieroCasa ?? 'AL_DIA').replace('_', ' '),
+    usoCasa: (casaApi.usoCasa ?? 'RESIDENCIAL').replace('_', ' ')
   }
 }
 
@@ -75,18 +55,16 @@ export const casaService = {
   async getAll(
   ) {
     try {
-      const response = await apiClient.get<CasasApiResponse>('/Casa/All')
+      const response = await apiClient.get<CasasApiResponse>('/casa/all')
       return response.data.data || []
     } catch (error) {
       console.error('Error al obtener las casas:', error)
       throw error
     }
   },
-  async getMembersByCasa(
-    idCasa: string | number
-  ) {
+  async getMembersByCasa(numeroCasa: number | string) {
     try {
-      const res = await apiClient.get<MiembrosApiResponse>(`/Miembros/ViewMembers/${idCasa}`)
+      const res = await apiClient.get<MiembrosApiResponse>(`/miembros/view-members/${numeroCasa}`)
       return res.data.data || []
     } catch (error) {
       console.error('Error al obtener los miembros:', error)

@@ -1,18 +1,29 @@
-export interface Miembro {
-  genero?: 'masculino' | 'femenino'
+export interface propietario {
+  nombreCompleto: string
+  telefono: number
+  correo: string
 }
 
-export interface Mascota {
-  tipo: 'perro' | 'gato'
+export interface Mascotas {
+  perro: number
+  gato: number
+  otro: number
 }
 
 export interface Casa {
-  id: string
-  numero: string
-  propietario: string
-  miembros: Miembro[]
-  mascotas: Mascota[]
-  estado: 'Al Día' | 'En Mora'
-  uso: 'Residencial' | 'Arrendada'
+  numeroCasa: string
+  propietario: propietario
+  cantidadMiembros: number
+  cantidadMascotas: number
+  mascotas: Mascotas
+  estadoFinancieroCasa: 'AL DIA' | 'EN MORA' | string
+  usoCasa: 'RESIDENCIAL' | 'ARRENDADA' | string
 }
 
+export interface MiembroCasa {
+  nombreCompleto: string
+  tipoMiembro: string
+  numeroDocumento: number
+  telefono: number
+  email: string
+}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+import { use, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -30,119 +31,38 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMiembros } from '@/hooks/useCasa'
+import { useCasas } from '@/hooks/useCasas'
 
 // Datos de ejemplo - en una aplicación real esto vendría de una API
-const casasData = {
-  '1': {
-    id: '1',
-    numero: '101',
-    propietario: 'María González',
-    tipoDocumento: 'Cédula',
-    numeroDocumento: '12345678',
-    correo: 'maria.gonzalez@email.com',
-    telefono: '+57 300 123 4567',
-    estado: 'Al Día',
-    uso: 'Habitacional',
-    rol: 'Propietario',
-    fechaRegistro: '2023-01-15',
-    ultimaActualizacion: '2024-01-10',
-    miembros: [
-      { 
-        nombre: 'María González', 
-        relacion: 'Propietaria', 
-        edad: 35,
-        genero: 'femenino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '12345678',
-        telefono: '+57 300 123 4567',
-        correo: 'maria.gonzalez@email.com'
-      },
-      { 
-        nombre: 'Carlos González', 
-        relacion: 'Esposo', 
-        edad: 38,
-        genero: 'masculino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '87654321',
-        telefono: '+57 300 987 6543',
-        correo: 'carlos.gonzalez@email.com'
-      },
-      { 
-        nombre: 'Ana González', 
-        relacion: 'Hija', 
-        edad: 12,
-        genero: 'femenino',
-        tipoDocumento: 'Tarjeta de Identidad',
-        numeroDocumento: 'TI123456789',
-        telefono: '+57 300 555 1234',
-        correo: 'ana.gonzalez@email.com'
-      },
-    ],
-    mascotas: [
-      { nombre: 'Max', tipo: 'Perro', raza: 'Golden Retriever' },
-      { nombre: 'Luna', tipo: 'Gato', raza: 'Persa' },
-    ],
-  },
-  '2': {
-    id: '2',
-    numero: '102',
-    propietario: 'Juan Pérez',
-    tipoDocumento: 'Cédula',
-    numeroDocumento: '87654321',
-    correo: 'juan.perez@email.com',
-    telefono: '+57 300 987 6543',
-    estado: 'En Mora',
-    uso: 'Habitacional',
-    rol: 'Propietario',
-    fechaRegistro: '2023-02-20',
-    ultimaActualizacion: '2024-01-05',
-    miembros: [
-      { 
-        nombre: 'Juan Pérez', 
-        relacion: 'Propietario', 
-        edad: 42,
-        genero: 'masculino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '11223344',
-        telefono: '+57 300 111 2233',
-        correo: 'juan.perez@email.com'
-      },
-      { 
-        nombre: 'Laura Pérez', 
-        relacion: 'Esposa', 
-        edad: 39,
-        genero: 'femenino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '55667788',
-        telefono: '+57 300 444 5566',
-        correo: 'laura.perez@email.com'
-      },
-    ],
-    mascotas: [],
-  },
-}
+
 
 export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const casaId = params.id as string
+  const numeroCasa = params.id as string
+  const [casaSeleccionada, setCasaSeleccionada] = useState<any>(null)
 
-  const {
-    miembros,
-    loading: loadingMiembros,
-    error: errorMiembros,
-    refetch,
-  } = useMiembros(casaId)
+  useEffect(() => {
+    const data = sessionStorage.getItem('casaSeleccionada')
+    if (!data) {
+      router.push('/admin/casas') // si no hay nada, volver
+      return
+    }
+    setCasaSeleccionada(JSON.parse(data))
+  }, [router])
   
-  const casa = casasData[casaId as keyof typeof casasData]
+  const { miembros, loading, error } = useMiembros(numeroCasa)
+
+  console.log("Eliminar casa:", casaSeleccionada?.numeroCasa)
+
 
   const handleDelete = () => {
-    console.log('Eliminar casa:', casa?.id)
+    console.log('Eliminar casa:', casaSeleccionada?.numeroCasa)
     // Aquí agregarías la lógica para eliminar la casa
     router.push('/admin/casas')
-  }
+  } 
 
-  if (!casa) {
+  if (!casaSeleccionada) {
     return (
       <div className="flex flex-col h-full">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -217,11 +137,11 @@ export default function CasaDetailPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/casas">Casas</BreadcrumbLink>
+                <BreadcrumbLink href="/admin/casas">casaSeleccionada</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Casa {casa.numero}</BreadcrumbPage>
+                <BreadcrumbPage>Casa {casaSeleccionada?.numeroCasa}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -241,7 +161,7 @@ export default function CasaDetailPage() {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900">
-                Casa N° {casa.numero} - {casa.propietario}
+                Casa N° {casaSeleccionada?.numeroCasa} - {casaSeleccionada?.propietario.nombreCompleto}
               </h1>
               <p className="text-gray-600 text-base mt-1">
                 Información general, miembros, mascotas y estado financiero de la vivienda.
@@ -268,8 +188,8 @@ export default function CasaDetailPage() {
                     <AlertDialogTitle>¿Remover Propietario?</AlertDialogTitle>
                     <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se removera permanentemente el propietario{' '}
-                        <strong>{casa.propietario}</strong> de la casa{' '}
-                        <strong>{casa.numero}</strong> y toda su información asociada.
+                        <strong>{casaSeleccionada?.propietario.nombreCompleto}</strong> de la casa{' '}
+                        <strong>{casaSeleccionada?.numeroCasa}</strong> y toda su información asociada.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -297,7 +217,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   NOMBRE
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.propietario}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.nombreCompleto}</p>
               </div>
 
               {/* EMAIL */}
@@ -305,7 +225,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   EMAIL
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.correo}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.correo}</p>
               </div>
 
               {/* DOCUMENTO */}
@@ -314,7 +234,7 @@ export default function CasaDetailPage() {
                   DOCUMENTO
                 </label>
                 <p className="text-lg font-bold text-gray-900">
-                  {casa.tipoDocumento} • {casa.numeroDocumento}
+                  {casaSeleccionada?.propietario.nombreCompleto}
                 </p>
               </div>
 
@@ -323,7 +243,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   TELEFONO
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.telefono}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.telefono}</p>
               </div>
 
               {/* ESTADO */}
@@ -337,7 +257,7 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.estado}</p>
+                  <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.estadoFinancieroCasa}</p>
                 </div>
               </div>
 
@@ -352,7 +272,7 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.rol}</p>
+                  <p className="text-lg font-bold text-gray-900">{"Propietario"}</p>
                 </div>
               </div>
 
@@ -367,7 +287,7 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.miembros.length}</p>
+                  <p className="text-lg font-bold text-gray-900">{miembros.length}</p>
                 </div>
               </div>
 
@@ -378,7 +298,9 @@ export default function CasaDetailPage() {
                 </label>
                 <div className="flex items-center gap-2">
                   <PawPrint className="w-5 h-5 text-gray-500" />
-                  <p className="text-lg font-bold text-gray-900">{casa.mascotas.length}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {casaSeleccionada?.mascotas?Object.values(casaSeleccionada?.mascotas as unknown as Record<string, number>).reduce((total: number, cantidad) => total + (cantidad || 0), 0):0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -426,34 +348,23 @@ export default function CasaDetailPage() {
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {casa.miembros.filter(miembro => miembro.relacion !== 'Propietario' && miembro.relacion !== 'Propietaria').map((miembro, index) => (
+                            {miembros.filter(miembro => miembro.tipoMiembro !== 'Propietario').map((miembro, index) => (
                             <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                 {/* Header con icono y nombre */}
                                 <div className="flex items-center gap-3 mb-3">
-                                  {miembro.genero === 'masculino' ? (
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                      <HugeiconsIcon
-                                        icon={User03Icon}
-                                        size={20}
-                                        className="text-blue-600"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-                                      <HugeiconsIcon
-                                        icon={User03Icon}
-                                        size={20}
-                                        className="text-pink-600"
-                                      />
-                                    </div>
-                                  )}
+                                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <HugeiconsIcon
+                                      icon={User03Icon}
+                                      size={20}
+                                      className="text-blue-600"
+                                    />
+                                  </div>
                                 <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombre}</h5>
+                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="secondary" className="text-xs">
-                                      {miembro.relacion}
+                                      {miembro.tipoMiembro}
                                     </Badge>
-                                    <span className="text-xs text-gray-500">{miembro.edad} años</span>
                                   </div>
                                 </div>
                               </div>
@@ -464,9 +375,7 @@ export default function CasaDetailPage() {
                                   <div className="flex-1">
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
                                     <p className="text-sm text-gray-900">
-                                      {miembro.tipoDocumento === 'Cédula' ? 'CC.' : 
-                                       miembro.tipoDocumento === 'Tarjeta de Identidad' ? 'TI.' : 
-                                       miembro.tipoDocumento} {miembro.numeroDocumento}
+                                       {miembro.numeroDocumento} {miembro.numeroDocumento}
                                     </p>
                                   </div>
                                   <div className="flex-1">
@@ -476,7 +385,7 @@ export default function CasaDetailPage() {
                                 </div>
                                 <div>
                                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                  <p className="text-sm text-gray-900 truncate" title={miembro.correo}>{miembro.correo}</p>
+                                  <p className="text-sm text-gray-900 truncate" title={miembro.email}>{miembro.email}</p>
                                 </div>
                               </div>
                             </div>
@@ -485,54 +394,56 @@ export default function CasaDetailPage() {
                       </div>
 
                       {/* Mascotas */}
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
-                        {casa.mascotas.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {casa.mascotas.map((mascota, index) => (
-                              <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                {/* Header con icono, nombre y raza */}
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    {mascota.tipo === 'Perro' ? (
-                                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#A3917020' }}>
-                                        <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
-                                      </div>
-                                    ) : mascota.tipo === 'Gato' ? (
-                                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#595D7520' }}>
-                                        <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
-                                      </div>
-                                    ) : (
-                                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <Heart className="w-5 h-5 text-gray-600" />
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <h5 className="font-semibold text-gray-900 truncate">{mascota.nombre}</h5>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="outline" className="text-xs">
-                                          {mascota.tipo}
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Raza en la parte derecha */}
-                                  <div className="text-right flex-shrink-0">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Raza</span>
-                                    <p className="text-sm text-gray-900">{mascota.raza}</p>
-                                  </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
+
+                          {casaSeleccionada?.mascotas &&
+                          (casaSeleccionada.mascotas.perro > 0 ||
+                            casaSeleccionada.mascotas.gato > 0 ||
+                            casaSeleccionada.mascotas.otro > 0) ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              
+                              {/* Perros */}
+                              <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm text-center">
+                                <div className="bg-blue-50 p-4 rounded-lg flex flex-col items-center">
+                                  <Dog className="w-8 h-8 text-blue-600 mb-2" />
+                                  <p className="text-lg font-semibold text-blue-600">
+                                    {casaSeleccionada.mascotas.perro}
+                                  </p>
+                                  <p className="text-sm text-gray-500">Perros</p>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            <Heart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <p>No hay mascotas registradas</p>
-                          </div>
-                        )}
-                      </div>
+
+                              {/* Gatos */}
+                              <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm text-center">
+                                <div className="bg-purple-50 p-4 rounded-lg flex flex-col items-center">
+                                  <Cat className="w-8 h-8 text-purple-600 mb-2" />
+                                  <p className="text-lg font-semibold text-purple-600">
+                                    {casaSeleccionada.mascotas.gato}
+                                  </p>
+                                  <p className="text-sm text-gray-500">Gatos</p>
+                                </div>
+                              </div>
+
+                              {/* Otros */}
+                              <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm text-center">
+                                <div className="bg-gray-50 p-4 rounded-lg flex flex-col items-center">
+                                  <PawPrint className="w-8 h-8 text-gray-600 mb-2" />
+                                  <p className="text-lg font-semibold text-gray-600">
+                                    {casaSeleccionada.mascotas.otro}
+                                  </p>
+                                  <p className="text-sm text-gray-500">Otros</p>
+                                </div>
+                              </div>
+
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <Heart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                              <p>No hay mascotas registradas</p>
+                            </div>
+                          )}
+                        </div>
                 </div>
               </TabsContent>
 

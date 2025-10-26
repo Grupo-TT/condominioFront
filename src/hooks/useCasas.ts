@@ -22,20 +22,12 @@ export function useCasas(): UseCasasReturn {
       setLoading(true)
       setError(null)
       
-      console.log('Hook: Iniciando carga de casas...')
-
       const token = authService.getToken()
-      console.log('Token actual:', token)
 
       const casasData = await casaService.getAll()
 
       setCasas(casasData.map(adaptCasaFromAPI))
-      
-      console.log('Hook: Casas cargadas exitosamente:', casasData)  
-
-      if ((casasData?.length ?? 0) === 0) console.log('API: 0 casas (lista vacía)')
     } catch (err) {
-      console.error('Hook: Error al cargar casas:', err)
       const msg = axios.isAxiosError(err)
         ? (err.response?.data as any)?.message || err.message
         : 'Error al cargar las casas. Intenta de nuevo.'

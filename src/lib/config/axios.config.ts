@@ -5,7 +5,6 @@ import { authService } from '../services/auth.service';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-console.log('🧭 API_URL actual:', process.env.NEXT_PUBLIC_API_URL)
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
