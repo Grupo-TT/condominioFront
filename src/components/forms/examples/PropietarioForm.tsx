@@ -55,7 +55,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
   })
 
   const handleFormSubmit = (data: PropietarioFormData) => {
-    console.log(data)
+    
     onSubmit(data)
     form.reset()
     setShowAllErrors(true)

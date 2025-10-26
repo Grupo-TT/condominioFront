@@ -69,17 +69,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Casa, Miembro, Mascota } from '@/types/casa.types'
-import { PropietarioFormData, propietarioSchema } from '@/lib/validations/propietario.validation'
+import { PropietarioFormData } from '@/lib/validations/propietario.validation'
 import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
-import { useForm } from 'react-hook-form'
-import { apiClient } from '@/lib/config/axios.config'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { propietarioService } from '@/lib/services/propietario.service'
-import { casaService } from '@/lib/services/casa.service'
-import { error } from 'node:console'
 
-// Usar el tipo importado del archivo de validaciones
-type FormData = PropietarioFormData
+import { propietarioService } from '@/lib/services/propietario.service'
 
 // Datos de ejemplo basados en la imagen
 const casasData: Casa[] = []
@@ -268,13 +261,6 @@ export default function CasasPage() {
     }
   }, [])
 
-  // const handleSubmit = useCallback((data: FormData) => {
-  //   // Aquí agregarías la lógica para crear el nuevo propietario
-  //   const res = propietarioService.create(data)
-  //   console.log('Nuevo propietario:', res)
-  //   // Solo cerrar sheet si el formulario es válido
-  //   setIsSheetOpen(false)
-  // }, [])
 
   const handleCrearPropietario = async (data: PropietarioFormData) => {
     try {

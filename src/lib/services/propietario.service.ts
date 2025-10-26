@@ -18,11 +18,11 @@ export const propietarioService = {
         rolEnCasa: data.rolEnCasa,
         idCasa: data.idCasa
       };
-      console.log(propietario)
+      
       const response = await apiClient.post("/persona/register", propietario);
       return response;
     } catch (error) {
-      console.error("Error en propietarioService.create:", error);
+      // console.error("Error en propietarioService.create:", error);
       throw error;
     }
   },
