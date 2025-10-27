@@ -266,7 +266,7 @@ export default function CuotasPage() {
 
   // Formulario con validaciones
   const form = useForm<PagoFormData>({
-    resolver: zodResolver(pagoSchema) as any,
+    resolver: zodResolver(pagoSchema),
     mode: "onChange",
     defaultValues: {
       obligacionId: '',

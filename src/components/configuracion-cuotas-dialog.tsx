@@ -53,7 +53,7 @@ function CollapsibleConfigCard({
   const [showAllErrors, setShowAllErrors] = useState(false);
   
   const form = useForm<ConfiguracionValorFormData>({
-    resolver: zodResolver(configuracionValorSchema) as any,
+    resolver: zodResolver(configuracionValorSchema),
     mode: 'onChange',
     defaultValues: {
       valor: undefined,
