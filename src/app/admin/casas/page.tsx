@@ -70,6 +70,7 @@
   } from '@tanstack/react-table'
   import { Casa, MiembroCasa, Mascotas } from '@/types/casa.types'
   import { useCasas } from '@/hooks/useCasas'
+  import { useRouter } from 'next/navigation'
   // Tipo para el formulario de nuevo propietario
   interface FormData {
     primerNombre: string
@@ -304,6 +305,7 @@
   }
 
   export default function CasasPage() {
+    const router = useRouter()
     const { casas, loading, error, refetch } = useCasas()
     
     const [pagination, setPagination] = useState<PaginationState>({
@@ -384,8 +386,12 @@
       const searchLower = searchTerm.toLowerCase()
       
       return casas.filter(casa => {
-        if (filterType !== 'todas' && casa.usoCasa.toLowerCase() !== filterType) {
-          return false
+        // Normalizar comparación del filtro
+        if (filterType !== 'todas') {
+          const usoNormalizado = casa.usoCasa.toLowerCase().trim()
+          if (usoNormalizado !== filterType) {
+            return false
+          }
         }
 
         if (searchTerm) {
@@ -423,8 +429,7 @@
               <div>
                 <button
                   onClick={() => {
-                    sessionStorage.setItem('casaSeleccionada', JSON.stringify(row.original))
-                    window.location.href = `/admin/casas/${row.original.numeroCasa}`
+                    router.push(`/admin/casas/${row.original.numeroCasa}`)
                   }}
                   className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
                 >

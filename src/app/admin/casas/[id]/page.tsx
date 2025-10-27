@@ -40,27 +40,47 @@ export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
   const numeroCasa = params.id as string
-  const [casaSeleccionada, setCasaSeleccionada] = useState<any>(null)
-
-  useEffect(() => {
-    const data = sessionStorage.getItem('casaSeleccionada')
-    if (!data) {
-      router.push('/admin/casas') // si no hay nada, volver
-      return
-    }
-    setCasaSeleccionada(JSON.parse(data))
-  }, [router])
   
-  const { miembros, loading, error } = useMiembros(numeroCasa)
+  const { casa: casaSeleccionada, miembros, loading, error } = useMiembros(numeroCasa)
 
   const propietarioMiembro = useMemo(() => {
-    return miembros.find((m: any) => m.tipoMiembro === 'PROPIETARIO')
-  }, [miembros])  
+    return miembros.find((m) => m.tipoMiembro === 'PROPIETARIO')
+  }, [miembros])
+
+  const totalMascotas = useMemo(() => {
+    if (!casaSeleccionada?.mascotas) return 0
+    return Object.values(casaSeleccionada.mascotas).reduce(
+      (total, cantidad) => total + (cantidad || 0), 
+      0
+    )
+  }, [casaSeleccionada])
 
   const handleDelete = () => {
     // Aquí agregarías la lógica para eliminar la casa
     router.push('/admin/casas')
   } 
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+          </div>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-500">Cargando información de la casa...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!casaSeleccionada) {
     return (
@@ -137,7 +157,7 @@ export default function CasaDetailPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/casas">casaSeleccionada</BreadcrumbLink>
+                <BreadcrumbLink href="/admin/casas">Casas</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -299,7 +319,7 @@ export default function CasaDetailPage() {
                 <div className="flex items-center gap-2">
                   <PawPrint className="w-5 h-5 text-gray-500" />
                   <p className="text-lg font-bold text-gray-900">
-                    {casaSeleccionada?.mascotas?Object.values(casaSeleccionada?.mascotas as unknown as Record<string, number>).reduce((total: number, cantidad) => total + (cantidad || 0), 0):0}
+                    {totalMascotas}
                   </p>
                 </div>
               </div>
@@ -348,7 +368,7 @@ export default function CasaDetailPage() {
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {miembros.filter(miembro => miembro.tipoMiembro !== 'Propietario').map((miembro, index) => (
+                            {miembros.filter(miembro => miembro.tipoMiembro.toUpperCase() !== 'PROPIETARIO').map((miembro, index) => (
                             <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                 {/* Header con icono y nombre */}
                                 <div className="flex items-center gap-3 mb-3">

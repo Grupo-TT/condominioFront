@@ -24,7 +24,8 @@ interface CasasApiResponse {
 }
 
 export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
-
+  // NOTA: El backend envía las mascotas con formato "TipoMascota.PERRO" en lugar de solo "PERRO"
+  // Esto es un issue conocido del backend que usa toString() del enum
   const mascotas = {
     perro: casaApi.mascotas?.["TipoMascota.PERRO"] ?? 0,
     gato: casaApi.mascotas?.["TipoMascota.GATO"] ?? 0,
@@ -35,9 +36,9 @@ export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
     numeroCasa: String(casaApi.numeroCasa),
     propietario: casaApi.propietario
     ?{
-      nombreCompleto: casaApi.propietario.nombreCompleto,
-      telefono: casaApi.propietario.telefono,
-      correo: casaApi.propietario.correo,
+      nombreCompleto: casaApi.propietario.nombreCompleto?.trim() || 'Sin nombre',
+      telefono: casaApi.propietario.telefono || 0,
+      correo: casaApi.propietario.correo?.trim() || '',
     } : {
       nombreCompleto: 'Sin propietario',
       telefono: 0,
@@ -46,8 +47,9 @@ export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
     cantidadMiembros: casaApi.cantidadMiembros || 0,
     cantidadMascotas: casaApi.cantidadMascotas || 0,
     mascotas,
-    estadoFinancieroCasa: (casaApi.estadoFinancieroCasa ?? 'AL_DIA').replace('_', ' '),
-    usoCasa: (casaApi.usoCasa ?? 'RESIDENCIAL').replace('_', ' ')
+    // Usar replaceAll para reemplazar TODAS las ocurrencias de guión bajo
+    estadoFinancieroCasa: (casaApi.estadoFinancieroCasa ?? 'AL_DIA').replaceAll('_', ' '),
+    usoCasa: (casaApi.usoCasa ?? 'RESIDENCIAL').replaceAll('_', ' ')
   }
 }
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { casaService } from '@/lib/services/casa.service'
-import { authService } from '@/lib/services/auth.service'
 import { adaptCasaFromAPI } from '@/lib/services/casa.service'
 import { Casa } from '@/types/casa.types'
 import axios from 'axios'
@@ -21,8 +20,6 @@ export function useCasas(): UseCasasReturn {
     try {
       setLoading(true)
       setError(null)
-      
-      const token = authService.getToken()
 
       const casasData = await casaService.getAll()
 
