@@ -6,7 +6,7 @@ import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat } from 'lucide-react'
+import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -60,178 +60,78 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { Casa, Miembro, Mascota } from '@/types/casa.types'
+import { Casa, Mascotas } from '@/types/casa.types'
 import { PropietarioFormData } from '@/lib/validations/propietario.validation'
 import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
-
+import { useCasas } from '@/hooks/useCasas'
+import { useRouter } from 'next/navigation'
 import { propietarioService } from '@/lib/services/propietario.service'
 
-// Datos de ejemplo basados en la imagen
-const casasData: Casa[] = []
-//   {
-//     id: '1',
-//     numero: '15',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'masculino' },
-//       { genero: 'masculino' },
-//       { genero: 'masculino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' },
-//       { tipo: 'perro' },
-//       { tipo: 'perro' },
-//       { tipo: 'gato' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'En Mora',
-//     uso: 'Residencial'
-//   },
-//   {
-//     id: '2',
-//     numero: '12',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Arrendada'
-//   },
-//   {
-//     id: '3',
-//     numero: '11',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' },
-//       { genero: 'femenino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'gato' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Residencial'
-//   },
-//   {
-//     id: '4',
-//     numero: '10',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Residencial'
-//   },
-//   {
-//     id: '5',
-//     numero: '19',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Residencial'
-//   },
-//   {
-//     id: '6',
-//     numero: '14',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Residencial'
-//   },
-//   {
-//     id: '7',
-//     numero: '16',
-//     propietario: 'Jose Pérez Hurtado',
-//     miembros: [
-//       { genero: 'masculino' },
-//       { genero: 'femenino' }
-//     ],
-//     mascotas: [
-//       { tipo: 'perro' },
-//       { tipo: 'gato' }
-//     ],
-//     estado: 'Al Día',
-//     uso: 'Residencial'
-//   }
-// ]
-
 // Componente para renderizar iconos de miembros
-function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
+function MiembrosIcons({ cantidad }: { cantidad: number }) {
   return (
-    <div className="flex gap-1 flex-wrap">
-      {miembros.map((miembro, idx) => (
-        <div
-          key={idx}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
-            }`}
-        >
-          <HugeiconsIcon
-            icon={User03Icon}
-            size={20}
-            className={miembro.genero === 'masculino' ? 'text-blue-600' : 'text-pink-600'}
-          />
-        </div>
-      ))}
+    <div className="flex items-center gap-2">
+      <HugeiconsIcon
+        icon={User03Icon}
+        size={18}
+        className="text-gray-500"
+      />
+      <span className="text-sm font-medium text-gray-700">
+        {cantidad}
+      </span>
     </div>
   )
 }
 
 // Componente para renderizar iconos de mascotas
-function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
+function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
+  const tipos = [
+    { tipo: 'perro', cantidad: mascotas.perro },
+    { tipo: 'gato', cantidad: mascotas.gato },
+    { tipo: 'otro', cantidad: mascotas.otro },
+  ]
+
   return (
     <div className="flex gap-1 flex-wrap">
-      {mascotas.map((mascota, idx) => (
-        <div
-          key={idx}
-          className="w-10 h-10 rounded-full flex items-center justify-center"
-          style={{
-            backgroundColor: mascota.tipo === 'perro' ? '#A3917020' : '#595D7520'
-          }}
-        >
-          {mascota.tipo === 'perro' ? (
-            <Dog
-              className="w-5 h-5"
-              style={{ color: '#A39170' }}
-            />
-          ) : (
-            <Cat
-              className="w-5 h-5"
-              style={{ color: '#595D75' }}
-            />
-          )}
-        </div>
-      ))}
+      {tipos.map(({ tipo, cantidad }, idx) =>
+        Array.from({ length: cantidad }).map((_, i) => {
+          // Colores personalizados para cada tipo
+          const bgColor =
+            tipo === 'perro'
+              ? '#F1E8D6' // Beige/Dorado claro
+              : tipo === 'gato'
+              ? '#E3E4EA' // Azul grisáceo claro
+              : '#E6EFEA' // Verde claro
+
+          const iconColor =
+            tipo === 'perro'
+              ? '#A39170' // Dorado/Marrón
+              : tipo === 'gato'
+              ? '#595D75' // Azul grisáceo oscuro
+              : '#4C6C5A' // Verde oscuro
+
+          const Icon =
+            tipo === 'perro' ? Dog : tipo === 'gato' ? Cat : PawPrint
+
+          return (
+            <div
+              key={`${idx}-${i}`}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: bgColor }}
+            >
+              <Icon className="w-5 h-5" style={{ color: iconColor }} />
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }
 
 export default function CasasPage() {
+  const router = useRouter()
+  const { casas } = useCasas()
+  
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -290,30 +190,30 @@ export default function CasasPage() {
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
-      return casasData
+      return casas || []
     }
 
     const searchLower = searchTerm.toLowerCase()
 
-    return casasData.filter(casa => {
+    return (casas || []).filter(casa => {
       // Filtrar por tipo de uso
-      if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
+      if (filterType !== 'todas' && casa.usoCasa.toLowerCase().trim() !== filterType) {
         return false
       }
 
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          casa.propietario.toLowerCase().includes(searchLower) ||
-          casa.numero.toLowerCase().includes(searchLower) ||
-          casa.estado.toLowerCase().includes(searchLower) ||
-          casa.uso.toLowerCase().includes(searchLower)
+          casa.propietario.nombreCompleto.toLowerCase().includes(searchLower) ||
+          casa.numeroCasa.toLowerCase().includes(searchLower) ||
+          casa.estadoFinancieroCasa.toLowerCase().includes(searchLower) ||
+          casa.usoCasa.toLowerCase().includes(searchLower)
         )
       }
 
       return true
     })
-  }, [searchTerm, filterType])
+  }, [casas, searchTerm, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -338,13 +238,13 @@ export default function CasasPage() {
             <div>
               <button
                 onClick={() => {
-                  window.location.href = `/admin/casas/${row.original.id}`
+                  router.push(`/admin/casas/${row.original.numeroCasa}`)
                 }}
                 className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
               >
-                {row.original.propietario}
+                {row.original.propietario.nombreCompleto}
               </button>
-              <div className="text-sm text-gray-500">Casa No.{row.original.numero}</div>
+              <div className="text-sm text-gray-500">Casa No.{row.original.numeroCasa}</div>
             </div>
           </div>
         ),
@@ -356,7 +256,7 @@ export default function CasasPage() {
         accessorKey: 'miembros',
         id: 'miembros',
         header: ({ column }) => <DataGridColumnHeader title="Miembros" column={column} />,
-        cell: ({ row }) => <MiembrosIcons miembros={row.original.miembros} />,
+        cell: ({ row }) => <MiembrosIcons cantidad={row.original.cantidadMiembros} />,
         size: 200,
         enableSorting: false,
       },
@@ -369,23 +269,30 @@ export default function CasasPage() {
         enableSorting: false,
       },
       {
-        accessorKey: 'estado',
+        accessorKey: 'estadoFinancieroCasa',
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
         cell: ({ row }) => {
-          const estado = row.original.estado
+          const estado = row.original.estadoFinancieroCasa
+          const capitalizeText = (text: string) => {
+            return text
+              .toLowerCase()
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          }
           return (
             <Badge
-              variant={estado === 'Al Día' ? 'success' : 'destructive'}
+              variant={estado.toUpperCase() === 'AL DIA' ? 'success' : 'destructive'}
               appearance="outline"
               size="md"
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
+                className={`w-2 h-2 rounded-full ${estado.toUpperCase() === 'AL DIA' ? 'bg-green-700' : 'bg-red-700'
                   }`}
               />
-              {estado}
+              {capitalizeText(estado)}
             </Badge>
           )
         },
@@ -393,18 +300,25 @@ export default function CasasPage() {
         enableSorting: true,
       },
       {
-        accessorKey: 'uso',
+        accessorKey: 'usoCasa',
         id: 'uso',
         header: ({ column }) => <DataGridColumnHeader title="Uso" column={column} />,
         cell: ({ row }) => {
-          const uso = row.original.uso
+          const uso = row.original.usoCasa
+          const capitalizeText = (text: string) => {
+            return text
+              .toLowerCase()
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          }
           return (
             <Badge
-              variant={uso === 'Residencial' ? 'outline' : 'secondary'}
+              variant={uso.toUpperCase() === 'RESIDENCIAL' ? 'outline' : 'secondary'}
               appearance="light"
               size="md"
             >
-              {uso}
+              {capitalizeText(uso)}
             </Badge>
           )
         },
@@ -446,14 +360,14 @@ export default function CasasPage() {
                       <AlertDialogTitle>¿Eliminar propietario?</AlertDialogTitle>
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se eliminará permanentemente el propietario{' '}
-                        <strong>{row.original.propietario}</strong> de la casa{' '}
-                        <strong>{row.original.numero}</strong> y toda su información asociada.
+                        <strong>{row.original.propietario.nombreCompleto}</strong> de la casa{' '}
+                        <strong>{row.original.numeroCasa}</strong> y toda su información asociada.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => handleDelete(row.original.id)}
+                        onClick={() => handleDelete(row.original.numeroCasa)}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Eliminar
