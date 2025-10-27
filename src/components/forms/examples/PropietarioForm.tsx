@@ -16,13 +16,13 @@ interface PropietarioFormProps {
 }
 
 const tipoDocumentoOptions: SelectOption[] = [
-  { value: "CC", label: "Cédula de Ciudadanía" },
-  { value: "CE", label: "Cédula de Extranjería" }
+  { value: "CEDULA_DE_CIUDADANIA", label: "Cédula de Ciudadanía" },
+  { value: "CEDULA_DE_EXTRANJERIA", label: "Cédula de Extranjería" }
 ]
 
 const rolOptions: SelectOption[] = [
-  { value: "propietario", label: "Propietario" },
-  { value: "arrendatario", label: "Arrendatario" }
+  { value: "PROPIETARIO", label: "Propietario" },
+  { value: "ARRENDATARIO", label: "Arrendatario" }
 ]
 
 const casaOptions: SelectOption[] = [
@@ -30,7 +30,24 @@ const casaOptions: SelectOption[] = [
   { value: "2", label: "Casa 2" },
   { value: "3", label: "Casa 3" },
   { value: "4", label: "Casa 4" },
-  { value: "5", label: "Casa 5" }
+  { value: "5", label: "Casa 5" },
+  { value: "6", label: "Casa 6" },
+  { value: "7", label: "Casa 7" },
+  { value: "8", label: "Casa 8" },
+  { value: "9", label: "Casa 9" },
+  { value: "10", label: "Casa 10" },
+  { value: "11", label: "Casa 11" },
+  { value: "12", label: "Casa 12" },
+  { value: "13", label: "Casa 13" },
+  { value: "14", label: "Casa 14" },
+  { value: "15", label: "Casa 15" },
+  { value: "16", label: "Casa 16" },
+  { value: "17", label: "Casa 17" },
+  { value: "18", label: "Casa 18" },
+  { value: "19", label: "Casa 19" },
+  { value: "20", label: "Casa 20" },
+  { value: "21", label: "Casa 21" },
+  { value: "22", label: "Casa 22" }
 ]
 
 export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
@@ -40,16 +57,17 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
     resolver: zodResolver(propietarioSchema),
     mode: "onChange",
     defaultValues: {
+
       primerNombre: '',
       segundoNombre: '',
       primerApellido: '',
       segundoApellido: '',
       tipoDocumento: '',
       numeroDocumento: '',
-      correoElectronico: '',
+      email: '',
       telefono: '',
       rolEnCasa: '',
-      casaAsociada: '',
+      idCasa: '',
     }
   })
 
@@ -193,12 +211,12 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
               <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
               <div className="grid grid-cols-1 gap-6">
                 <Controller
-                  name="correoElectronico"
+                  name="email"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <FormInput
                       {...field}
-                      name="correoElectronico"
+                      name="email"
                       label="Correo Electrónico"
                       required={true}
                       placeholder="Ej: jose.perez@email.com"
@@ -257,12 +275,12 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                 />
 
                 <Controller
-                  name="casaAsociada"
+                  name="idCasa"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <FormSelect
                       {...field}
-                      name="casaAsociada"
+                      name="idCasa"
                       label="Casa Asociada"
                       required={true}
                       placeholder="Seleccionar casa"

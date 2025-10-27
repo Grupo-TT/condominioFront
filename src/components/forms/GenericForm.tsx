@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, type Path } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -47,7 +47,7 @@ export function GenericForm<T extends z.ZodType>({
   const form = useForm<z.infer<T>>({
     resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: defaultValues as any
+    defaultValues: defaultValues as Partial<z.infer<T>>
   })
 
   const handleFormSubmit = (data: z.infer<T>) => {
@@ -72,7 +72,7 @@ export function GenericForm<T extends z.ZodType>({
           {fields.map((field) => (
             <Controller
               key={field.name}
-              name={field.name as any}
+              name={field.name as Path<z.infer<T>>}
               control={form.control}
               render={({ field: controllerField, fieldState }) => {
                 const commonProps = {

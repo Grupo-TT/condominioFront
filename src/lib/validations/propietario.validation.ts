@@ -36,7 +36,7 @@ export const propietarioSchema = z.object({
     .pipe(
       z.string()
         .min(1, "Debe seleccionar un tipo de documento")
-        .refine((val) => val === "CC" || val === "CE", {
+        .refine((val) => val === "CEDULA_DE_CIUDADANIA" || val === "CEDULA_DE_EXTRANJERIA", {
           message: "Debe seleccionar un tipo de documento válido"
         })
     ),
@@ -48,7 +48,7 @@ export const propietarioSchema = z.object({
     .min(7, "El número de documento debe tener mínimo 7 dígitos")
     .max(11, "El número de documento debe tener máximo 11 dígitos"),
 
-  correoElectronico: z
+  email: z
     .string()
     .min(1, "Correo electrónico es obligatorio")
     .email("Debe ingresar un correo electrónico válido")
@@ -68,22 +68,23 @@ export const propietarioSchema = z.object({
     .pipe(
       z.string()
         .min(1, "Debe seleccionar un rol en la casa")
-        .refine((val) => val === "propietario" || val === "arrendatario", {
+        .refine((val) => val === "PROPIETARIO" || val === "ARRENDATARIO", {
           message: "Debe seleccionar un rol válido"
         })
     ),
 
-  casaAsociada: z
+
+  idCasa: z
     .union([z.string(), z.undefined()])
     .transform((val) => val === undefined ? "" : val)
     .pipe(
       z.string()
         .min(1, "Debe seleccionar una casa")
-        .refine((val) => ["1", "2", "3", "4", "5"].includes(val), {
+        .refine((val) => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"].includes(val), {
           message: "Debe seleccionar una casa válida"
         })
     ),
 })
 
 // Tipo inferido del schema
-export type PropietarioFormData = typeof propietarioSchema._type
+export type PropietarioFormData = z.infer<typeof propietarioSchema>

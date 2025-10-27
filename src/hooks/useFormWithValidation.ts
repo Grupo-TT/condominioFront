@@ -22,7 +22,7 @@ export function useFormWithValidation<T extends z.ZodType>({
 // Hook para manejar envío de formularios
 export function useFormSubmission<T>(
   onSubmit: (data: T) => void,
-  onError?: (errors: any) => void
+  onError?: (errors: unknown) => void
 ) {
   const handleSubmit = (data: T) => {
     try {
