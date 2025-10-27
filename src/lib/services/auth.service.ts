@@ -5,10 +5,12 @@ import { LoginCredentials, LoginResponse } from '@/types/auth.types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-
 /**
  * Servicio de autenticación
- * Maneja login, logout, tokens y persistencia de sesión
+ * 
+ * ✅ Con HTTPS habilitado:
+ * - Flag Secure: Las cookies solo se transmiten por HTTPS
+ * - Protección contra interceptación man-in-the-middle
  */
 class AuthService {
   /**
@@ -18,20 +20,18 @@ class AuthService {
    */
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      
       const response = await axios.post<LoginResponse>(
         `${API_URL}/auth/login`,
         credentials
       );
       
-      
       if (response.data.token) {
         const rememberMe = credentials.rememberMe || false;
         
-        // Configurar cookies según "Recordarme"
+        // Configurar cookies con flag Secure para HTTPS
         const cookieOptions = {
           sameSite: 'strict' as const,
-          secure: process.env.NODE_ENV === 'production'
+          secure: process.env.NODE_ENV === 'production'  // ⭐ Solo HTTPS en producción
         };
         
         if (rememberMe) {
@@ -75,7 +75,6 @@ class AuthService {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        
         const errorMessage = error.response?.data?.message || 
                            error.response?.data?.error || 
                            `Error al iniciar sesión (${error.response?.status})`;
