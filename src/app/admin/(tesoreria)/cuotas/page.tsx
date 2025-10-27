@@ -29,7 +29,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { SquareMinus, SquarePlus, Home, Search, X } from 'lucide-react'
+import { SquareMinus, SquarePlus, Home, Search, X, Settings } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
@@ -38,8 +38,9 @@ import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
 import { FormInput, FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ConfiguracionCuotasDialog } from '@/components/configuracion-cuotas-dialog'
 import {
   Sheet,
   SheetClose,
@@ -534,6 +535,24 @@ export default function CuotasPage() {
                     </Button>
                   )}
                 </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <ConfiguracionCuotasDialog>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-10 w-10"
+                        >
+                          <Settings className="h-5 w-5" />
+                        </Button>
+                      </TooltipTrigger>
+                    </ConfiguracionCuotasDialog>
+                    <TooltipContent side="top" align="end" alignOffset={-20} sideOffset={5}>
+                      <p>Configurar valores constantes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
