@@ -61,6 +61,29 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+function CardHeading({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-heading"
+      className={cn("flex flex-col gap-1", className)}
+      {...props}
+    />
+  )
+}
+
+function CardToolbar({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-toolbar"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -87,6 +110,8 @@ export {
   CardFooter,
   CardTitle,
   CardAction,
+  CardHeading,
+  CardToolbar,
   CardDescription,
   CardContent,
 }
