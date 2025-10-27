@@ -1,4 +1,4 @@
-import type { IEventExtended, TipoRecurso } from '@/data/reservas.mock'
+import type { IEventExtended, TipoRecurso } from '@/types/reservas-calendar.types'
 import type { IUser } from '@/calendar/interfaces'
 
 /**
@@ -100,7 +100,7 @@ function mapSolicitanteToUser(
   return {
     id: `user-${casa.id}`, // Usamos el ID de la casa como identificador único
     name: solicitante.nombreCompleto,
-    email: solicitante.correo,
+    correo: solicitante.correo,
     picturePath: null, // La API no proporciona foto, podría agregarse después
   }
 }

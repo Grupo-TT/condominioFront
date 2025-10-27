@@ -18,7 +18,7 @@ import { Dialog, DialogHeader, DialogClose, DialogContent, DialogTrigger, Dialog
 import { reservaEditSchema } from "@/calendar/schemas";
 
 import type { IEvent } from "@/calendar/interfaces";
-import type { IEventExtended } from "@/data/reservas.mock";
+import type { IEventExtended } from "@/types/reservas-calendar.types";
 import type { TimeValue } from "react-aria-components";
 import type { TReservaEditFormData } from "@/calendar/schemas";
 
