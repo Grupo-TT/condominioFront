@@ -6,7 +6,7 @@
   import { DataGridPagination } from '@/components/ui/data-grid-pagination'
   import { DataGridTable } from '@/components/ui/data-grid-table'
   import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-  import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, User } from 'lucide-react'
+  import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, User, PawPrint } from 'lucide-react'
   import { HugeiconsIcon } from '@hugeicons/react'
   import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
   import { Button } from '@/components/ui/button'
@@ -248,13 +248,16 @@
 
 
   // Componente para renderizar iconos de miembros
-  function MiembrosIcons({ miembros }: { miembros: MiembroCasa[] }) {
-    const cantidadMiembros = miembros?.length ?? 0
-
+  function MiembrosIcons({ cantidad }: { cantidad: number }) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center gap-2">
+        <HugeiconsIcon
+          icon={User03Icon}
+          size={18}
+          className="text-gray-500"
+        />
         <span className="text-sm font-medium text-gray-700">
-          {cantidadMiembros} miembro{cantidadMiembros !== 1 ? 's' : ''}
+          {cantidad}
         </span>
       </div>
     )
@@ -272,22 +275,23 @@
       <div className="flex gap-1 flex-wrap">
         {tipos.map(({ tipo, cantidad }, idx) =>
           Array.from({ length: cantidad }).map((_, i) => {
+            // Colores personalizados para cada tipo
             const bgColor =
               tipo === 'perro'
-                ? '#A3917020'
+                ? '#F1E8D6' // Beige/Dorado claro
                 : tipo === 'gato'
-                ? '#595D7520'
-                : '#D1D5DB20'
+                ? '#E3E4EA' // Azul grisáceo claro
+                : '#E6EFEA' // Verde claro
   
             const iconColor =
               tipo === 'perro'
-                ? '#A39170'
+                ? '#A39170' // Dorado/Marrón
                 : tipo === 'gato'
-                ? '#595D75'
-                : '#9CA3AF'
+                ? '#595D75' // Azul grisáceo oscuro
+                : '#4C6C5A' // Verde oscuro
   
             const Icon =
-              tipo === 'perro' ? Dog : tipo === 'gato' ? Cat : User
+              tipo === 'perro' ? Dog : tipo === 'gato' ? Cat : PawPrint
   
             return (
               <div
@@ -302,6 +306,15 @@
         )}
       </div>
     )
+  }
+
+  // Función helper para capitalizar (primera letra en mayúscula)
+  function capitalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
   }
 
   export default function CasasPage() {
@@ -448,7 +461,7 @@
           id: 'miembros',
           header: ({ column }) => <DataGridColumnHeader title="Miembros" column={column} />,
           cell: ({ row }) => (
-            <div className="text-gray-900 font-medium">{row.original.cantidadMiembros}</div>
+            <MiembrosIcons cantidad={row.original.cantidadMiembros} />
           ),
           size: 120,
           enableSorting: false,
@@ -467,6 +480,7 @@
           header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
           cell: ({ row }) => {
             const estado = row.original.estadoFinancieroCasa
+            const estadoCapitalizado = capitalizeText(estado)
             return (
               <Badge
                 variant={estado === 'AL DIA' ? 'success' : 'destructive'}
@@ -479,7 +493,7 @@
                     estado === 'AL DIA' ? 'bg-green-700' : 'bg-red-700'
                   }`}
                 />
-                {estado}
+                {estadoCapitalizado}
               </Badge>
             )
           },
@@ -492,13 +506,15 @@
           header: ({ column }) => <DataGridColumnHeader title="Uso" column={column} />,
           cell: ({ row }) => {
             const uso = row.original.usoCasa
+            const usoCapitalizado = capitalizeText(uso)
+            const isResidencial = uso === 'Residencial' || uso === 'RESIDENCIAL'
             return (
               <Badge
-                variant={uso === 'Residencial' ? 'outline' : 'secondary'}
-                appearance="light"
+                variant={isResidencial ? 'outline' : 'secondary'}
+                appearance={isResidencial ? 'outline' : 'light'}
                 size="md"
               >
-                {uso}
+                {usoCapitalizado}
               </Badge>
             )
           },
