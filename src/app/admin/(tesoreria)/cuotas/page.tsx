@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -59,6 +59,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { registrarPago } from '@/lib/services/cuotas.service'
+import { useCuotas } from '@/hooks/useCuotas'
 
 
 // Componente para la sub-tabla de obligaciones
@@ -223,21 +224,27 @@ export default function CuotasPage() {
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
-
+  const { casas, estadoCuenta, fetchCasas, fetchEstadoCuenta, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
     setSearchTerm('')
   }
 
+  useEffect(() => {
+    if (selectedCasa) {
+      fetchEstadoCuenta(Number(selectedCasa.id))
+    }
+  }, [selectedCasa, fetchEstadoCuenta])
+  
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
-      return cuotasData
+      return casas
     }
 
     const searchLower = searchTerm.toLowerCase()
 
-    return cuotasData.filter(casa => {
+    return casas.filter(casa => {
       // Filtrar por tipo
       if (filterType === 'al-dia' && casa.saldoPendiente > 0) {
         return false
@@ -257,7 +264,7 @@ export default function CuotasPage() {
 
       return true
     })
-  }, [searchTerm, filterType])
+  }, [casas,searchTerm, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -324,13 +331,12 @@ export default function CuotasPage() {
         monto: data.monto,
       });
       
-      await registrarPago({
+      await handleRegistrarPago({
         soporte: selectedCasa.id,
         obligacionId: data.obligacionId,
         monto: data.monto,
       });
   
-      alert("Pago registrado correctamente ✅");
       setIsSheetOpen(false);
       form.reset();
     } catch (error) {
@@ -338,12 +344,6 @@ export default function CuotasPage() {
       alert("Error al registrar el pago. Por favor, inténtalo de nuevo.");
     }
   }
-
-  // // Función para registrar el pago
-  // const handleRegistrarPago = () => {
-  //   setShowAllErrors(true)
-  //   form.handleSubmit(handleFormSubmit)()
-  // }
 
   // Función para cancelar
   const handleCancelar = () => {
@@ -356,9 +356,9 @@ export default function CuotasPage() {
   }
 
 
-  // useEffect(() => {
-  //   getCasas().then(setCasas);
-  // }, []);
+  useEffect(() => {
+    fetchCasas();
+  }, [fetchCasas]);
 
   // useEffect(() => {
   //   if (casaId) {
@@ -369,8 +369,6 @@ export default function CuotasPage() {
   //     setSaldoPendiente(null);
   //   }
   // }, [casaId]);
-
-
 
 
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
