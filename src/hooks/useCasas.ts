@@ -26,7 +26,7 @@ export function useCasas(): UseCasasReturn {
       setCasas(casasData.map(adaptCasaFromAPI))
     } catch (err) {
       const msg = axios.isAxiosError(err)
-        ? (err.response?.data as any)?.message || err.message
+        ? (err.response?.data as { message?: string })?.message || err.message
         : 'Error al cargar las casas. Intenta de nuevo.'
       setError(msg)
       setCasas([])

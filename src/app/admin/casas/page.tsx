@@ -6,7 +6,7 @@
   import { DataGridPagination } from '@/components/ui/data-grid-pagination'
   import { DataGridTable } from '@/components/ui/data-grid-table'
   import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-  import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, User, PawPrint } from 'lucide-react'
+  import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
   import { HugeiconsIcon } from '@hugeicons/react'
   import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
   import { Button } from '@/components/ui/button'
@@ -68,7 +68,7 @@
     SortingState,
     useReactTable,
   } from '@tanstack/react-table'
-  import { Casa, MiembroCasa, Mascotas } from '@/types/casa.types'
+  import { Casa, Mascotas } from '@/types/casa.types'
   import { useCasas } from '@/hooks/useCasas'
   import { useRouter } from 'next/navigation'
   // Tipo para el formulario de nuevo propietario
@@ -579,7 +579,7 @@
           enableSorting: false,
         },
       ],
-      [handleDelete]
+      [handleDelete, router]
     )
 
     const table = useReactTable({

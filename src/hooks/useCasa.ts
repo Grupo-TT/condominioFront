@@ -55,7 +55,7 @@ export function useMiembros(casaNumero: string | number) {
           email: m.email,
         }))
       )
-    } catch (e) {
+    } catch {
       setError('No se pudieron cargar los datos de la casa')
       setMiembros([])
       setCasa(null)

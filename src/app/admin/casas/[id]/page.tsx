@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import { use, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -31,7 +31,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMiembros } from '@/hooks/useCasa'
-import { useCasas } from '@/hooks/useCasas'
 
 // Datos de ejemplo - en una aplicación real esto vendría de una API
 
@@ -41,7 +40,7 @@ export default function CasaDetailPage() {
   const router = useRouter()
   const numeroCasa = params.id as string
   
-  const { casa: casaSeleccionada, miembros, loading, error } = useMiembros(numeroCasa)
+  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa)
 
   const propietarioMiembro = useMemo(() => {
     return miembros.find((m) => m.tipoMiembro === 'PROPIETARIO')
