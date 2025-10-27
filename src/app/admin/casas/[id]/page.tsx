@@ -312,7 +312,9 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{"Propietario"}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendatario' : 'Propietario'}
+                  </p>
                 </div>
               </div>
 

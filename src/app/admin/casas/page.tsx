@@ -224,30 +224,37 @@ export default function CasasPage() {
         accessorKey: 'propietario',
         id: 'propietario',
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon
-                icon={Home07Icon}
-                size={20}
-                color="currentColor"
-                strokeWidth={1.5}
-                className="text-gray-600"
-              />
+        cell: ({ row }) => {
+          const esArrendada = row.original.usoCasa.toUpperCase() === 'ARRENDADA'
+          const rol = esArrendada ? 'Arrendatario' : 'Propietario'
+          
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <HugeiconsIcon
+                  icon={Home07Icon}
+                  size={20}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className="text-gray-600"
+                />
+              </div>
+              <div>
+                <button
+                  onClick={() => {
+                    router.push(`/admin/casas/${row.original.numeroCasa}`)
+                  }}
+                  className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                >
+                  {row.original.propietario.nombreCompleto}
+                </button>
+                <div className="text-sm text-gray-500">
+                  <span className="font-medium">{rol}</span> · Casa No.{row.original.numeroCasa}
+                </div>
+              </div>
             </div>
-            <div>
-              <button
-                onClick={() => {
-                  router.push(`/admin/casas/${row.original.numeroCasa}`)
-                }}
-                className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
-              >
-                {row.original.propietario.nombreCompleto}
-              </button>
-              <div className="text-sm text-gray-500">Casa No.{row.original.numeroCasa}</div>
-            </div>
-          </div>
-        ),
+          )
+        },
         size: 250,
         enableSorting: true,
         enableHiding: false,
@@ -383,7 +390,7 @@ export default function CasasPage() {
         enableSorting: false,
       },
     ],
-    [handleDelete]
+    [handleDelete, router]
   )
 
   const table = useReactTable({
