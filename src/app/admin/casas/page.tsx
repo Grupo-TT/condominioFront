@@ -12,22 +12,14 @@ import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { toast } from 'sonner'
+import axios from 'axios'
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -250,10 +242,6 @@ export default function CasasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const [casas, setCasas] = useState<Casa>()
-  const [loading, setLoading] = useState(false)
-
-
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
     if (searchInputRef.current) {
@@ -264,22 +252,27 @@ export default function CasasPage() {
 
   const handleCrearPropietario = async (data: PropietarioFormData) => {
     try {
-      setLoading(true)
-      const res = await propietarioService.create(data)
-      console.log("Propietario creado:", res.data)
+      await propietarioService.create(data)
+
+      // Mostrar toast de éxito
+      toast.success('Propietario creado exitosamente', {
+        duration: 5000,
+      })
 
       // Cerrar el sheet
       setIsSheetOpen(false)
       // Recargar la lista de casas si es necesario
       // fetchCasas()
     } catch (err) {
-      console.error("Error al crear el propietario ❌ ", err)
-      // Mostrar mensaje de error al usuario
-      // @ts-expect-error err type is unknown, but we attempt to get response data/message
-      const errorMessage = err?.response?.data?.message || err?.message || "Error al crear el propietario"
-      console.log(`Error: ${errorMessage}`)
-    } finally {
-      setLoading(false)
+      // Extraer mensaje de error usando axios.isAxiosError
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || "Error al crear el propietario"
+        : "Error al crear el propietario. Intenta de nuevo."
+      
+      // Mostrar toast de error
+      toast.error(errorMessage, {
+        duration: 5000,
+      })
     }
   }
 

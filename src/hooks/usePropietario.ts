@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 import { propietarioService } from '@/lib/services/propietario.service'
 import { PropietarioFormData } from '@/lib/validations/propietario.validation'
 
@@ -26,14 +27,9 @@ export const usePropietario = (): UsePropietarioReturn => {
       setSuccess(true)
     } catch (err) {
       console.error("Error al crear el propietario:", err)
-      let errorMessage = "Error al crear el propietario"
-      if (err && typeof err === "object") {
-        if ('response' in err && typeof err.response === "object" && err.response && 'data' in err.response && typeof err.response.data === "object" && err.response.data && 'message' in err.response.data) {
-          errorMessage = (err.response as { data?: { message?: string } }).data?.message || errorMessage
-        } else if ('message' in err && typeof err.message === "string") {
-          errorMessage = err.message
-        }
-      }
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message
+        : 'Error al crear el propietario. Intenta de nuevo.'
       setError(errorMessage)
       throw err // Re-lanzar para que el componente pueda manejarlo
     } finally {
