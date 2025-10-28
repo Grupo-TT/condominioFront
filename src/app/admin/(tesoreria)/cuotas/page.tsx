@@ -81,7 +81,7 @@ function ObligacionesSubTable({
   const columns = useMemo<ColumnDef<Obligacion>[]>(
     () => [
       {
-        accessorKey: 'titulo',
+        accessorKey: 'motivo',
         header: ({ column }) => <DataGridColumnHeader title="Obligación" column={column} />,
         cell: (info) => info.getValue() as string,
         enableSorting: true,
@@ -232,10 +232,10 @@ export default function CuotasPage() {
 
   useEffect(() => {
     if (selectedCasa) {
-      fetchEstadoCuenta(Number(selectedCasa.id))
+      fetchEstadoCuenta(Number(selectedCasa.numeroCasa))
     }
   }, [selectedCasa, fetchEstadoCuenta])
-  
+
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
@@ -256,15 +256,15 @@ export default function CuotasPage() {
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          casa.propietario.toLowerCase().includes(searchLower) ||
-          casa.numeroCasa.toLowerCase().includes(searchLower) ||
+          casa.propietario.nombreCompleto.toLowerCase().includes(searchLower) ||
+          casa.numeroCasa.toString().toLowerCase().includes(searchLower) ||
           casa.saldoPendiente.toString().includes(searchLower)
         )
       }
 
       return true
     })
-  }, [casas,searchTerm, filterType])
+  }, [casas, searchTerm, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -307,9 +307,9 @@ export default function CuotasPage() {
   const handleFormSubmit = async (data: PagoFormData) => {
     console.log("Datos del formulario:", data);
     console.log("Casa seleccionada:", selectedCasa);
-    
+
     // Validación adicional: verificar que el monto no supere el saldo pendiente
-    const obligacion = selectedCasa?.obligaciones.find(o => o.id === data.obligacionId)
+    const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === data.obligacionId)
     if (obligacion && data.monto > obligacion.saldoPendiente) {
       form.setError('monto', {
         type: 'manual',
@@ -330,13 +330,13 @@ export default function CuotasPage() {
         obligacionId: data.obligacionId,
         monto: data.monto,
       });
-      
+
       await handleRegistrarPago({
-        soporte: selectedCasa.id,
+        soporte: selectedCasa.numeroCasa.toString(),
         obligacionId: data.obligacionId,
         monto: data.monto,
       });
-  
+
       setIsSheetOpen(false);
       form.reset();
     } catch (error) {
@@ -355,21 +355,9 @@ export default function CuotasPage() {
     setShowAllErrors(false)
   }
 
-
   useEffect(() => {
     fetchCasas();
   }, [fetchCasas]);
-
-  // useEffect(() => {
-  //   if (casaId) {
-  //     getEstadoCuenta(casaId).then((data) =>
-  //       setSaldoPendiente(data.saldoPendiente)
-  //     );
-  //   } else {
-  //     setSaldoPendiente(null);
-  //   }
-  // }, [casaId]);
-
 
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
@@ -386,7 +374,7 @@ export default function CuotasPage() {
         size: 25,
         enableResizing: false,
         meta: {
-          expandedContent: (row: CuotaCasa) => <ObligacionesSubTable obligaciones={row.obligaciones} casa={row} onObligacionClick={handleObligacionClick} />,
+          expandedContent: (row: CuotaCasa) => <ObligacionesSubTable obligaciones={row.obligacionesPendientes} casa={row} onObligacionClick={handleObligacionClick} />,
         },
       },
       {
@@ -396,7 +384,7 @@ export default function CuotasPage() {
         cell: ({ row }) => (
           <div>
             <div className="font-semibold text-gray-900">Casa No. {row.original.numeroCasa}</div>
-            <div className="text-sm text-gray-500">{row.original.propietario}</div>
+            <div className="text-sm text-gray-500">{row.original.propietario.nombreCompleto}</div>
           </div>
         ),
         size: 250,
@@ -486,8 +474,8 @@ export default function CuotasPage() {
     columns,
     data: filteredCasas,
     pageCount: Math.ceil((filteredCasas?.length || 0) / pagination.pageSize),
-    getRowId: (row: CuotaCasa) => row.id,
-    getRowCanExpand: (row) => Boolean(row.original.obligaciones && row.original.obligaciones.length > 0),
+    getRowId: (row: CuotaCasa) => row.numeroCasa.toString(),
+    getRowCanExpand: (row) => Boolean(row.original.obligacionesPendientes && row.original.obligacionesPendientes.length > 0),
     state: {
       pagination,
       sorting,
@@ -753,7 +741,7 @@ export default function CuotasPage() {
                           </div>
                           <div className="space-y-1">
                             <h3 className="text-xl font-bold text-gray-900">Casa No. {selectedCasa?.numeroCasa}</h3>
-                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario}</p>
+                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario.nombreCompleto}</p>
                           </div>
                         </div>
                       </div>
@@ -773,7 +761,7 @@ export default function CuotasPage() {
                           value={field.value}
                           onValueChange={(value) => {
                             field.onChange(value)
-                            const obligacion = selectedCasa?.obligaciones.find(o => o.id === value)
+                            const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === value)
                             setSelectedObligacion(obligacion || null)
                             if (obligacion) {
                               form.setValue('monto', obligacion.saldoPendiente)
@@ -784,7 +772,7 @@ export default function CuotasPage() {
                             <SelectValue placeholder="Selecciona una obligación pendiente">
                               {selectedObligacion && (
                                 <div className="flex flex-col items-start text-left py-1">
-                                  <span className="font-medium text-gray-900">{selectedObligacion.titulo}</span>
+                                  <span className="font-medium text-gray-900">{selectedObligacion.motivo}</span>
                                   <span className="text-sm text-gray-500 mt-1">
                                     {new Intl.NumberFormat('es-CO', {
                                       style: 'currency',
@@ -796,10 +784,10 @@ export default function CuotasPage() {
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {selectedCasa?.obligaciones.map((obligacion) => (
+                            {selectedCasa?.obligacionesPendientes.map((obligacion) => (
                               <SelectItem key={obligacion.id} value={obligacion.id} className="py-3">
                                 <div className="flex flex-col items-start">
-                                  <span className="font-medium text-gray-900">{obligacion.titulo}</span>
+                                  <span className="font-medium text-gray-900">{obligacion.motivo}</span>
                                   <span className="text-sm text-gray-500 mt-1">
                                     {new Intl.NumberFormat('es-CO', {
                                       style: 'currency',

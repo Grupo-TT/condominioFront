@@ -1,6 +1,6 @@
 export interface Obligacion {
   id: string;
-  titulo: string;
+  motivo: string;
   valorTotal: number;
   saldoPendiente: number;
   abonado: number;
@@ -8,10 +8,17 @@ export interface Obligacion {
 
 export interface CuotaCasa {
   id: string;
-  numeroCasa: string;
-  propietario: string;
+  numeroCasa: number;
+  propietario: Propietario;
   saldoPendiente: number;
   cantidadPagosPendientes: number;
   ultimoPago: string;
-  obligaciones: Obligacion[];
+  obligacionesPendientes: Obligacion[];
+}
+
+export interface Propietario {
+  id: string;
+  nombreCompleto: string;
+  telefono: string;
+  correo: string;
 }
