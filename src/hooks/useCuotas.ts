@@ -2,13 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { getEstadoCuenta, getEstadosCuenta, registrarPago } from '@/lib/services/cuotas.service'
-import { CuotaCasa } from '@/types/cuotas.types'
-
-interface PagoPayload {
-  soporte: string
-  obligacionId?: string
-  monto: number
-}
+import { CuotaCasa, PagoPayload } from '@/types/cuotas.types'
 
 export const useCuotas = () => {
   const [loading, setLoading] = useState(false)
@@ -59,6 +53,7 @@ export const useCuotas = () => {
     setError(null)
     try {
       const data = await registrarPago(payload)
+      console.log(payload)
       console.log('Pago registrado correctamente:', data)
 
       // Refetch del estado de cuenta si existe

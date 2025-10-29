@@ -326,15 +326,15 @@ export default function CuotasPage() {
 
     try {
       console.log("Enviando pago con datos:", {
-        casaId: selectedCasa.id,
+        casaId: selectedCasa.numeroCasa,
         obligacionId: data.obligacionId,
         monto: data.monto,
       });
 
       await handleRegistrarPago({
         soporte: selectedCasa.numeroCasa.toString(),
-        obligacionId: data.obligacionId,
-        monto: data.monto,
+        idObligacion: Number(data.obligacionId),
+        montoAPagar: data.monto,
       });
 
       setIsSheetOpen(false);

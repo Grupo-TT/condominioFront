@@ -1,3 +1,4 @@
+import { PagoPayload } from "@/types/cuotas.types";
 import apiClient from "../config/axios.config";
 
 export const getEstadoCuenta = async (casaId: number) => {
@@ -17,11 +18,7 @@ export const getEstadosCuenta = async () => {
     throw error;
   }
 };
-export const registrarPago = async (payload: {
-  soporte: string;
-  obligacionId?: string;
-  monto: number;
-}) => {
+export const registrarPago = async (payload: PagoPayload) => {
   try {
     const { data } = await apiClient.post("/pago", payload);
     console.log("Pago registrado:", data);

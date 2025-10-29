@@ -22,3 +22,9 @@ export interface Propietario {
   telefono: string;
   correo: string;
 }
+
+export interface PagoPayload {
+  soporte: string;
+  idObligacion: number;
+  montoAPagar: number;
+}
