@@ -1,4 +1,3 @@
-import type { TEventColor } from "@/calendar/types";
 import type { IEvent, IUser } from "@/calendar/interfaces";
 
 // Solo usamos 2 colores: orange (dorado) para Zonas y purple (morado) para Objetos

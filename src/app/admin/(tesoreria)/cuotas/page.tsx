@@ -29,13 +29,13 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { SquareMinus, SquarePlus, Home, Search, X, Settings } from 'lucide-react'
+import { SquareMinus, SquarePlus, Search, X, Settings } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
 import { cuotasData } from '@/data/cuotas.mock'
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
-import { FormInput, FormFieldWithTooltip } from '@/components/forms'
+import { FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -49,7 +49,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -146,7 +145,7 @@ function ObligacionesSubTable({
         enableSorting: false,
       },
     ],
-    []
+    [casa, onObligacionClick]
   )
 
   const table = useReactTable({
@@ -221,7 +220,6 @@ export default function CuotasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [selectedCasa, setSelectedCasa] = useState<CuotaCasa | null>(null)
   const [selectedObligacion, setSelectedObligacion] = useState<Obligacion | null>(null)
-  const [montoPago, setMontoPago] = useState('')
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
@@ -278,7 +276,6 @@ export default function CuotasPage() {
   const handleCasaClick = (casa: CuotaCasa) => {
     setSelectedCasa(casa)
     setSelectedObligacion(null) // No preseleccionar obligación
-    setMontoPago('')
     form.reset({
       obligacionId: '',
       monto: 0,
@@ -291,7 +288,6 @@ export default function CuotasPage() {
   const handleObligacionClick = (casa: CuotaCasa, obligacion: Obligacion) => {
     setSelectedCasa(casa)
     setSelectedObligacion(obligacion) // Preseleccionar la obligación
-    setMontoPago(obligacion.saldoPendiente.toString())
     form.reset({
       obligacionId: obligacion.id,
       monto: obligacion.saldoPendiente,
@@ -331,7 +327,6 @@ export default function CuotasPage() {
     setIsSheetOpen(false)
     setSelectedCasa(null)
     setSelectedObligacion(null)
-    setMontoPago('')
     form.reset()
     setShowAllErrors(false)
   }
@@ -444,7 +439,7 @@ export default function CuotasPage() {
         enableSorting: false,
       },
     ],
-    []
+    [handleCasaClick, handleObligacionClick]
   )
 
   const table = useReactTable({
@@ -751,7 +746,7 @@ export default function CuotasPage() {
                   <Controller
                     name="obligacionId"
                     control={form.control}
-                    render={({ field, fieldState }) => (
+                    render={({ field }) => (
                       <Select 
                         value={field.value} 
                         onValueChange={(value) => {
@@ -760,7 +755,6 @@ export default function CuotasPage() {
                           setSelectedObligacion(obligacion || null)
                           if (obligacion) {
                             form.setValue('monto', obligacion.saldoPendiente)
-                            setMontoPago(obligacion.saldoPendiente.toString())
                           }
                         }}
                       >
@@ -827,7 +821,6 @@ export default function CuotasPage() {
                             onChange={(e) => {
                               const value = e.target.value
                               field.onChange(value ? parseFloat(value) : 0)
-                              setMontoPago(value)
                             }}
                             className={`w-full h-12 pl-8 text-lg font-medium ${
                               fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''

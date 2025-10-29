@@ -19,9 +19,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -128,7 +126,6 @@ export default function RecursosPage() {
   const [formNombre, setFormNombre] = useState('')
   const [formDescripcion, setFormDescripcion] = useState('')
   const [formTipo, setFormTipo] = useState<'zona' | 'objeto' | ''>('')
-  const [showAllErrors, setShowAllErrors] = useState(false)
   const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
@@ -179,7 +176,6 @@ export default function RecursosPage() {
 
   const handleNuevoRecursoSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setShowAllErrors(true)
     if (!validateForm()) return
     if (isEditMode && selectedRecursoId) {
       setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? {
@@ -343,7 +339,6 @@ export default function RecursosPage() {
                     setFormDescripcion(row.original.descripcion)
                     setFormTipo(row.original.tipo)
                     setErrors({})
-                    setShowAllErrors(false)
                     setIsSheetOpen(true)
                   }}
                 >
@@ -493,7 +488,7 @@ export default function RecursosPage() {
                     </Button>
                   )}
                 </div>
-                <Button className="gap-2" onClick={() => { setIsEditMode(false); setSelectedRecursoId(null); setFormNombre(''); setFormDescripcion(''); setFormTipo(''); setErrors({}); setShowAllErrors(false); setIsSheetOpen(true) }}>
+                <Button className="gap-2" onClick={() => { setIsEditMode(false); setSelectedRecursoId(null); setFormNombre(''); setFormDescripcion(''); setFormTipo(''); setErrors({}); setIsSheetOpen(true) }}>
                   <Plus className="w-4 h-4" />
                   Nuevo recurso
                 </Button>

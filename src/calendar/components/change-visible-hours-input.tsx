@@ -42,9 +42,21 @@ export function ChangeVisibleHoursInput() {
 
       <div className="flex items-center gap-4">
         <p>From</p>
-        <TimeInput id="start-time" hourCycle={12} granularity="hour" value={from as TimeValue} onChange={setFrom as (value: TimeValue | null) => void} />
+        <TimeInput 
+          id="start-time" 
+          hourCycle={12} 
+          granularity="hour" 
+          value={from as unknown as TimeValue} 
+          onChange={(value) => setFrom(value as unknown as { hour: number; minute: number })} 
+        />
         <p>To</p>
-        <TimeInput id="end-time" hourCycle={12} granularity="hour" value={to as TimeValue} onChange={setTo as (value: TimeValue | null) => void} />
+        <TimeInput 
+          id="end-time" 
+          hourCycle={12} 
+          granularity="hour" 
+          value={to as unknown as TimeValue} 
+          onChange={(value) => setTo(value as unknown as { hour: number; minute: number })} 
+        />
       </div>
 
       <Button className="mt-4 w-fit" onClick={handleApply}>

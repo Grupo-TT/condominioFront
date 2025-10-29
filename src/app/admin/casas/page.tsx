@@ -346,7 +346,7 @@ export default function CasasPage() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={() => {
-                    console.log('Editar casa:', row.original.id)
+                    console.log('Editar casa:', row.original.numeroCasa)
                   }}
                 >
                   <Pencil className="mr-2 h-4 w-4" />
@@ -397,7 +397,7 @@ export default function CasasPage() {
     columns,
     data: filteredCasas,
     pageCount: Math.ceil((filteredCasas?.length || 0) / pagination.pageSize),
-    getRowId: (row: Casa) => row.id,
+    getRowId: (row: Casa) => row.numeroCasa,
     state: {
       pagination,
       sorting,

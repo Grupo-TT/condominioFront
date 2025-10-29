@@ -16,13 +16,11 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
 import {
@@ -368,7 +366,7 @@ export default function MultasPage() {
         enableSorting: false,
       },
     ],
-    []
+    [handleEdit, handleViewDetail]
   )
 
   const table = useReactTable({

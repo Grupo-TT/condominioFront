@@ -274,7 +274,7 @@ export default function CasaDetailPage() {
                   DOCUMENTO
                 </label>
                 <p className="text-lg font-bold text-gray-900">
-                {propietarioMiembro?.numeroDocumento || casaSeleccionada?.propietario?.numeroDocumento || 'No disponible'}
+                {propietarioMiembro?.numeroDocumento || 'No disponible'}
                 </p>
               </div>
 
