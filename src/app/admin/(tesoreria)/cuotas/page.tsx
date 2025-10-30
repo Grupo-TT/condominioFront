@@ -410,11 +410,11 @@ export default function CuotasPage() {
         enableSorting: true,
       },
       {
-        accessorKey: 'cantidadPagosPendientes',
-        id: 'cantidadPagosPendientes',
+        accessorKey: 'obligacionesPendientes',  
+        id: 'obligacionesPendientes',
         header: ({ column }) => <DataGridColumnHeader title="Pagos Pendientes" column={column} />,
         cell: ({ row }) => {
-          const cantidad = row.original.cantidadPagosPendientes
+          const cantidad = row.original.obligacionesPendientes.length
           return (
             <Badge
               variant={cantidad === 0 ? 'success' : cantidad <= 2 ? 'warning' : 'destructive'}
