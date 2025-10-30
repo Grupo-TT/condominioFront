@@ -1,6 +1,7 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -29,112 +30,79 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useMiembros } from '@/hooks/useCasa'
 
 // Datos de ejemplo - en una aplicación real esto vendría de una API
-const casasData = {
-  '1': {
-    id: '1',
-    numero: '101',
-    propietario: 'María González',
-    tipoDocumento: 'Cédula',
-    numeroDocumento: '12345678',
-    correo: 'maria.gonzalez@email.com',
-    telefono: '+57 300 123 4567',
-    estado: 'Al Día',
-    uso: 'Habitacional',
-    rol: 'Propietario',
-    fechaRegistro: '2023-01-15',
-    ultimaActualizacion: '2024-01-10',
-    miembros: [
-      { 
-        nombre: 'María González', 
-        relacion: 'Propietaria', 
-        edad: 35,
-        genero: 'femenino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '12345678',
-        telefono: '+57 300 123 4567',
-        correo: 'maria.gonzalez@email.com'
-      },
-      { 
-        nombre: 'Carlos González', 
-        relacion: 'Esposo', 
-        edad: 38,
-        genero: 'masculino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '87654321',
-        telefono: '+57 300 987 6543',
-        correo: 'carlos.gonzalez@email.com'
-      },
-      { 
-        nombre: 'Ana González', 
-        relacion: 'Hija', 
-        edad: 12,
-        genero: 'femenino',
-        tipoDocumento: 'Tarjeta de Identidad',
-        numeroDocumento: 'TI123456789',
-        telefono: '+57 300 555 1234',
-        correo: 'ana.gonzalez@email.com'
-      },
-    ],
-    mascotas: [
-      { nombre: 'Max', tipo: 'Perro', raza: 'Golden Retriever' },
-      { nombre: 'Luna', tipo: 'Gato', raza: 'Persa' },
-    ],
-  },
-  '2': {
-    id: '2',
-    numero: '102',
-    propietario: 'Juan Pérez',
-    tipoDocumento: 'Cédula',
-    numeroDocumento: '87654321',
-    correo: 'juan.perez@email.com',
-    telefono: '+57 300 987 6543',
-    estado: 'En Mora',
-    uso: 'Habitacional',
-    rol: 'Propietario',
-    fechaRegistro: '2023-02-20',
-    ultimaActualizacion: '2024-01-05',
-    miembros: [
-      { 
-        nombre: 'Juan Pérez', 
-        relacion: 'Propietario', 
-        edad: 42,
-        genero: 'masculino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '11223344',
-        telefono: '+57 300 111 2233',
-        correo: 'juan.perez@email.com'
-      },
-      { 
-        nombre: 'Laura Pérez', 
-        relacion: 'Esposa', 
-        edad: 39,
-        genero: 'femenino',
-        tipoDocumento: 'Cédula',
-        numeroDocumento: '55667788',
-        telefono: '+57 300 444 5566',
-        correo: 'laura.perez@email.com'
-      },
-    ],
-    mascotas: [],
-  },
-}
+
 
 export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const casaId = params.id as string
+  const numeroCasa = params.id as string
   
-  const casa = casasData[casaId as keyof typeof casasData]
+  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa)
 
-  const handleDelete = () => {
-    console.log('Eliminar casa:', casa?.id)
-    // Aquí agregarías la lógica para eliminar la casa
-    router.push('/admin/casas')
+  const propietarioMiembro = useMemo(() => {
+    return miembros.find((m) => m.tipoMiembro === 'PROPIETARIO')
+  }, [miembros])
+
+  const totalMascotas = useMemo(() => {
+    if (!casaSeleccionada?.mascotas) return 0
+    return Object.values(casaSeleccionada.mascotas).reduce(
+      (total, cantidad) => total + (cantidad || 0), 
+      0
+    )
+  }, [casaSeleccionada])
+
+  // Función helper para determinar el género según el tipo de miembro
+  const getGenderFromTipoMiembro = (tipoMiembro: string): 'masculino' | 'femenino' | 'neutro' => {
+    const tipo = tipoMiembro.toUpperCase()
+    
+    // Tipos femeninos
+    if (tipo.includes('HIJA') || tipo.includes('ESPOSA') || tipo.includes('MADRE') || 
+        tipo.includes('HERMANA') || tipo.includes('ABUELA') || tipo.includes('TIA') ||
+        tipo.includes('SOBRINA') || tipo.includes('NIETA')) {
+      return 'femenino'
+    }
+    
+    // Tipos masculinos
+    if (tipo.includes('HIJO') || tipo.includes('ESPOSO') || tipo.includes('PADRE') || 
+        tipo.includes('HERMANO') || tipo.includes('ABUELO') || tipo.includes('TIO') ||
+        tipo.includes('SOBRINO') || tipo.includes('NIETO')) {
+      return 'masculino'
+    }
+    
+    return 'neutro'
   }
 
-  if (!casa) {
+  const handleDelete = () => {
+    // Aquí agregarías la lógica para eliminar la casa
+    router.push('/admin/casas')
+  } 
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+          </div>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-500">Cargando información de la casa...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!casaSeleccionada) {
     return (
       <div className="flex flex-col h-full">
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -213,7 +181,7 @@ export default function CasaDetailPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Casa {casa.numero}</BreadcrumbPage>
+                <BreadcrumbPage>Casa {casaSeleccionada?.numeroCasa}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -233,7 +201,7 @@ export default function CasaDetailPage() {
             </div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900">
-                Casa N° {casa.numero} - {casa.propietario}
+                Casa N° {casaSeleccionada?.numeroCasa} - {casaSeleccionada?.propietario.nombreCompleto}
               </h1>
               <p className="text-gray-600 text-base mt-1">
                 Información general, miembros, mascotas y estado financiero de la vivienda.
@@ -260,8 +228,8 @@ export default function CasaDetailPage() {
                     <AlertDialogTitle>¿Remover Propietario?</AlertDialogTitle>
                     <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se removera permanentemente el propietario{' '}
-                        <strong>{casa.propietario}</strong> de la casa{' '}
-                        <strong>{casa.numero}</strong> y toda su información asociada.
+                        <strong>{casaSeleccionada?.propietario.nombreCompleto}</strong> de la casa{' '}
+                        <strong>{casaSeleccionada?.numeroCasa}</strong> y toda su información asociada.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -289,7 +257,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   NOMBRE
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.propietario}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.nombreCompleto}</p>
               </div>
 
               {/* EMAIL */}
@@ -297,7 +265,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   EMAIL
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.correo}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.correo}</p>
               </div>
 
               {/* DOCUMENTO */}
@@ -306,7 +274,7 @@ export default function CasaDetailPage() {
                   DOCUMENTO
                 </label>
                 <p className="text-lg font-bold text-gray-900">
-                  {casa.tipoDocumento} • {casa.numeroDocumento}
+                {propietarioMiembro?.numeroDocumento || 'No disponible'}
                 </p>
               </div>
 
@@ -315,7 +283,7 @@ export default function CasaDetailPage() {
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   TELEFONO
                 </label>
-                <p className="text-lg font-bold text-gray-900">{casa.telefono}</p>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.telefono}</p>
               </div>
 
               {/* ESTADO */}
@@ -329,7 +297,7 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.estado}</p>
+                  <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.estadoFinancieroCasa}</p>
                 </div>
               </div>
 
@@ -344,7 +312,9 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.rol}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendatario' : 'Propietario'}
+                  </p>
                 </div>
               </div>
 
@@ -359,7 +329,7 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casa.miembros.length}</p>
+                  <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.cantidadMiembros}</p>
                 </div>
               </div>
 
@@ -370,7 +340,9 @@ export default function CasaDetailPage() {
                 </label>
                 <div className="flex items-center gap-2">
                   <PawPrint className="w-5 h-5 text-gray-500" />
-                  <p className="text-lg font-bold text-gray-900">{casa.mascotas.length}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {totalMascotas}
+                  </p>
                 </div>
               </div>
             </div>
@@ -418,34 +390,34 @@ export default function CasaDetailPage() {
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {casa.miembros.filter(miembro => miembro.relacion !== 'Propietario' && miembro.relacion !== 'Propietaria').map((miembro, index) => (
+                            {miembros.filter(miembro => {
+                              const tipo = miembro.tipoMiembro.toUpperCase()
+                              return tipo !== 'PROPIETARIO' && tipo !== 'ARRENDATARIO'
+                            }).map((miembro, index) => {
+                              const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
+                              const colorConfig = genero === 'femenino' 
+                                ? { bg: 'bg-pink-100', text: 'text-pink-600' }
+                                : genero === 'masculino'
+                                ? { bg: 'bg-blue-100', text: 'text-blue-600' }
+                                : { bg: 'bg-gray-100', text: 'text-gray-600' }
+                              
+                              return (
                             <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                 {/* Header con icono y nombre */}
                                 <div className="flex items-center gap-3 mb-3">
-                                  {miembro.genero === 'masculino' ? (
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                      <HugeiconsIcon
-                                        icon={User03Icon}
-                                        size={20}
-                                        className="text-blue-600"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
-                                      <HugeiconsIcon
-                                        icon={User03Icon}
-                                        size={20}
-                                        className="text-pink-600"
-                                      />
-                                    </div>
-                                  )}
+                                  <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
+                                    <HugeiconsIcon
+                                      icon={User03Icon}
+                                      size={20}
+                                      className={colorConfig.text}
+                                    />
+                                  </div>
                                 <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombre}</h5>
+                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="secondary" className="text-xs">
-                                      {miembro.relacion}
+                                      {miembro.tipoMiembro}
                                     </Badge>
-                                    <span className="text-xs text-gray-500">{miembro.edad} años</span>
                                   </div>
                                 </div>
                               </div>
@@ -456,9 +428,7 @@ export default function CasaDetailPage() {
                                   <div className="flex-1">
                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
                                     <p className="text-sm text-gray-900">
-                                      {miembro.tipoDocumento === 'Cédula' ? 'CC.' : 
-                                       miembro.tipoDocumento === 'Tarjeta de Identidad' ? 'TI.' : 
-                                       miembro.tipoDocumento} {miembro.numeroDocumento}
+                                       {miembro.numeroDocumento}
                                     </p>
                                   </div>
                                   <div className="flex-1">
@@ -468,63 +438,98 @@ export default function CasaDetailPage() {
                                 </div>
                                 <div>
                                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                  <p className="text-sm text-gray-900 truncate" title={miembro.correo}>{miembro.correo}</p>
+                                  <p className="text-sm text-gray-900 truncate" title={miembro.email || 'Información no disponible'}>
+                                    {miembro.email || 'Información no disponible'}
+                                  </p>
                                 </div>
                               </div>
                             </div>
-                          ))}
+                          )})}
                         </div>
                       </div>
 
                       {/* Mascotas */}
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
-                        {casa.mascotas.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {casa.mascotas.map((mascota, index) => (
-                              <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                {/* Header con icono, nombre y raza */}
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    {mascota.tipo === 'Perro' ? (
-                                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#A3917020' }}>
-                                        <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
-                                      </div>
-                                    ) : mascota.tipo === 'Gato' ? (
-                                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#595D7520' }}>
-                                        <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
-                                      </div>
-                                    ) : (
-                                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <Heart className="w-5 h-5 text-gray-600" />
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <h5 className="font-semibold text-gray-900 truncate">{mascota.nombre}</h5>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="outline" className="text-xs">
-                                          {mascota.tipo}
-                                        </Badge>
-                                      </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
+
+                          {casaSeleccionada?.mascotas &&
+                          (casaSeleccionada.mascotas.perro > 0 ||
+                            casaSeleccionada.mascotas.gato > 0 ||
+                            casaSeleccionada.mascotas.otro > 0) ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {/* Perros */}
+                              {casaSeleccionada.mascotas.perro > 0 && (
+                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                                      style={{ backgroundColor: '#F1E8D6' }}
+                                    >
+                                      <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-lg font-bold text-gray-900">
+                                        {casaSeleccionada.mascotas.perro}
+                                      </span>
+                                      <span className="text-sm text-gray-500">
+                                        {casaSeleccionada.mascotas.perro === 1 ? 'Perro' : 'Perros'}
+                                      </span>
                                     </div>
                                   </div>
-                                  
-                                  {/* Raza en la parte derecha */}
-                                  <div className="text-right flex-shrink-0">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Raza</span>
-                                    <p className="text-sm text-gray-900">{mascota.raza}</p>
+                                </div>
+                              )}
+
+                              {/* Gatos */}
+                              {casaSeleccionada.mascotas.gato > 0 && (
+                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                                      style={{ backgroundColor: '#E3E4EA' }}
+                                    >
+                                      <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-lg font-bold text-gray-900">
+                                        {casaSeleccionada.mascotas.gato}
+                                      </span>
+                                      <span className="text-sm text-gray-500">
+                                        {casaSeleccionada.mascotas.gato === 1 ? 'Gato' : 'Gatos'}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            <Heart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <p>No hay mascotas registradas</p>
-                          </div>
-                        )}
-                      </div>
+                              )}
+
+                              {/* Otros */}
+                              {casaSeleccionada.mascotas.otro > 0 && (
+                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                                      style={{ backgroundColor: '#E6EFEA' }}
+                                    >
+                                      <PawPrint className="w-5 h-5" style={{ color: '#4C6C5A' }} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-lg font-bold text-gray-900">
+                                        {casaSeleccionada.mascotas.otro}
+                                      </span>
+                                      <span className="text-sm text-gray-500">
+                                        {casaSeleccionada.mascotas.otro === 1 ? 'Otro' : 'Otros'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-gray-500 py-4">
+                              <Heart className="w-5 h-5 text-gray-400" />
+                              <p className="text-sm">No hay mascotas registradas</p>
+                            </div>
+                          )}
+                        </div>
                 </div>
               </TabsContent>
 

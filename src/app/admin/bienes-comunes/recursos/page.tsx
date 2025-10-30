@@ -1,0 +1,619 @@
+'use client'
+
+import React, { useState, useMemo } from 'react'
+import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
+import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
+import { DataGridPagination } from '@/components/ui/data-grid-pagination'
+import { DataGridTable } from '@/components/ui/data-grid-table'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { FormFieldWithTooltip } from '@/components/forms'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Separator } from '@/components/ui/separator'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import {
+  ColumnDef,
+  ExpandedState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  PaginationState,
+  SortingState,
+  useReactTable,
+} from '@tanstack/react-table'
+
+type Recurso = {
+  id: string
+  nombre: string
+  descripcion: string
+  tipo: 'zona' | 'objeto'
+  estado: 'Disponible' | 'No disponible'
+  habilitado: boolean
+}
+
+const data: Recurso[] = [
+  {
+    id: '1',
+    nombre: 'Salón Comunal',
+    descripcion:
+      'Espacio amplio para reuniones de copropietarios, eventos y actividades sociales. Capacidad para 60 personas, incluye sillas y sonido básico.',
+    tipo: 'zona',
+    estado: 'Disponible',
+    habilitado: true,
+  },
+  {
+    id: '2',
+    nombre: 'Parque Infantil',
+    descripcion:
+      'Área de juegos para niños con columpios y resbaladero. Horario de 8am a 6pm. Se requiere supervisión de un adulto.',
+    tipo: 'zona',
+    estado: 'Disponible',
+    habilitado: true,
+  },
+  {
+    id: '3',
+    nombre: 'Proyector Epson X200',
+    descripcion:
+      'Proyector portátil de 3500 lúmenes, entradas HDMI/VGA. Se presta con control y cable HDMI. Reservas máximo por 4 horas.',
+    tipo: 'objeto',
+    estado: 'No disponible',
+    habilitado: false,
+  },
+  {
+    id: '4',
+    nombre: 'Parrillera Zona B',
+    descripcion:
+      'Parrillera de carbón en zona B. Incluye mesa lateral y lavaplatos. Se debe dejar limpia al finalizar.',
+    tipo: 'zona',
+    estado: 'Disponible',
+    habilitado: true,
+  },
+]
+
+export default function RecursosPage() {
+  const [recursos, setRecursos] = useState<Recurso[]>(data)
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [expanded, setExpanded] = useState<ExpandedState>({})
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState<'todas' | 'zonas' | 'objetos'>('todas')
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [formNombre, setFormNombre] = useState('')
+  const [formDescripcion, setFormDescripcion] = useState('')
+  const [formTipo, setFormTipo] = useState<'zona' | 'objeto' | ''>('')
+  const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
+
+  const handleClearSearch = () => setSearchTerm('')
+
+  const filteredData = useMemo(() => {
+    const term = searchTerm.toLowerCase()
+    return recursos.filter((r) => {
+      if (filterType === 'zonas' && r.tipo !== 'zona') return false
+      if (filterType === 'objetos' && r.tipo !== 'objeto') return false
+      if (!term) return true
+      return (
+        r.nombre.toLowerCase().includes(term) ||
+        r.descripcion.toLowerCase().includes(term)
+      )
+    })
+  }, [searchTerm, filterType, recursos])
+
+  const validateForm = () => {
+    const nextErrors: { nombre?: string; descripcion?: string; tipo?: string } = {}
+    if (!formNombre || formNombre.trim().length === 0 || formNombre.length > 50) {
+      nextErrors.nombre = 'Por favor, ingresa un nombre válido para el recurso.'
+    }
+    if (formDescripcion && formDescripcion.length > 200) {
+      nextErrors.descripcion = 'La descripción no puede superar los 200 caracteres.'
+    }
+    if (!formTipo) {
+      nextErrors.tipo = 'Selecciona el tipo de recurso.'
+    }
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
+
+  const validateNombre = (value: string) => {
+    if (!value || value.trim().length === 0 || value.length > 50) {
+      return 'Por favor, ingresa un nombre válido para el recurso.'
+    }
+    return undefined
+  }
+
+  const validateDescripcion = (value: string) => {
+    if (value && value.length > 200) {
+      return 'La descripción no puede superar los 200 caracteres.'
+    }
+    return undefined
+  }
+
+  const handleNuevoRecursoSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateForm()) return
+    if (isEditMode && selectedRecursoId) {
+      setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? {
+        ...r,
+        nombre: formNombre,
+        descripcion: formDescripcion,
+        tipo: formTipo as 'zona' | 'objeto',
+      } : r))
+    } else {
+      setRecursos((prev) => [
+        ...prev,
+        {
+          id: (Math.max(0, ...prev.map(p => parseInt(p.id))) + 1).toString(),
+          nombre: formNombre,
+          descripcion: formDescripcion,
+          tipo: formTipo as 'zona' | 'objeto',
+          estado: 'Disponible',
+          habilitado: true,
+        },
+      ])
+    }
+    setIsSheetOpen(false)
+    setFormNombre('')
+    setFormDescripcion('')
+    setFormTipo('')
+    setIsEditMode(false)
+    setSelectedRecursoId(null)
+  }
+
+  const columns = useMemo<ColumnDef<Recurso>[]>(
+    () => [
+      {
+        id: 'expand',
+        header: () => null,
+        cell: ({ row }) => {
+          return (
+            <button
+              className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                row.toggleExpanded()
+              }}
+            >
+              {row.getIsExpanded() ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          )
+        },
+        size: 24,
+        meta: {
+          expandedContent: (row: Recurso) => (
+            <div
+              className="px-6 py-4 border-l-4"
+              style={{ backgroundColor: '#4C6C5B14', borderLeftColor: '#4C6C5B' }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                  <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Descripción detallada</h4>
+                  <p className="text-gray-600 leading-relaxed">{row.descripcion}</p>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+      },
+      {
+        accessorKey: 'nombre',
+        id: 'nombre',
+        header: ({ column }) => <DataGridColumnHeader title="Recurso" column={column} />,
+        cell: ({ row }) => {
+          const isZona = row.original.tipo === 'zona'
+          return (
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: isZona ? '#A3917020' : '#595D7520' }}
+              >
+                {isZona ? (
+                  <MapPin className="w-4 h-4" style={{ color: '#A39170' }} />
+                ) : (
+                  <Package className="w-4 h-4" style={{ color: '#595D75' }} />
+                )}
+              </div>
+              <div className="space-y-px">
+                <div className="font-medium text-gray-900">{row.original.nombre}</div>
+                <div className="text-xs text-gray-500">
+                  {isZona ? 'Zona común' : 'Objeto'}
+                </div>
+              </div>
+            </div>
+          )
+        },
+        enableSorting: true,
+        enableHiding: false,
+        size: 220,
+      },
+      {
+        accessorKey: 'descripcion',
+        id: 'descripcion',
+        header: ({ column }) => <DataGridColumnHeader title="Descripción" column={column} />,
+        cell: ({ row }) => (
+          <span className="line-clamp-1 text-gray-600" title={row.original.descripcion}>
+            {row.original.descripcion}
+          </span>
+        ),
+        enableSorting: false,
+        size: 480,
+      },
+      {
+        accessorKey: 'tipo',
+        id: 'tipo',
+        header: ({ column }) => <DataGridColumnHeader title="Tipo" column={column} />,
+        cell: ({ row }) => (
+          <Badge 
+            variant={row.original.tipo === 'zona' ? 'secondary' : 'outline'} 
+            appearance="light"
+          >
+            {row.original.tipo === 'zona' ? 'Zona' : 'Objeto'}
+          </Badge>
+        ),
+        enableSorting: true,
+        size: 120,
+      },
+      {
+        accessorKey: 'estado',
+        id: 'estado',
+        header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.habilitado ? 'success' : 'destructive'}
+            appearance="outline"
+          >
+            {row.original.habilitado ? 'Disponible' : 'No disponible'}
+          </Badge>
+        ),
+        enableSorting: true,
+        size: 140,
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button aria-label="acciones" variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsEditMode(true)
+                    setSelectedRecursoId(row.original.id)
+                    setFormNombre(row.original.nombre)
+                    setFormDescripcion(row.original.descripcion)
+                    setFormTipo(row.original.tipo)
+                    setErrors({})
+                    setIsSheetOpen(true)
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className={row.original.habilitado ? 'text-red-600 focus:text-red-600 focus:bg-red-50' : 'text-green-700 focus:text-green-700 focus:bg-green-50'}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      {row.original.habilitado ? (
+                        <XCircle className="mr-2 h-4 w-4" />
+                      ) : (
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                      )}
+                      {row.original.habilitado ? 'Deshabilitar' : 'Habilitar'}
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {row.original.habilitado ? '¿Deshabilitar recurso?' : '¿Habilitar recurso?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {row.original.habilitado
+                          ? 'El recurso quedará no disponible para reservas o uso hasta que lo habilites nuevamente.'
+                          : 'El recurso quedará disponible para su uso.'}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setRecursos((prev) => prev.map((r) => r.id === row.original.id ? { ...r, habilitado: !r.habilitado } : r))
+                        }}
+                        className={row.original.habilitado ? 'bg-red-600 hover:bg-red-700' : 'text-white hover:opacity-90'}
+                        style={row.original.habilitado ? undefined : { backgroundColor: '#4C6C5B' }}
+                      >
+                        Confirmar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
+        size: 80,
+        enableSorting: false,
+      },
+    ],
+    [setRecursos]
+  )
+
+  const table = useReactTable({
+    columns,
+    data: filteredData,
+    pageCount: Math.ceil((filteredData?.length || 0) / pagination.pageSize),
+    getRowId: (row: Recurso) => row.id,
+    getRowCanExpand: (row) => Boolean(row.original.descripcion),
+    state: {
+      pagination,
+      sorting,
+      expanded,
+    },
+    columnResizeMode: 'onChange',
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
+
+  return (
+    <>
+      <header className="flex h-16 shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2 px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mr-2 data-[orientation=vertical]:h-4"
+          />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink href="/admin/dashboard">
+                  Dashboard Admin
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/admin/bienes-comunes">
+                  Bienes Comunes
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Recursos</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+      </header>
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-6 p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Gestión de Recursos</h1>
+              <p className="text-gray-500 mt-1">
+                Administra zonas y objetos de uso común del condominio.
+              </p>
+            </div>
+          </div>
+
+          {/* Filtros y controles */}
+          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'todas' | 'zonas' | 'objetos')} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="todas">Todos</TabsTrigger>
+                <TabsTrigger value="zonas">Zonas</TabsTrigger>
+                <TabsTrigger value="objetos">Objetos</TabsTrigger>
+              </TabsList>
+              <div className="flex items-center gap-3">
+                <div className="relative w-80">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <Input
+                    placeholder="Buscar recursos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                  />
+                  {searchTerm !== '' && (
+                    <Button 
+                      onClick={handleClearSearch} 
+                      variant="ghost" 
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                    >
+                      <X size={16} className="text-gray-500" />
+                    </Button>
+                  )}
+                </div>
+                <Button className="gap-2" onClick={() => { setIsEditMode(false); setSelectedRecursoId(null); setFormNombre(''); setFormDescripcion(''); setFormTipo(''); setErrors({}); setIsSheetOpen(true) }}>
+                  <Plus className="w-4 h-4" />
+                  Nuevo recurso
+                </Button>
+              </div>
+            </div>
+
+            <TabsContent value={filterType}>
+              <DataGrid
+                table={table}
+                recordCount={filteredData?.length || 0}
+                tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+              >
+            <div className="w-full space-y-2.5">
+              <DataGridContainer border={false}>
+                <ScrollArea>
+                  <DataGridTable />
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </DataGridContainer>
+              <DataGridPagination
+                rowsPerPageLabel="Filas por página"
+                info="{from} - {to} de {count}"
+                previousPageLabel="Ir a la página anterior"
+                nextPageLabel="Ir a la página siguiente"
+              />
+            </div>
+              </DataGrid>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent 
+          side="right" 
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
+          style={{ width: '500px', maxWidth: 'none' }}
+        >
+          <SheetHeader className="border-b pb-4">
+            <SheetTitle className="text-xl font-semibold">{isEditMode ? 'Editar Recurso' : 'Agregar Recurso'}</SheetTitle>
+            <SheetDescription className="text-gray-600">
+              {isEditMode ? 'Modifica la información del recurso seleccionado.' : 'Agrega un recurso de bienes comunes.'}
+            </SheetDescription>
+          </SheetHeader>
+
+          <form onSubmit={handleNuevoRecursoSubmit} className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <div className="space-y-6 px-4 pt-4">
+                <FormFieldWithTooltip 
+                  label="Nombre" 
+                  required 
+                  invalid={Boolean(errors.nombre)} 
+                  error={errors.nombre}
+                >
+                  <Input id="nombre" value={formNombre} onChange={(e) => {
+                    const val = e.target.value
+                    setFormNombre(val)
+                    const err = validateNombre(val)
+                    setErrors((prev) => ({ ...prev, nombre: err }))
+                  }} placeholder="Ej. Salón Comunal" />
+                </FormFieldWithTooltip>
+
+                <FormFieldWithTooltip 
+                  label="Descripción" 
+                  invalid={Boolean(errors.descripcion)} 
+                  error={errors.descripcion}
+                >
+                  <textarea
+                    id="descripcion"
+                    value={formDescripcion}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setFormDescripcion(val)
+                      const err = validateDescripcion(val)
+                      setErrors((prev) => ({ ...prev, descripcion: err }))
+                    }}
+                    placeholder="Describe el recurso, condiciones de uso, etc."
+                    className="w-full min-h-28 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-gray-300 focus:ring-1 focus:ring-gray-200"
+                  />
+                </FormFieldWithTooltip>
+
+                <FormFieldWithTooltip 
+                  label="Tipo" 
+                  required 
+                  invalid={Boolean(errors.tipo)} 
+                  error={errors.tipo || 'Selecciona el tipo de recurso.'}
+                >
+                  <Select value={formTipo} onValueChange={(v) => {
+                    setFormTipo(v as 'zona' | 'objeto')
+                    setErrors((prev) => ({ ...prev, tipo: undefined }))
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona el tipo de recurso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="zona">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#A3917020' }}>
+                            <MapPin className="w-3.5 h-3.5" style={{ color: '#A39170' }} />
+                          </span>
+                          <span>Zona</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="objeto">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#595D7520' }}>
+                            <Package className="w-3.5 h-3.5" style={{ color: '#595D75' }} />
+                          </span>
+                          <span>Objeto</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormFieldWithTooltip>
+              </div>
+            </div>
+
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+              <SheetClose asChild>
+                <Button variant="outline" type="button" className="flex-1">Cancelar</Button>
+              </SheetClose>
+              <Button type="submit" className="flex-1">{isEditMode ? 'Guardar cambios' : 'Agregar recurso'}</Button>
+            </SheetFooter>
+          </form>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
