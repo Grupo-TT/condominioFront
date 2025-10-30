@@ -19,8 +19,17 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // withCredentials: true se usaría si hiciéramos llamadas directas
-  // desde el cliente al backend, pero ahora usamos API Routes como proxy
+  withCredentials: true,
+});
+
+// Interceptor de REQUEST: adjunta el token si existe
+apiClient.interceptors.request.use((config) => {
+  const token = authService.getToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
 });
 
 /**

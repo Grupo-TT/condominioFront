@@ -31,15 +31,11 @@ export const propietarioSchema = z.object({
     .or(z.literal("")),
 
   tipoDocumento: z
-    .union([z.string(), z.undefined()])
-    .transform((val) => val === undefined ? "" : val)
-    .pipe(
-      z.string()
-        .min(1, "Debe seleccionar un tipo de documento")
-        .refine((val) => val === "CEDULA_DE_CIUDADANIA" || val === "CEDULA_DE_EXTRANJERIA", {
-          message: "Debe seleccionar un tipo de documento válido"
-        })
-    ),
+    .string()
+    .min(1, "Debe seleccionar un tipo de documento")
+    .refine((val) => val === "CEDULA_DE_CIUDADANIA" || val === "CEDULA_DE_EXTRANJERIA", {
+      message: "Debe seleccionar un tipo de documento válido"
+    }),
 
   numeroDocumento: z
     .string()
@@ -63,27 +59,19 @@ export const propietarioSchema = z.object({
     }),
 
   rolEnCasa: z
-    .union([z.string(), z.undefined()])
-    .transform((val) => val === undefined ? "" : val)
-    .pipe(
-      z.string()
-        .min(1, "Debe seleccionar un rol en la casa")
-        .refine((val) => val === "PROPIETARIO" || val === "ARRENDATARIO", {
-          message: "Debe seleccionar un rol válido"
-        })
-    ),
+    .string()
+    .min(1, "Debe seleccionar un rol en la casa")
+    .refine((val) => val === "PROPIETARIO" || val === "ARRENDATARIO", {
+      message: "Debe seleccionar un rol válido"
+    }),
 
 
   idCasa: z
-    .union([z.string(), z.undefined()])
-    .transform((val) => val === undefined ? "" : val)
-    .pipe(
-      z.string()
-        .min(1, "Debe seleccionar una casa")
-        .refine((val) => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"].includes(val), {
-          message: "Debe seleccionar una casa válida"
-        })
-    ),
+    .string()
+    .min(1, "Debe seleccionar una casa")
+    .refine((val) => ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"].includes(val), {
+      message: "Debe seleccionar una casa válida"
+    }),
 })
 
 // Tipo inferido del schema

@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { TimeInput } from "@/components/ui/time-input";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
-import type { TimeValue } from "react-aria-components";
-
 export function ChangeVisibleHoursInput() {
   const { visibleHours, setVisibleHours } = useCalendar();
 
@@ -43,19 +41,15 @@ export function ChangeVisibleHoursInput() {
       <div className="flex items-center gap-4">
         <p>From</p>
         <TimeInput 
-          id="start-time" 
-          hourCycle={12} 
-          granularity="hour" 
-          value={from as unknown as TimeValue} 
-          onChange={(value) => setFrom(value as unknown as { hour: number; minute: number })} 
+          hourCycle={12}
+          value={from} 
+          onChange={(value) => setFrom(value || { hour: 0, minute: 0 })} 
         />
         <p>To</p>
         <TimeInput 
-          id="end-time" 
-          hourCycle={12} 
-          granularity="hour" 
-          value={to as unknown as TimeValue} 
-          onChange={(value) => setTo(value as unknown as { hour: number; minute: number })} 
+          hourCycle={12}
+          value={to} 
+          onChange={(value) => setTo(value || { hour: 0, minute: 0 })} 
         />
       </div>
 

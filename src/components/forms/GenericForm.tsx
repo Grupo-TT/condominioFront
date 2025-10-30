@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { useForm, Controller, type Path } from 'react-hook-form'
+import { useForm, Controller, type Path, type FieldValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ export interface FormFieldConfig {
   disabled?: boolean
 }
 
-interface GenericFormProps<T extends z.ZodType> {
+interface GenericFormProps<T extends z.ZodType<FieldValues>> {
   schema: T
   fields: FormFieldConfig[]
   onSubmit: (data: z.infer<T>) => void
@@ -32,7 +32,7 @@ interface GenericFormProps<T extends z.ZodType> {
   defaultValues?: Partial<z.infer<T>>
 }
 
-export function GenericForm<T extends z.ZodType>({
+export function GenericForm<T extends z.ZodType<FieldValues>>({
   schema,
   fields,
   onSubmit,
@@ -45,9 +45,11 @@ export function GenericForm<T extends z.ZodType>({
   const [showAllErrors, setShowAllErrors] = useState(false)
 
   const form = useForm<z.infer<T>>({
+    // @ts-expect-error - Generic type complexity with zodResolver
     resolver: zodResolver(schema),
     mode: 'onChange',
-    defaultValues: defaultValues as Partial<z.infer<T>>
+    // @ts-expect-error - Generic type complexity with defaultValues
+    defaultValues: defaultValues
   })
 
   const handleFormSubmit = (data: z.infer<T>) => {
@@ -58,6 +60,7 @@ export function GenericForm<T extends z.ZodType>({
 
   const handleFormSubmitAttempt = () => {
     setShowAllErrors(true)
+    // @ts-expect-error - Generic type complexity with form.handleSubmit
     form.handleSubmit(handleFormSubmit)()
   }
 
@@ -110,7 +113,7 @@ export function GenericForm<T extends z.ZodType>({
                   )
                 }
 
-                return null
+                return <></>
               }}
             />
           ))}

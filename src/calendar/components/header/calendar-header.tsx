@@ -31,7 +31,7 @@ export function CalendarHeader({ view, events, onViewChange }: IProps) {
               <Button
                 aria-label="Vista por semana"
                 size="icon"
-                variant={view === "week" ? "default" : "outline"}
+                variant={view === "week" ? "primary" : "outline"}
                 className="rounded-l-md [&_svg]:size-5"
                 onClick={() => onViewChange?.("week")}
               >
@@ -48,7 +48,7 @@ export function CalendarHeader({ view, events, onViewChange }: IProps) {
               <Button
                 aria-label="Vista por mes"
                 size="icon"
-                variant={view === "month" ? "default" : "outline"}
+                variant={view === "month" ? "primary" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
                 onClick={() => onViewChange?.("month")}
               >
@@ -65,7 +65,7 @@ export function CalendarHeader({ view, events, onViewChange }: IProps) {
               <Button
                 aria-label="Vista por año"
                 size="icon"
-                variant={view === "year" ? "default" : "outline"}
+                variant={view === "year" ? "primary" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
                 onClick={() => onViewChange?.("year")}
               >
@@ -82,7 +82,7 @@ export function CalendarHeader({ view, events, onViewChange }: IProps) {
               <Button
                 aria-label="Vista por agenda"
                 size="icon"
-                variant={view === "agenda" ? "default" : "outline"}
+                variant={view === "agenda" ? "primary" : "outline"}
                 className="-ml-px rounded-r-md [&_svg]:size-5"
                 onClick={() => onViewChange?.("agenda")}
               >
