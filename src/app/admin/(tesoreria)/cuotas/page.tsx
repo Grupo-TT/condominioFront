@@ -33,7 +33,6 @@ import { SquareMinus, SquarePlus, Search, X } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
-import { cuotasData } from '@/data/cuotas.mock'
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
 import { FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
@@ -58,7 +57,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { registrarPago } from '@/lib/services/cuotas.service'
 import { useCuotas } from '@/hooks/useCuotas'
 
 
@@ -114,7 +112,7 @@ function ObligacionesSubTable({
         size: 150,
       },
       {
-        accessorKey: 'abonado',
+        accessorKey: 'montoPagado',
         header: ({ column }) => <DataGridColumnHeader title="Abonado" column={column} />,
         cell: (info) => {
           const value = info.getValue() as number
@@ -224,7 +222,7 @@ export default function CuotasPage() {
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
-  const { casas, estadoCuenta, fetchCasas, fetchEstadoCuenta, handleRegistrarPago } = useCuotas()
+  const { casas, fetchCasas, fetchEstadoCuenta, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -305,8 +303,6 @@ export default function CuotasPage() {
   }, [form])
 
   const handleFormSubmit = async (data: PagoFormData) => {
-    console.log("Datos del formulario:", data);
-    console.log("Casa seleccionada:", selectedCasa);
 
     // Validación adicional: verificar que el monto no supere el saldo pendiente
     const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === data.obligacionId)
@@ -320,16 +316,10 @@ export default function CuotasPage() {
 
     if (!selectedCasa) {
       console.error("No hay casa seleccionada");
-      alert("Error: No hay casa seleccionada");
       return;
     }
 
     try {
-      console.log("Enviando pago con datos:", {
-        casaId: selectedCasa.numeroCasa,
-        obligacionId: data.obligacionId,
-        monto: data.monto,
-      });
 
       await handleRegistrarPago({
         soporte: selectedCasa.numeroCasa.toString(),
@@ -764,6 +754,7 @@ export default function CuotasPage() {
                             const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === value)
                             setSelectedObligacion(obligacion || null)
                             if (obligacion) {
+                              console.log(obligacion)
                               form.setValue('monto', obligacion.saldoPendiente)
                             }
                           }}

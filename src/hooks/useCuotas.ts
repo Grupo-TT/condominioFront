@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { getEstadoCuenta, getEstadosCuenta, registrarPago } from '@/lib/services/cuotas.service'
+import { getEstadoCuenta, getPorCobrar, registrarPago } from '@/lib/services/cuotas.service'
 import { CuotaCasa, PagoPayload } from '@/types/cuotas.types'
 
 export const useCuotas = () => {
@@ -15,8 +15,7 @@ export const useCuotas = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await getEstadosCuenta()
-      console.log('✅ Estados de cuenta cargados:', response)
+      const response = await getPorCobrar()
       setCasas(response?.data || [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -34,7 +33,6 @@ export const useCuotas = () => {
     setError(null)
     try {
       const response = await getEstadoCuenta(casaId)
-      console.log('Estado de cuenta obtenido:', response)
       setEstadoCuenta(response?.data || response)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -53,14 +51,8 @@ export const useCuotas = () => {
     setError(null)
     try {
       const data = await registrarPago(payload)
-      console.log(payload)
-      console.log('Pago registrado correctamente:', data)
-
-      // Refetch del estado de cuenta si existe
-      if (estadoCuenta) {
-        await fetchEstadoCuenta(Number(estadoCuenta.numeroCasa))
-      }
-
+      fetchCasas()
+      
       return data
     } catch (err) {
       if (err instanceof Error) {
@@ -76,7 +68,7 @@ export const useCuotas = () => {
     } finally {
       setLoading(false)
     }
-  }, [estadoCuenta, fetchEstadoCuenta])
+  }, [fetchCasas])
 
   return {
     casas,
