@@ -19,7 +19,6 @@ export const getPorCobrar = async () => {
 export const registrarPago = async (payload: PagoPayload) => {
   try {
     const { data } = await apiClient.post("/pago", payload);
-    console.log(data.message)
     return data;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

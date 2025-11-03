@@ -19,6 +19,11 @@ export const useCuotas = () => {
       setCasas(response?.data || [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
+      // Si el error es 400 con mensaje de "no hay casas", simplemente establecer casas vacías
+      if (err.response?.status === 400 && err.response?.data?.message?.includes('No hay casas')) {
+        setCasas([])
+        return
+      }
       console.error('Error al obtener estados de cuenta:', err)
       setError('No se pudieron obtener los estados de cuenta.')
     } finally {
@@ -51,13 +56,12 @@ export const useCuotas = () => {
     setError(null)
     try {
       const data = await registrarPago(payload)
-      fetchCasas()
-      
+      // Actualizar la lista de casas después de registrar el pago
+      await fetchCasas()
       return data
     } catch (err) {
       if (err instanceof Error) {
         console.error('Error al registrar pago:', err)
-        // Try to extract a message from a possible "response" property, otherwise fallback to generic message
         const responseErr = (err as { response?: { data?: { message?: string } } })
         setError(responseErr.response?.data?.message || 'Error al registrar el pago')
       } else {

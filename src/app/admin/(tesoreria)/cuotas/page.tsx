@@ -299,7 +299,7 @@ export default function CuotasPage() {
     setSelectedCasa(casa)
     setSelectedObligacion(obligacion) // Preseleccionar la obligación
     form.reset({
-      obligacionId: obligacion.id,
+      obligacionId: String(obligacion.id), // Asegurar que sea string
       monto: obligacion.saldoPendiente,
     })
     setShowAllErrors(false)
@@ -307,9 +307,8 @@ export default function CuotasPage() {
   }, [form])
 
   const handleFormSubmit = async (data: PagoFormData) => {
-
     // Validación adicional: verificar que el monto no supere el saldo pendiente
-    const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === data.obligacionId)
+    const obligacion = selectedCasa?.obligacionesPendientes.find(o => String(o.id) === String(data.obligacionId))
     if (obligacion && data.monto > obligacion.saldoPendiente) {
       form.setError('monto', {
         type: 'manual',
@@ -319,20 +318,20 @@ export default function CuotasPage() {
     }
 
     if (!selectedCasa) {
-      console.error("No hay casa seleccionada");
       return;
     }
 
+    const payload = {
+      soporte: selectedCasa.numeroCasa.toString(),
+      idObligacion: Number(data.obligacionId),
+      montoAPagar: data.monto,
+    }
+
     try {
-
-      await handleRegistrarPago({
-        soporte: selectedCasa.numeroCasa.toString(),
-        idObligacion: Number(data.obligacionId),
-        montoAPagar: data.monto,
-      });
-
+      await handleRegistrarPago(payload);
       setIsSheetOpen(false);
       form.reset();
+      setSelectedObligacion(null);
     } catch (error) {
       console.error("Error al registrar pago", error);
       alert("Error al registrar el pago. Por favor, inténtalo de nuevo.");
@@ -713,14 +712,19 @@ export default function CuotasPage() {
 
             <form
               id="pago-form"
-              onSubmit={form.handleSubmit(handleFormSubmit)}
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit(handleFormSubmit, (errors) => {
+                  setShowAllErrors(true);
+                })(e);
+              }}
               className="flex flex-col h-full"
             >
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-6 px-4">
                   {/* Información de la casa */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">Casa seleccionada</Label>
+                    <span className="text-sm font-medium text-gray-700 block">Casa seleccionada</span>
                     <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
                       {/* Background pattern */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
@@ -759,6 +763,8 @@ export default function CuotasPage() {
                           <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
                             <PopoverTrigger asChild>
                               <Button
+                                id="obligacion"
+                                name="obligacionId"
                                 variant="outline"
                                 role="combobox"
                                 mode="input"
@@ -784,7 +790,7 @@ export default function CuotasPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                               <Command>
-                                <CommandInput placeholder="Buscar obligación..." />
+                                <CommandInput placeholder="Buscar obligación..." name="buscar-obligacion" />
                                 <CommandList>
                                   <ScrollArea viewportClassName="max-h-[300px] [&>div]:block!">
                                     <CommandEmpty>No se encontró la obligación.</CommandEmpty>
@@ -799,7 +805,8 @@ export default function CuotasPage() {
                                               currency: 'COP',
                                             }).format(obligacion.saldoPendiente)}`}
                                             onSelect={() => {
-                                              field.onChange(obligacion.id)
+                                              const obligacionId = String(obligacion.id)
+                                              field.onChange(obligacionId)
                                               setSelectedObligacion(obligacion)
                                               form.setValue('monto', obligacion.saldoPendiente)
                                               setComboboxOpen(false)
@@ -852,6 +859,7 @@ export default function CuotasPage() {
                             </span>
                             <Input
                               id="monto"
+                              name="monto"
                               type="number"
                               placeholder="0"
                               value={field.value?.toString() || ''}
