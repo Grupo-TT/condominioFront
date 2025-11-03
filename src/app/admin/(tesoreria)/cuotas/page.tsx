@@ -204,7 +204,13 @@ function ObligacionesSubTable({
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
             </DataGridContainer>
-            <DataGridPagination className="pb-1.5" />
+            <DataGridPagination
+              className="pb-1.5"
+              rowsPerPageLabel="Filas por página"
+              info="{from} - {to} de {count}"
+              previousPageLabel="Ir a la página anterior"
+              nextPageLabel="Ir a la página siguiente"
+            />
           </div>
         </DataGrid>
       </div>
