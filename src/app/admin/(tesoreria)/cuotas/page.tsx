@@ -16,7 +16,6 @@ import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   ColumnDef,
@@ -50,13 +49,17 @@ import {
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Button, ButtonArrow } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  Command,
+  CommandCheck,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCuotas } from '@/hooks/useCuotas'
 
 
@@ -222,6 +225,7 @@ export default function CuotasPage() {
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
+  const [comboboxOpen, setComboboxOpen] = useState(false)
   const { casas, fetchCasas, fetchEstadoCuenta, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
@@ -746,51 +750,83 @@ export default function CuotasPage() {
                     <Controller
                       name="obligacionId"
                       control={form.control}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value)
-                            const obligacion = selectedCasa?.obligacionesPendientes.find(o => o.id === value)
-                            setSelectedObligacion(obligacion || null)
-                            if (obligacion) {
-                              console.log(obligacion)
-                              form.setValue('monto', obligacion.saldoPendiente)
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="h-16">
-                            <SelectValue placeholder="Selecciona una obligación pendiente">
-                              {selectedObligacion && (
-                                <div className="flex flex-col items-start text-left py-1">
-                                  <span className="font-medium text-gray-900">{selectedObligacion.motivo}</span>
-                                  <span className="text-sm text-gray-500 mt-1">
-                                    {new Intl.NumberFormat('es-CO', {
-                                      style: 'currency',
-                                      currency: 'COP',
-                                    }).format(selectedObligacion.saldoPendiente)}
-                                  </span>
-                                </div>
-                              )}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectedCasa?.obligacionesPendientes.map((obligacion) => (
-                              <SelectItem key={obligacion.id} value={obligacion.id} className="py-3">
-                                <div className="flex flex-col items-start">
-                                  <span className="font-medium text-gray-900">{obligacion.motivo}</span>
-                                  <span className="text-sm text-gray-500 mt-1">
-                                    {new Intl.NumberFormat('es-CO', {
-                                      style: 'currency',
-                                      currency: 'COP',
-                                    }).format(obligacion.saldoPendiente)}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      render={({ field }) => {
+                        const obligacionSeleccionada = field.value && selectedCasa?.obligacionesPendientes
+                          ? selectedCasa.obligacionesPendientes.find(o => String(o.id) === String(field.value))
+                          : null
+
+                        return (
+                          <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                mode="input"
+                                placeholder={!field.value}
+                                aria-expanded={comboboxOpen}
+                                className="w-full h-16 justify-between"
+                              >
+                                {obligacionSeleccionada ? (
+                                  <div className="flex flex-col items-start text-left w-full pr-8">
+                                    <span className="font-medium text-gray-900 leading-tight">{obligacionSeleccionada.motivo}</span>
+                                    <span className="text-sm text-gray-500 mt-1">
+                                      {new Intl.NumberFormat('es-CO', {
+                                        style: 'currency',
+                                        currency: 'COP',
+                                      }).format(obligacionSeleccionada.saldoPendiente)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">Selecciona una obligación pendiente</span>
+                                )}
+                                <ButtonArrow />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar obligación..." />
+                                <CommandList>
+                                  <ScrollArea viewportClassName="max-h-[300px] [&>div]:block!">
+                                    <CommandEmpty>No se encontró la obligación.</CommandEmpty>
+                                    <CommandGroup>
+                                      {selectedCasa?.obligacionesPendientes.map((obligacion) => {
+                                        const isSelected = String(field.value) === String(obligacion.id)
+                                        return (
+                                          <CommandItem
+                                            key={obligacion.id}
+                                            value={`${obligacion.motivo} ${new Intl.NumberFormat('es-CO', {
+                                              style: 'currency',
+                                              currency: 'COP',
+                                            }).format(obligacion.saldoPendiente)}`}
+                                            onSelect={() => {
+                                              field.onChange(obligacion.id)
+                                              setSelectedObligacion(obligacion)
+                                              form.setValue('monto', obligacion.saldoPendiente)
+                                              setComboboxOpen(false)
+                                            }}
+                                            className="py-3"
+                                          >
+                                            <div className="flex flex-col items-start flex-1 min-w-0 pr-8">
+                                              <span className="font-medium text-gray-900">{obligacion.motivo}</span>
+                                              <span className="text-sm text-gray-500 mt-1">
+                                                {new Intl.NumberFormat('es-CO', {
+                                                  style: 'currency',
+                                                  currency: 'COP',
+                                                }).format(obligacion.saldoPendiente)}
+                                              </span>
+                                            </div>
+                                            {isSelected && <CommandCheck className="ms-auto" />}
+                                          </CommandItem>
+                                        )
+                                      })}
+                                    </CommandGroup>
+                                  </ScrollArea>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        )
+                      }}
                     />
                   </div>
 
@@ -823,7 +859,7 @@ export default function CuotasPage() {
                                 const value = e.target.value
                                 field.onChange(value ? parseFloat(value) : 0)
                               }}
-                              className={`w-full h-12 pl-8 text-lg font-medium ${fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
+                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
                                 }`}
                             />
                           </div>
