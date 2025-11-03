@@ -96,14 +96,9 @@ export default function RecursosPage() {
         setLoading(true)
         const list = await recursoService.getRecurso()
         if (!mounted) return
-        // El backend puede devolver directamente un array o un objeto { data: [...] }
-        // Normalizamos a un array antes de mapear
+        // El servicio ya devuelve un array normalizado
         console.debug('[recursos] raw response:', list)
-        const items = Array.isArray(list)
-          ? list
-          : (list && typeof list === 'object' && 'data' in list && Array.isArray(list.data))
-            ? list.data
-            : []
+        const items = Array.isArray(list) ? list : []
 
         setRecursosResponse(items)
         setRecursos(items.map(mapResponseToUI))
