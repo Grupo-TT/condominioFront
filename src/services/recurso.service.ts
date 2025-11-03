@@ -1,4 +1,3 @@
-import { get } from 'http';
 import { apiClient } from '../lib/config/axios.config'
 import { RecursoRequest, RecursoResponse } from '../types/recursos.types';
 
@@ -20,7 +19,7 @@ export const recursoService = {
         const response = await apiClient.get(`/recurso/all`);
         const body = response.data
         if (Array.isArray(body)) return body as RecursoResponse[]
-        if (body && typeof body === 'object' && Array.isArray((body as any).data)) return (body as any).data as RecursoResponse[]
+        if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
         return []
     }
 }

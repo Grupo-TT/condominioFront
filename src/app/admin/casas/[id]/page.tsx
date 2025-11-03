@@ -2,12 +2,13 @@
 
 import { useRouter, useParams } from 'next/navigation'
 import { useMemo } from 'react'
+import { useCasaContext } from '@/contexts/CasaContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, NotificationSquareIcon, Door01Icon, UserGroupIcon, User03Icon } from '@hugeicons/core-free-icons'
-import { ArrowLeft, Edit, Trash2, Users, Heart, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -39,8 +40,19 @@ export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
   const numeroCasa = params.id as string
+  const { getCasaFromCache, clearCasaCache } = useCasaContext()
   
-  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa)
+  // Leer la casa del contexto (más rápido que sessionStorage, sin serialización)
+  const casaPrecargada = useMemo(() => {
+    const casa = getCasaFromCache(numeroCasa)
+    // Limpiar del caché después de leerlo para liberar memoria
+    if (casa) {
+      clearCasaCache(numeroCasa)
+    }
+    return casa
+  }, [numeroCasa, getCasaFromCache, clearCasaCache])
+  
+  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa, casaPrecargada)
 
   const propietarioMiembro = useMemo(() => {
     return miembros.find((m) => m.tipoMiembro === 'PROPIETARIO')
@@ -53,6 +65,13 @@ export default function CasaDetailPage() {
       0
     )
   }, [casaSeleccionada])
+
+  const miembrosFiltrados = useMemo(() => {
+    return miembros.filter(miembro => {
+      const tipo = miembro.tipoMiembro.toUpperCase()
+      return tipo !== 'PROPIETARIO' && tipo !== 'ARRENDATARIO'
+    })
+  }, [miembros])
 
   // Función helper para determinar el género según el tipo de miembro
   const getGenderFromTipoMiembro = (tipoMiembro: string): 'masculino' | 'femenino' | 'neutro' => {
@@ -181,7 +200,7 @@ export default function CasaDetailPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Casa {casaSeleccionada?.numeroCasa}</BreadcrumbPage>
+                <BreadcrumbPage>Casa No. {casaSeleccionada?.numeroCasa}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -251,17 +270,25 @@ export default function CasaDetailPage() {
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {/* Tarjeta principal con toda la información */}
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-16 gap-y-6">
               {/* NOMBRE */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   NOMBRE
                 </label>
                 <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.nombreCompleto}</p>
               </div>
 
+              {/* TELEFONO */}
+              <div className="space-y-2 min-w-0">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  TELEFONO
+                </label>
+                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.telefono}</p>
+              </div>
+
               {/* EMAIL */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 -ml-8">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   EMAIL
                 </label>
@@ -269,7 +296,7 @@ export default function CasaDetailPage() {
               </div>
 
               {/* DOCUMENTO */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   DOCUMENTO
                 </label>
@@ -278,39 +305,31 @@ export default function CasaDetailPage() {
                 </p>
               </div>
 
-              {/* TELEFONO */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  TELEFONO
-                </label>
-                <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.propietario.telefono}</p>
-              </div>
-
               {/* ESTADO */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   ESTADO
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <HugeiconsIcon
                     icon={NotificationSquareIcon}
                     size={18}
-                    className="text-gray-500"
+                    className="text-gray-500 flex-shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.estadoFinancieroCasa}</p>
                 </div>
               </div>
 
               {/* ROL */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   ROL
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <HugeiconsIcon
                     icon={Door01Icon}
                     size={18}
-                    className="text-gray-500"
+                    className="text-gray-500 flex-shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
                     {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendatario' : 'Propietario'}
@@ -319,27 +338,27 @@ export default function CasaDetailPage() {
               </div>
 
               {/* MIEMBROS */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0 -ml-8">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   MIEMBROS
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <HugeiconsIcon
                     icon={UserGroupIcon}
                     size={18}
-                    className="text-gray-500"
+                    className="text-gray-500 flex-shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.cantidadMiembros}</p>
                 </div>
               </div>
 
               {/* MASCOTAS */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   MASCOTAS
                 </label>
-                <div className="flex items-center gap-2">
-                  <PawPrint className="w-5 h-5 text-gray-500" />
+                <div className="flex items-center gap-2 min-w-0">
+                  <PawPrint className="w-5 h-5 text-gray-500 flex-shrink-0" />
                   <p className="text-lg font-bold text-gray-900">
                     {totalMascotas}
                   </p>
@@ -389,63 +408,78 @@ export default function CasaDetailPage() {
                       {/* Miembros */}
                       <div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {miembros.filter(miembro => {
-                              const tipo = miembro.tipoMiembro.toUpperCase()
-                              return tipo !== 'PROPIETARIO' && tipo !== 'ARRENDATARIO'
-                            }).map((miembro, index) => {
-                              const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
-                              const colorConfig = genero === 'femenino' 
-                                ? { bg: 'bg-pink-100', text: 'text-pink-600' }
-                                : genero === 'masculino'
-                                ? { bg: 'bg-blue-100', text: 'text-blue-600' }
-                                : { bg: 'bg-gray-100', text: 'text-gray-600' }
-                              
-                              return (
-                            <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                {/* Header con icono y nombre */}
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
-                                    <HugeiconsIcon
-                                      icon={User03Icon}
-                                      size={20}
-                                      className={colorConfig.text}
-                                    />
+                          {miembrosFiltrados.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {miembrosFiltrados.map((miembro, index) => {
+                                const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
+                                const colorConfig = genero === 'femenino' 
+                                  ? { bg: 'bg-pink-100', text: 'text-pink-600' }
+                                  : genero === 'masculino'
+                                  ? { bg: 'bg-blue-100', text: 'text-blue-600' }
+                                  : { bg: 'bg-gray-100', text: 'text-gray-600' }
+                                
+                                return (
+                              <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                  {/* Header con icono y nombre */}
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
+                                      <HugeiconsIcon
+                                        icon={User03Icon}
+                                        size={20}
+                                        className={colorConfig.text}
+                                      />
+                                    </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {miembro.tipoMiembro}
+                                      </Badge>
+                                    </div>
                                   </div>
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {miembro.tipoMiembro}
-                                    </Badge>
+                                </div>
+
+                                {/* Información */}
+                                <div className="space-y-2">
+                                  <div className="flex gap-4">
+                                    <div className="flex-1">
+                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
+                                      <p className="text-sm text-gray-900">
+                                         {miembro.numeroDocumento}
+                                      </p>
+                                    </div>
+                                    <div className="flex-1">
+                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
+                                      <p className="text-sm text-gray-900">{miembro.telefono}</p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
+                                    <p className="text-sm text-gray-900 truncate" title={miembro.email || 'Información no disponible'}>
+                                      {miembro.email || 'Información no disponible'}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
-
-                              {/* Información */}
-                              <div className="space-y-2">
-                                <div className="flex gap-4">
-                                  <div className="flex-1">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
-                                    <p className="text-sm text-gray-900">
-                                       {miembro.numeroDocumento}
-                                    </p>
-                                  </div>
-                                  <div className="flex-1">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
-                                    <p className="text-sm text-gray-900">{miembro.telefono}</p>
-                                  </div>
+                            )})}
+                          </div>
+                          ) : (
+                            <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <HugeiconsIcon
+                                    icon={UserGroupIcon}
+                                    size={24}
+                                    className="text-gray-400"
+                                  />
                                 </div>
-                                <div>
-                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                  <p className="text-sm text-gray-900 truncate" title={miembro.email || 'Información no disponible'}>
-                                    {miembro.email || 'Información no disponible'}
-                                  </p>
+                                <div className="space-y-0.5">
+                                  <p className="text-base font-semibold text-gray-700">No hay miembros registrados</p>
+                                  <p className="text-sm text-gray-500">Esta vivienda no tiene miembros adicionales registrados</p>
                                 </div>
                               </div>
                             </div>
-                          )})}
-                        </div>
+                          )}
                       </div>
 
                       {/* Mascotas */}
@@ -524,9 +558,16 @@ export default function CasaDetailPage() {
                               )}
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 text-gray-500 py-4">
-                              <Heart className="w-5 h-5 text-gray-400" />
-                              <p className="text-sm">No hay mascotas registradas</p>
+                            <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <PawPrint className="w-6 h-6 text-gray-400" />
+                                </div>
+                                <div className="space-y-0.5">
+                                  <p className="text-base font-semibold text-gray-700">No hay mascotas registradas</p>
+                                  <p className="text-sm text-gray-500">Esta vivienda no tiene mascotas registradas</p>
+                                </div>
+                              </div>
                             </div>
                           )}
                         </div>

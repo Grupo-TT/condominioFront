@@ -7,6 +7,7 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -66,7 +67,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
+import { RecursoResponse } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
 import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
 import type { RecursoUI } from '@/services/recurso.adapter'
@@ -74,6 +75,7 @@ import type { RecursoUI } from '@/services/recurso.adapter'
 export default function RecursosPage() {
   const [recursos, setRecursos] = useState<RecursoUI[]>([])
   const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
+  const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -91,21 +93,21 @@ export default function RecursosPage() {
     let mounted = true
     async function loadRecursos() {
       try {
+        setLoading(true)
         const list = await recursoService.getRecurso()
         if (!mounted) return
-        // El backend puede devolver directamente un array o un objeto { data: [...] }
-        // Normalizamos a un array antes de mapear
+        // El servicio ya devuelve un array normalizado
         console.debug('[recursos] raw response:', list)
-        const items = Array.isArray(list)
-          ? list
-          : (list && Array.isArray((list as any).data))
-            ? (list as any).data
-            : []
+        const items = Array.isArray(list) ? list : []
 
         setRecursosResponse(items)
         setRecursos(items.map(mapResponseToUI))
       } catch (err) {
         console.error('Error cargando recursos:', err)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
     loadRecursos()
@@ -159,8 +161,6 @@ export default function RecursosPage() {
   const handleNuevoRecursoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
-
-    const tipoComun = formTipo === 'zona' ? 'ZONA' : 'OBJETO'
 
     if (isEditMode && selectedRecursoId) {
       const idNum = parseInt(selectedRecursoId)
@@ -233,6 +233,7 @@ export default function RecursosPage() {
         },
         size: 24,
         meta: {
+          skeleton: <Skeleton className="h-6 w-6 rounded-md" />,
           expandedContent: (row: RecursoUI) => (
             <div
               className="px-6 py-4 border-l-4"
@@ -283,6 +284,17 @@ export default function RecursosPage() {
         enableSorting: true,
         enableHiding: false,
         size: 220,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="w-8 h-8 rounded-lg" />
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'descripcion',
@@ -295,6 +307,9 @@ export default function RecursosPage() {
         ),
         enableSorting: false,
         size: 480,
+        meta: {
+          skeleton: <Skeleton className="h-4 w-64" />,
+        },
       },
       {
         accessorKey: 'tipo',
@@ -310,6 +325,9 @@ export default function RecursosPage() {
         ),
         enableSorting: true,
         size: 120,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-16" />,
+        },
       },
       {
         accessorKey: 'estado',
@@ -325,6 +343,9 @@ export default function RecursosPage() {
         ),
         enableSorting: true,
         size: 140,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-24" />,
+        },
       },
       {
         id: 'actions',
@@ -397,6 +418,9 @@ export default function RecursosPage() {
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
     [setRecursos]
@@ -506,6 +530,8 @@ export default function RecursosPage() {
               <DataGrid
                 table={table}
                 recordCount={filteredData?.length || 0}
+                loadingMode="skeleton"
+                isLoading={loading}
                 tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
               >
             <div className="w-full space-y-2.5">
