@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -273,7 +273,7 @@ export default function CuotasPage() {
   })
 
   // Función para abrir el sheet desde una casa
-  const handleCasaClick = (casa: CuotaCasa) => {
+  const handleCasaClick = useCallback((casa: CuotaCasa) => {
     setSelectedCasa(casa)
     setSelectedObligacion(null) // No preseleccionar obligación
     form.reset({
@@ -282,10 +282,10 @@ export default function CuotasPage() {
     })
     setShowAllErrors(false)
     setIsSheetOpen(true)
-  }
+  }, [form])
 
   // Función para abrir el sheet desde una obligación específica
-  const handleObligacionClick = (casa: CuotaCasa, obligacion: Obligacion) => {
+  const handleObligacionClick = useCallback((casa: CuotaCasa, obligacion: Obligacion) => {
     setSelectedCasa(casa)
     setSelectedObligacion(obligacion) // Preseleccionar la obligación
     form.reset({
@@ -294,7 +294,7 @@ export default function CuotasPage() {
     })
     setShowAllErrors(false)
     setIsSheetOpen(true)
-  }
+  }, [form])
 
   const handleFormSubmit = (data: PagoFormData) => {
     // Validación adicional: verificar que el monto no supere el saldo pendiente
