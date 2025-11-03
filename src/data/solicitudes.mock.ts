@@ -114,17 +114,6 @@ export const solicitudesData: Solicitud[] = [
     descripcion: 'Solicitud para la ampliación y mejoramiento de la zona de parqueaderos del conjunto residencial.\n\nMotivo:\n- El número actual de parqueaderos es insuficiente para la cantidad de vehículos de los residentes\n- Muchos residentes deben estacionar sus vehículos fuera del conjunto\n- Falta de organización en la asignación de espacios\n\nPropuesta:\n1. Evaluar la posibilidad de construir un segundo nivel de parqueadero\n2. Optimizar el espacio actual mediante mejor señalización\n3. Implementar sistema de rotación si es necesario\n4. Considerar alquiler de espacios adicionales cercanos\n\nSe solicita una reunión con la administración y una consulta con todos los propietarios para evaluar las opciones disponibles y sus costos asociados.'
   },
   {
-    id: '8',
-    casaId: '8',
-    numeroCasa: '22',
-    propietario: 'Patricia Gómez Méndez',
-    titulo: 'Petición para implementar sistema de energía solar',
-    tipo: 'peticion',
-    fecha: '2024-02-01',
-    estado: 'pendiente',
-    descripcion: 'Propuesta para la instalación de paneles solares en las áreas comunes del conjunto residencial.\n\nBeneficios:\n- Reducción significativa en los costos de energía eléctrica\n- Contribución al cuidado del medio ambiente\n- Aumento del valor de las propiedades\n- Independencia energética parcial\n\nImplementación propuesta:\n1. Instalación de paneles solares en techos de áreas comunes\n2. Sistemas de iluminación LED con energía solar\n3. Sistema de respaldo para iluminación de emergencia\n4. Inversión inicial recuperable en 5-7 años\n\nSe ha realizado un estudio preliminar que muestra viabilidad técnica y económica. Se requiere aprobación de la asamblea de propietarios para proceder con la implementación.'
-  },
-  {
     id: '9',
     casaId: '9',
     numeroCasa: '25',
