@@ -14,7 +14,7 @@ export default function SonnerDemo() {
         size="sm"
         onClick={() =>
           toast.custom(
-            (t) => (
+            () => (
               <Alert variant="default">
                 <div>
                   <RiCheckboxCircleFill />
@@ -36,7 +36,7 @@ export default function SonnerDemo() {
         size="sm"
         onClick={() =>
           toast.custom(
-            (t) => (
+            () => (
               <Alert variant="default">
                 <div>
                   <RiCheckboxCircleFill />
@@ -58,7 +58,7 @@ export default function SonnerDemo() {
         size="sm"
         onClick={() =>
           toast.custom(
-            (t) => (
+            () => (
               <Alert variant="default">
                 <div>
                   <RiSpam3Fill />
@@ -80,7 +80,7 @@ export default function SonnerDemo() {
         size="sm"
         onClick={() =>
           toast.custom(
-            (t) => (
+            () => (
               <Alert variant="destructive">
                 <div>
                   <RiErrorWarningFill />
