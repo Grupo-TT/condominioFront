@@ -1,0 +1,33 @@
+// src/services/recurso.adapter.ts (ejemplo)
+import type { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
+
+// Tipo usado por la UI: forma adaptada de la respuesta de la API
+export type RecursoUI = Omit<RecursoResponse, 'id'> & {
+  id: string
+  tipo: 'zona' | 'objeto'
+  estado: string
+  habilitado: boolean
+}
+
+export function mapFormToRequest(form: { nombre: string; descripcion: string; tipo: 'zona'|'objeto' | '' }, disponibilidad?: DisponibilidadRecurso) : RecursoRequest {
+  return {
+    nombre: form.nombre,
+    descripcion: form.descripcion,
+    tipoRecursoComun: form.tipo === 'zona' ? 'ZONA' : 'OBJETO',
+    disponibilidadRecurso: disponibilidad || 'DISPONIBLE'
+  }
+}
+
+export function mapResponseToUI(resp: RecursoResponse): RecursoUI {
+  const tipo = resp.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto'
+  return {
+    id: resp.id != null ? resp.id.toString() : String(Date.now()),
+    nombre: resp.nombre,
+    descripcion: resp.descripcion,
+    tipo: tipo as 'zona' | 'objeto',
+    tipoRecursoComun: resp.tipoRecursoComun,
+    disponibilidadRecurso: resp.disponibilidadRecurso,
+    estado: resp.disponibilidadRecurso === 'DISPONIBLE' ? 'Disponible' : 'No disponible',
+    habilitado: resp.disponibilidadRecurso === 'DISPONIBLE'
+  }
+}

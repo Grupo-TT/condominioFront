@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
@@ -66,57 +66,14 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-
-type Recurso = {
-  id: string
-  nombre: string
-  descripcion: string
-  tipo: 'zona' | 'objeto'
-  estado: 'Disponible' | 'No disponible'
-  habilitado: boolean
-}
-
-const data: Recurso[] = [
-  {
-    id: '1',
-    nombre: 'Salón Comunal',
-    descripcion:
-      'Espacio amplio para reuniones de copropietarios, eventos y actividades sociales. Capacidad para 60 personas, incluye sillas y sonido básico.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-  {
-    id: '2',
-    nombre: 'Parque Infantil',
-    descripcion:
-      'Área de juegos para niños con columpios y resbaladero. Horario de 8am a 6pm. Se requiere supervisión de un adulto.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-  {
-    id: '3',
-    nombre: 'Proyector Epson X200',
-    descripcion:
-      'Proyector portátil de 3500 lúmenes, entradas HDMI/VGA. Se presta con control y cable HDMI. Reservas máximo por 4 horas.',
-    tipo: 'objeto',
-    estado: 'No disponible',
-    habilitado: false,
-  },
-  {
-    id: '4',
-    nombre: 'Parrillera Zona B',
-    descripcion:
-      'Parrillera de carbón en zona B. Incluye mesa lateral y lavaplatos. Se debe dejar limpia al finalizar.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-]
+import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
+import { recursoService } from '@/services/recurso.service'
+import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/recurso.adapter'
 
 export default function RecursosPage() {
-  const [recursos, setRecursos] = useState<Recurso[]>(data)
+  const [recursos, setRecursos] = useState<RecursoUI[]>([])
+  const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -130,13 +87,38 @@ export default function RecursosPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
 
+  useEffect(() => {
+    let mounted = true
+    async function loadRecursos() {
+      try {
+        const list = await recursoService.getRecurso()
+        if (!mounted) return
+        // El backend puede devolver directamente un array o un objeto { data: [...] }
+        // Normalizamos a un array antes de mapear
+        console.debug('[recursos] raw response:', list)
+        const items = Array.isArray(list)
+          ? list
+          : (list && Array.isArray((list as any).data))
+            ? (list as any).data
+            : []
+
+        setRecursosResponse(items)
+        setRecursos(items.map(mapResponseToUI))
+      } catch (err) {
+        console.error('Error cargando recursos:', err)
+      }
+    }
+    loadRecursos()
+    return () => { mounted = false }
+  }, [])
+
   const handleClearSearch = () => setSearchTerm('')
 
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
     return recursos.filter((r) => {
-      if (filterType === 'zonas' && r.tipo !== 'zona') return false
-      if (filterType === 'objetos' && r.tipo !== 'objeto') return false
+      if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
+      if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
       if (!term) return true
       return (
         r.nombre.toLowerCase().includes(term) ||
@@ -174,38 +156,63 @@ export default function RecursosPage() {
     return undefined
   }
 
-  const handleNuevoRecursoSubmit = (e: React.FormEvent) => {
+  const handleNuevoRecursoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
+
+    const tipoComun = formTipo === 'zona' ? 'ZONA' : 'OBJETO'
+
     if (isEditMode && selectedRecursoId) {
-      setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? {
-        ...r,
-        nombre: formNombre,
-        descripcion: formDescripcion,
-        tipo: formTipo as 'zona' | 'objeto',
-      } : r))
+      const idNum = parseInt(selectedRecursoId)
+      const existing = recursosResponse.find(r => r.id === idNum)
+      const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo }, existing?.disponibilidadRecurso)
+
+      try {
+        const updated = await recursoService.putRecurso(idNum, payload)
+
+        setRecursosResponse((prev) => prev.map((resp) => resp.id === idNum ? updated : resp))
+
+        setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? mapResponseToUI(updated) : r))
+
+        setIsSheetOpen(false)
+        setFormNombre('')
+        setFormDescripcion('')
+        setFormTipo('')
+        setIsEditMode(false)
+        setSelectedRecursoId(null)
+      } catch (err) {
+        console.error('Error actualizando recurso:', err)
+        setErrors((prev) => ({ ...prev, nombre: 'Error al actualizar el recurso. Intenta de nuevo.' }))
+      }
+
     } else {
-      setRecursos((prev) => [
-        ...prev,
-        {
-          id: (Math.max(0, ...prev.map(p => parseInt(p.id))) + 1).toString(),
-          nombre: formNombre,
-          descripcion: formDescripcion,
-          tipo: formTipo as 'zona' | 'objeto',
-          estado: 'Disponible',
-          habilitado: true,
-        },
-      ])
+      // Create new recurso via API
+      const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo })
+
+      try {
+        const created = await recursoService.postRecurso(payload)
+
+        setRecursosResponse((prev) => [...prev, created])
+
+        setRecursos((prev) => [
+          ...prev,
+          mapResponseToUI(created),
+        ])
+
+        setIsSheetOpen(false)
+        setFormNombre('')
+        setFormDescripcion('')
+        setFormTipo('')
+        setIsEditMode(false)
+        setSelectedRecursoId(null)
+      } catch (err) {
+        console.error('Error creando recurso:', err)
+        setErrors((prev) => ({ ...prev, nombre: 'Error al crear el recurso. Intenta de nuevo.' }))
+      }
     }
-    setIsSheetOpen(false)
-    setFormNombre('')
-    setFormDescripcion('')
-    setFormTipo('')
-    setIsEditMode(false)
-    setSelectedRecursoId(null)
   }
 
-  const columns = useMemo<ColumnDef<Recurso>[]>(
+  const columns = useMemo<ColumnDef<RecursoUI>[]>(
     () => [
       {
         id: 'expand',
@@ -226,7 +233,7 @@ export default function RecursosPage() {
         },
         size: 24,
         meta: {
-          expandedContent: (row: Recurso) => (
+          expandedContent: (row: RecursoUI) => (
             <div
               className="px-6 py-4 border-l-4"
               style={{ backgroundColor: '#4C6C5B14', borderLeftColor: '#4C6C5B' }}
@@ -399,8 +406,8 @@ export default function RecursosPage() {
     columns,
     data: filteredData,
     pageCount: Math.ceil((filteredData?.length || 0) / pagination.pageSize),
-    getRowId: (row: Recurso) => row.id,
-    getRowCanExpand: (row) => Boolean(row.original.descripcion),
+  getRowId: (row: RecursoUI) => row.id,
+  getRowCanExpand: (row) => Boolean(row.original.descripcion),
     state: {
       pagination,
       sorting,
