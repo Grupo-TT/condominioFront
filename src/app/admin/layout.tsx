@@ -6,6 +6,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { CasaProvider } from "@/contexts/CasaContext"
 
 export default function AdminLayout({
   children,
@@ -13,12 +14,14 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider>
-      <AdminSidebar />
-      <SidebarInset>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <CasaProvider>
+      <SidebarProvider>
+        <AdminSidebar />
+        <SidebarInset>
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </CasaProvider>
   )
 }
 

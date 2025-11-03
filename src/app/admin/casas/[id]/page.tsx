@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from 'next/navigation'
 import { useMemo } from 'react'
+import { useCasaContext } from '@/contexts/CasaContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -39,8 +40,19 @@ export default function CasaDetailPage() {
   const params = useParams()
   const router = useRouter()
   const numeroCasa = params.id as string
+  const { getCasaFromCache, clearCasaCache } = useCasaContext()
   
-  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa)
+  // Leer la casa del contexto (más rápido que sessionStorage, sin serialización)
+  const casaPrecargada = useMemo(() => {
+    const casa = getCasaFromCache(numeroCasa)
+    // Limpiar del caché después de leerlo para liberar memoria
+    if (casa) {
+      clearCasaCache(numeroCasa)
+    }
+    return casa
+  }, [numeroCasa, getCasaFromCache, clearCasaCache])
+  
+  const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa, casaPrecargada)
 
   const propietarioMiembro = useMemo(() => {
     return miembros.find((m) => m.tipoMiembro === 'PROPIETARIO')
