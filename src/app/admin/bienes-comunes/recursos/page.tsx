@@ -72,6 +72,7 @@ import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
 import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
 import type { RecursoUI } from '@/services/recurso.adapter'
+import { useRecurso } from '@/hooks/useRecurso'
 
 export default function RecursosPage() {
   const [recursos, setRecursos] = useState<RecursoUI[]>([])
@@ -89,6 +90,7 @@ export default function RecursosPage() {
   const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
+  const { habilitarRecurso, deshabilitarRecurso } = useRecurso()
 
   useEffect(() => {
     let mounted = true
@@ -385,8 +387,23 @@ export default function RecursosPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          setRecursos((prev) => prev.map((r) => r.id === row.original.id ? { ...r, habilitado: !r.habilitado } : r))
+                        onClick={async () => {
+                          try {
+                            const id = parseInt(row.original.id)
+                            const nuevoEstado = !row.original.habilitado
+                            if (nuevoEstado) {
+                              await habilitarRecurso(id)
+                            } else {
+                              await deshabilitarRecurso(id)
+                            }
+                            setRecursos(prev =>
+                              prev.map(r =>
+                                r.id === row.original.id ? { ...r, habilitado: nuevoEstado, estado: nuevoEstado ? 'Disponible' : 'No disponible' } : r
+                              )
+                            )
+                          } catch (err) {
+                            console.error('No se pudo actualizar el estado del recurso, por favor intenta nuevamente.', err)
+                          }
                         }}
                         className={row.original.habilitado ? 'bg-red-600 hover:bg-red-700' : 'text-white hover:opacity-90'}
                         style={row.original.habilitado ? undefined : { backgroundColor: '#4C6C5B' }}
