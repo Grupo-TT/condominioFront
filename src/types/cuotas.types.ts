@@ -24,7 +24,15 @@ export interface Multa {
   motivo: string;
   monto: number;
   fecha: string;
-  estado: 'pendiente' | 'pagada' | 'cancelada';
+  estadoPago: 'POR_COBRAR' | 'pagada' | 'cancelada';
   observaciones?: string;
   tipoPago?: 'efectivo' | 'labor-social';
+}
+
+export interface MultaForm {
+  idCasa: string | undefined;
+  monto: number;
+  titulo: string;
+  motivo: string;
+  // tipoPago: string | null;
 }

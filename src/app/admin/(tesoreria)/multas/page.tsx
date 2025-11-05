@@ -68,7 +68,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Multa } from '@/types/cuotas.types'
-import { multasData } from '@/data/multas.mock'
+import { useMultas } from '@/hooks/useMultas'
 
 export default function MultasPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -77,7 +77,7 @@ export default function MultasPage() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'pendiente' | 'pagada'>('pendiente')
+  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'pagada'>('POR_COBRAR')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<Multa | null>(null)
@@ -94,6 +94,9 @@ export default function MultasPage() {
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editValor, setEditValor] = useState('')
   const [editTipoPago, setEditTipoPago] = useState<'efectivo' | 'labor-social'>('efectivo')
+
+  const { multasData, loading, error, refreshMultas, nuevaMulta } = useMultas()
+  console.log(multasData)
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -116,15 +119,18 @@ export default function MultasPage() {
     setIsEditSheetOpen(true)
   }, [])
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Editando multa:', {
-      id: editingMulta?.id,
+    // Debe enviar el formato correcto a createNuevaMulta
+    const ok = await nuevaMulta({
+      idCasa: editingMulta?.id,
       titulo: editTitulo,
-      descripcion: editDescripcion,
-      valor: editValor,
-      tipoPago: editTipoPago
+      motivo: editDescripcion,
+      monto: Number(editValor),
+      // tipoPago: "DINERO"
     })
+
+    console.log(ok)
     // Aquí irá la llamada a la API para actualizar la multa
     setIsEditSheetOpen(false)
   }
@@ -140,11 +146,14 @@ export default function MultasPage() {
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredMultas = useMemo(() => {
+    if (!multasData || multasData.length === 0) return []
     const searchLower = searchTerm.toLowerCase()
-    
+
     return multasData.filter(multa => {
       // Filtrar por estado (siempre aplica)
-      if (multa.estado !== filterType) {
+      if (multa.estadoPago !== filterType) {
+        console.log(multa.estadoPago)
+        console.log(filterType)
         return false
       }
 
@@ -160,10 +169,11 @@ export default function MultasPage() {
 
       return true
     })
-  }, [searchTerm, filterType])
+  }, [searchTerm, multasData, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredMultas.length > 0
+  console.log(filteredMultas)
 
   const columns = useMemo<ColumnDef<Multa>[]>(
     () => [
@@ -178,10 +188,10 @@ export default function MultasPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={FileCorruptIcon} 
-                size={18} 
-                color="currentColor" 
+              <HugeiconsIcon
+                icon={FileCorruptIcon}
+                size={18}
+                color="currentColor"
                 strokeWidth={1.5}
                 className="text-gray-600"
               />
@@ -207,9 +217,9 @@ export default function MultasPage() {
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
         cell: ({ row }) => (
           <div className="flex items-center gap-2.5">
-            <HugeiconsIcon 
-              icon={Home07Icon} 
-              size={14} 
+            <HugeiconsIcon
+              icon={Home07Icon}
+              size={14}
               className="text-gray-400"
             />
             <div>
@@ -263,7 +273,7 @@ export default function MultasPage() {
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
         cell: ({ row }) => {
-          const estado = row.original.estado
+          const estado = row.original.estadoPago
           return (
             <Badge
               variant={estado === 'pagada' ? 'success' : 'destructive'}
@@ -272,11 +282,10 @@ export default function MultasPage() {
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  estado === 'pagada' ? 'bg-green-700' : 'bg-red-700'
-                }`}
+                className={`w-2 h-2 rounded-full ${estado === 'pagada' ? 'bg-green-700' : 'bg-red-700'
+                  }`}
               />
-              {estado === 'pagada' ? 'Pagada' : 'Pendiente'}
+              {estado === 'pagada' ? 'Pagada' : 'POR_COBRAR'}
             </Badge>
           )
         },
@@ -429,10 +438,10 @@ export default function MultasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'pendiente' | 'pagada')} className="space-y-4">
+          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'pagada')} className="space-y-4">
             <div className="flex items-center justify-between">
               <TabsList>
-                <TabsTrigger value="pendiente">Pendientes</TabsTrigger>
+                <TabsTrigger value="POR_COBRAR">Pendientes</TabsTrigger>
                 <TabsTrigger value="pagada">Pagadas</TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-3">
@@ -448,11 +457,11 @@ export default function MultasPage() {
                     ref={searchInputRef}
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -465,8 +474,31 @@ export default function MultasPage() {
               </div>
             </div>
 
-            <TabsContent value="pendiente">
-              {hasResults ? (
+            <TabsContent value="POR_COBRAR">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto animate-pulse" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    Cargando multas...
+                  </h3>
+                  <p className="text-gray-500 text-sm">Por favor espera un momento.</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-red-500 mb-2">
+                    <X className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    Error al cargar multas
+                  </h3>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                  <Button onClick={refreshMultas} className="mt-4">
+                    Reintentar
+                  </Button>
+                </div>
+              ) : hasResults ? (
                 <DataGrid
                   table={table}
                   recordCount={filteredMultas?.length || 0}
@@ -500,7 +532,7 @@ export default function MultasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay multas pendientes que coincidan con "${searchTerm}"`
                       : 'No hay multas pendientes'
                     }
@@ -544,7 +576,7 @@ export default function MultasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay multas pagadas que coincidan con "${searchTerm}"`
                       : 'No hay multas pagadas'
                     }
@@ -558,8 +590,8 @@ export default function MultasPage() {
 
       {/* Sheet de detalle */}
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250 p-0 flex flex-col"
           style={{ width: '420px', maxWidth: 'none' }}
         >
@@ -573,13 +605,12 @@ export default function MultasPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    selectedMulta.estado === 'pagada' ? 'bg-green-50' : 'bg-red-50'
-                  }`}>
-                    <HugeiconsIcon 
-                      icon={FileCorruptIcon} 
-                      size={18} 
-                      className={selectedMulta.estado === 'pagada' ? 'text-green-700' : 'text-red-600'}
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'pagada' ? 'bg-green-50' : 'bg-red-50'
+                    }`}>
+                    <HugeiconsIcon
+                      icon={FileCorruptIcon}
+                      size={18}
+                      className={selectedMulta.estadoPago === 'pagada' ? 'text-green-700' : 'text-red-600'}
                     />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900">{selectedMulta.motivo}</h3>
@@ -616,11 +647,11 @@ export default function MultasPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Estado:</div>
                       <Badge
-                        variant={selectedMulta.estado === 'pagada' ? 'success' : 'destructive'}
+                        variant={selectedMulta.estadoPago === 'pagada' ? 'success' : 'destructive'}
                         appearance="outline"
                         size="sm"
                       >
-                        {selectedMulta.estado === 'pagada' ? 'Pagada' : 'Pendiente'}
+                        {selectedMulta.estadoPago === 'pagada' ? 'Pagada' : 'POR_COBRAR'}
                       </Badge>
                     </div>
                   </div>
@@ -665,7 +696,7 @@ export default function MultasPage() {
 
               {/* Footer con acciones */}
               <div className="px-6 py-4 border-t border-gray-200">
-                <Button 
+                <Button
                   onClick={() => {
                     console.log('Editar multa:', selectedMulta.id)
                   }}
@@ -683,8 +714,8 @@ export default function MultasPage() {
 
       {/* Sheet de formulario para asignar multa */}
       <Sheet open={isFormSheetOpen} onOpenChange={setIsFormSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
           style={{ width: '500px', maxWidth: 'none' }}
         >
@@ -695,11 +726,18 @@ export default function MultasPage() {
             </SheetDescription>
           </SheetHeader>
 
-          <form 
+          <form
             onSubmit={(e) => {
               e.preventDefault()
-              console.log('Asignar multa:', { formCasa, formTitulo, formDescripcion, formValor })
+              const formNuevaMulta = {
+                idCasa: formCasa,
+                titulo: formTitulo,
+                motivo: formDescripcion,
+                monto: Number(formValor),
+                }
+              console.log('Asignar multa:', formNuevaMulta)
               // Aquí iría la lógica para guardar la multa
+              nuevaMulta(formNuevaMulta)
               setIsFormSheetOpen(false)
               // Limpiar formulario
               setFormCasa('')
@@ -721,9 +759,9 @@ export default function MultasPage() {
                       <SelectValue placeholder="Selecciona una casa">
                         {formCasa && (
                           <div className="flex items-center gap-2">
-                            <HugeiconsIcon 
-                              icon={Home07Icon} 
-                              size={16} 
+                            <HugeiconsIcon
+                              icon={Home07Icon}
+                              size={16}
                               className="text-gray-500"
                             />
                             <span>Casa No. {formCasa}</span>
@@ -735,9 +773,9 @@ export default function MultasPage() {
                       {Array.from({ length: 22 }, (_, i) => i + 1).map((num) => (
                         <SelectItem key={num} value={num.toString()}>
                           <div className="flex items-center gap-2">
-                            <HugeiconsIcon 
-                              icon={Home07Icon} 
-                              size={16} 
+                            <HugeiconsIcon
+                              icon={Home07Icon}
+                              size={16}
                               className="text-gray-500"
                             />
                             <span>Casa No. {num}</span>
@@ -797,9 +835,9 @@ export default function MultasPage() {
             </div>
 
             <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 className="flex-1"
                 onClick={() => {
                   setIsFormSheetOpen(false)
@@ -812,8 +850,8 @@ export default function MultasPage() {
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1"
                 disabled={!formCasa || !formTitulo || !formDescripcion || !formValor}
               >
@@ -827,7 +865,7 @@ export default function MultasPage() {
       {/* Sheet para Editar Multa */}
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <SheetContent side="right" className="sm:max-w-[540px] w-full p-0">
-          <form 
+          <form
             onSubmit={handleEditSubmit}
             className="flex flex-col h-full"
           >
@@ -846,9 +884,9 @@ export default function MultasPage() {
                     Casa
                   </Label>
                   <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
-                    <HugeiconsIcon 
-                      icon={Home07Icon} 
-                      size={16} 
+                    <HugeiconsIcon
+                      icon={Home07Icon}
+                      size={16}
                       className="text-gray-500"
                     />
                     <span className="text-sm">Casa No. {editingMulta?.numeroCasa} - {editingMulta?.propietario}</span>
@@ -943,16 +981,16 @@ export default function MultasPage() {
             </div>
 
             <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-4 border-t">
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 className="flex-1"
                 onClick={handleEditCancel}
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1"
                 disabled={!editTitulo || !editDescripcion || !editValor || !editTipoPago}
               >
