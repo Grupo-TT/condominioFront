@@ -9,7 +9,7 @@ interface UseMultasReturn {
   error: string | null
   refreshMultas: () => Promise<void>
   nuevaMulta: (multa: MultaForm) => Promise<void>
-  updateMulta: (id: number, multa: MultaForm) => Promise<void>
+  modificarMulta: (id: number, multa: MultaForm) => Promise<void>
 }
 
 export function useMultas(): UseMultasReturn {
@@ -54,10 +54,11 @@ export function useMultas(): UseMultasReturn {
   )
 
   // --- Actualizar multa existente ---
-  const updateMulta = useCallback(
+  const modificarMulta = useCallback(
     async (id: number, multa: MultaForm) => {
       try {
         const response = await updateMulta(id, multa)
+
         await fetchMultas()
       } catch (err: any) {
         console.error('Error actualizando multa:', err)
@@ -73,6 +74,6 @@ export function useMultas(): UseMultasReturn {
     error,
     refreshMultas: fetchMultas,
     nuevaMulta,
-    updateMulta,
+    modificarMulta,
   }
 }

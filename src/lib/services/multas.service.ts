@@ -25,7 +25,8 @@ export const createMulta = async (data: MultaForm) => {
     }
 }
 // PUT /obligacion/multa/edit/${id}
-export const updateMulta = async (id: string, data: MultaForm) => {
+export const updateMulta = async (id: number, data: MultaForm) => {
+    console.log(id,data)
     try {
         const response = await apiClient.put(`/obligacion/multa/edit/${id}`, data)
         console.log('Multa actualizada correctamente.', response.data)

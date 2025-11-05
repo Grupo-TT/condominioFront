@@ -69,6 +69,7 @@ import {
 } from '@tanstack/react-table'
 import { Multa } from '@/types/cuotas.types'
 import { useMultas } from '@/hooks/useMultas'
+import { updateMulta } from '@/lib/services/multas.service'
 
 export default function MultasPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -77,7 +78,7 @@ export default function MultasPage() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'CONDONADO'>('POR_COBRAR')
+  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'>('PENDIENTE')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<Multa | null>(null)
@@ -93,10 +94,9 @@ export default function MultasPage() {
   const [editTitulo, setEditTitulo] = useState('')
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editValor, setEditValor] = useState('')
-  const [editTipoPago, setEditTipoPago] = useState<'efectivo' | 'labor-social'>('efectivo')
+  const [editTipoPago, setEditTipoPago] = useState<'DINERO' | 'LABOR_SOCIAL'>('DINERO')
 
-  const { multasData, loading, error, refreshMultas, nuevaMulta } = useMultas()
-  console.log(multasData)
+  const { multasData, loading, error, refreshMultas, nuevaMulta, modificarMulta } = useMultas()
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -112,25 +112,23 @@ export default function MultasPage() {
 
   const handleEdit = useCallback((multa: Multa) => {
     setEditingMulta(multa)
-    setEditTitulo(multa.motivo)
-    setEditDescripcion(multa.observaciones || '')
+    setEditTitulo(multa.titulo)
+    setEditDescripcion(multa.motivo || '')
     setEditValor(multa.monto.toString())
-    setEditTipoPago(multa.tipoPago || 'efectivo')
+    setEditTipoPago(multa.tipoPago || 'DINERO')
     setIsEditSheetOpen(true)
   }, [])
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Debe enviar el formato correcto a createNuevaMulta
-    const ok = await nuevaMulta({
-      idCasa: editingMulta?.id,
+    const ok = await modificarMulta(Number(editingMulta?.id),{
       titulo: editTitulo,
       motivo: editDescripcion,
       monto: Number(editValor),
-      // tipoPago: "DINERO"
+      tipoPago: editTipoPago,
     })
 
-    console.log(ok)
     // Aquí irá la llamada a la API para actualizar la multa
     setIsEditSheetOpen(false)
   }
@@ -139,46 +137,50 @@ export default function MultasPage() {
     setEditTitulo('')
     setEditDescripcion('')
     setEditValor('')
-    setEditTipoPago('efectivo')
+    setEditTipoPago('DINERO')
     setEditingMulta(null)
     setIsEditSheetOpen(false)
   }
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredMultas = useMemo(() => {
-    if (!multasData || multasData.length === 0) return []
-    const searchLower = searchTerm.toLowerCase()
+    if (!multasData || multasData.length === 0) return [];
+    const searchLower = searchTerm.toLowerCase();
 
-    return multasData.filter(multa => {
-      // Filtrar por estado (siempre aplica)
-      if (multa.estadoPago !== filterType) {
-        console.log(multa.estadoPago)
-        console.log(filterType)
-        return false
+    return multasData.filter((multa) => {
+      // 🔹 Filtrar por estado agrupado
+      if (filterType === "PENDIENTE") {
+        if (multa.estadoPago !== "PENDIENTE" && multa.estadoPago !== "POR_COBRAR") {
+          return false;
+        }
+      } else if (filterType === "CONDONADO") {
+        if (multa.estadoPago !== "CONDONADO") {
+          return false;
+        }
       }
 
-      // Filtrar por término de búsqueda
+      // 🔹 Filtrar por término de búsqueda (si hay)
       if (searchTerm) {
         return (
-          multa.propietario.toLowerCase().includes(searchLower) ||
-          multa.numeroCasa.toLowerCase().includes(searchLower) ||
-          multa.motivo.toLowerCase().includes(searchLower) ||
-          multa.monto.toString().includes(searchLower)
-        )
+          multa.propietario?.toLowerCase().includes(searchLower) ||
+          multa.casa?.toString().toLowerCase().includes(searchLower) ||
+          multa.titulo?.toLowerCase().includes(searchLower) ||
+          multa.monto?.toString().includes(searchLower)
+        );
       }
 
-      return true
-    })
-  }, [searchTerm, multasData, filterType])
+      return true;
+    });
+  }, [multasData, filterType, searchTerm]);
+
 
   // Verificar si hay resultados
   const hasResults = filteredMultas.length > 0
-  console.log(filteredMultas)
 
   const columns = useMemo<ColumnDef<Multa>[]>(
     () => [
       {
-        accessorKey: 'motivo',
+        accessorKey: 'titulo',
         id: 'titulo',
         header: ({ column }) => (
           <div className="pl-[52px]">
@@ -201,9 +203,9 @@ export default function MultasPage() {
                 onClick={() => handleViewDetail(row.original)}
                 className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
               >
-                {row.original.motivo}
+                {row.original.titulo}
               </button>
-              <div className="text-sm text-gray-500 truncate">{row.original.observaciones || 'Sin descripción'}</div>
+              <div className="text-sm text-gray-500 truncate">{row.original.motivo || 'Sin descripción'}</div>
             </div>
           </div>
         ),
@@ -224,7 +226,7 @@ export default function MultasPage() {
             />
             <div>
               <div className="font-medium text-gray-900">{row.original.propietario}</div>
-              <div className="text-xs text-gray-500">Casa No.{row.original.numeroCasa}</div>
+              <div className="text-xs text-gray-500">Casa No.{row.original.casa}</div>
             </div>
           </div>
         ),
@@ -285,7 +287,11 @@ export default function MultasPage() {
                 className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : 'bg-red-700'
                   }`}
               />
-              {estado === 'CONDONADO' ? 'CONDONADO' : 'POR_COBRAR'}
+              {estado === 'CONDONADO'
+                ? 'CONDONADO'
+                : estado === 'PENDIENTE'
+                  ? 'PENDIENTE'
+                  : 'POR COBRAR'}
             </Badge>
           )
         },
@@ -297,14 +303,14 @@ export default function MultasPage() {
         id: 'tipoPago',
         header: ({ column }) => <DataGridColumnHeader title="Tipo de Pago" column={column} />,
         cell: ({ row }) => {
-          const tipoPago = row.original.tipoPago || 'efectivo'
+          const tipoPago = row.original.tipoPago || 'DINERO'
           return (
             <Badge
-              variant={tipoPago === 'efectivo' ? 'outline' : 'secondary'}
+              variant={tipoPago === 'DINERO' ? 'outline' : 'secondary'}
               appearance="light"
               size="md"
             >
-              {tipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}
+              {tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
             </Badge>
           )
         },
@@ -350,7 +356,7 @@ export default function MultasPage() {
                       <AlertDialogTitle>¿Eliminar multa?</AlertDialogTitle>
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se eliminará permanentemente la multa{' '}
-                        <strong>{row.original.motivo}</strong> del propietario{' '}
+                        <strong>{row.original.titulo}</strong> del propietario{' '}
                         <strong>{row.original.propietario}</strong>.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -438,10 +444,10 @@ export default function MultasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'CONDONADO')} className="space-y-4">
+          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE')} className="space-y-4">
             <div className="flex items-center justify-between">
               <TabsList>
-                <TabsTrigger value="POR_COBRAR">Pendientes</TabsTrigger>
+                <TabsTrigger value="PENDIENTE">Pendientes</TabsTrigger>
                 <TabsTrigger value="CONDONADO">Pagadas</TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-3">
@@ -474,7 +480,7 @@ export default function MultasPage() {
               </div>
             </div>
 
-            <TabsContent value="POR_COBRAR">
+            <TabsContent value="PENDIENTE">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-gray-400 mb-2">
@@ -613,10 +619,10 @@ export default function MultasPage() {
                       className={selectedMulta.estadoPago === 'CONDONADO' ? 'text-green-700' : 'text-red-600'}
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedMulta.motivo}</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{selectedMulta.titulo}</h3>
                 </div>
-                {selectedMulta.observaciones && (
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.observaciones}</p>
+                {selectedMulta.motivo && (
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.motivo}</p>
                 )}
               </div>
 
@@ -651,7 +657,12 @@ export default function MultasPage() {
                         appearance="outline"
                         size="sm"
                       >
-                        {selectedMulta.estadoPago === 'CONDONADO' ? 'CONDONADO' : 'POR_COBRAR'}
+                        {selectedMulta.estadoPago === 'CONDONADO'
+                          ? 'CONDONADO'
+                          : selectedMulta.estadoPago === 'PENDIENTE'
+                            ? 'PENDIENTE'
+                            : 'POR COBRAR'}
+
                       </Badge>
                     </div>
                   </div>
@@ -666,7 +677,7 @@ export default function MultasPage() {
                       </div>
                       <div className="flex justify-between">
                         <div className="text-xs text-gray-500">Casa:</div>
-                        <div className="text-sm text-gray-900">No. {selectedMulta.numeroCasa}</div>
+                        <div className="text-sm text-gray-900">No. {selectedMulta.casa}</div>
                       </div>
                     </div>
                   </div>
@@ -686,7 +697,7 @@ export default function MultasPage() {
                       <div className="flex justify-between">
                         <div className="text-xs text-gray-500">Tipo de pago:</div>
                         <div className="text-sm text-gray-900">
-                          {selectedMulta.tipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}
+                          {selectedMulta.tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
                         </div>
                       </div>
                     </div>
@@ -697,9 +708,7 @@ export default function MultasPage() {
               {/* Footer con acciones */}
               <div className="px-6 py-4 border-t border-gray-200">
                 <Button
-                  onClick={() => {
-                    console.log('Editar multa:', selectedMulta.id)
-                  }}
+                  onClick={() => handleEdit(selectedMulta)}
                   className="w-full"
                   variant="outline"
                 >
@@ -734,7 +743,7 @@ export default function MultasPage() {
                 titulo: formTitulo,
                 motivo: formDescripcion,
                 monto: Number(formValor),
-                }
+              }
               console.log('Asignar multa:', formNuevaMulta)
               // Aquí iría la lógica para guardar la multa
               nuevaMulta(formNuevaMulta)
@@ -889,7 +898,7 @@ export default function MultasPage() {
                       size={16}
                       className="text-gray-500"
                     />
-                    <span className="text-sm">Casa No. {editingMulta?.numeroCasa} - {editingMulta?.propietario}</span>
+                    <span className="text-sm">Casa No. {editingMulta?.casa} - {editingMulta?.propietario}</span>
                   </div>
                 </div>
 
@@ -929,29 +938,29 @@ export default function MultasPage() {
                   <Label htmlFor="edit-tipo-pago" className="text-sm font-medium">
                     Tipo de Pago <span className="text-red-500">*</span>
                   </Label>
-                  <Select value={editTipoPago} onValueChange={(value: 'efectivo' | 'labor-social') => setEditTipoPago(value)}>
+                  <Select value={editTipoPago} onValueChange={(value: 'DINERO' | 'LABOR_SOCIAL') => setEditTipoPago(value)}>
                     <SelectTrigger id="edit-tipo-pago">
                       <SelectValue placeholder="Selecciona el tipo de pago">
                         {editTipoPago && (
                           <div className="flex items-center gap-2">
-                            {editTipoPago === 'efectivo' ? (
+                            {editTipoPago === 'DINERO' ? (
                               <Banknote className="h-4 w-4 text-green-600" />
                             ) : (
                               <HandHeart className="h-4 w-4 text-blue-600" />
                             )}
-                            <span>{editTipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}</span>
+                            <span>{editTipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}</span>
                           </div>
                         )}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="efectivo">
+                      <SelectItem value="DINERO">
                         <div className="flex items-center gap-2">
                           <Banknote className="h-4 w-4 text-green-600" />
                           <span>Efectivo</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="labor-social">
+                      <SelectItem value="LABOR_SOCIAL">
                         <div className="flex items-center gap-2">
                           <HandHeart className="h-4 w-4 text-blue-600" />
                           <span>Labor Social</span>
