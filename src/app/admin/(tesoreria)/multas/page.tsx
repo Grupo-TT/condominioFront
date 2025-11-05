@@ -77,7 +77,7 @@ export default function MultasPage() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'pagada'>('POR_COBRAR')
+  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'CONDONADO'>('POR_COBRAR')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<Multa | null>(null)
@@ -276,16 +276,16 @@ export default function MultasPage() {
           const estado = row.original.estadoPago
           return (
             <Badge
-              variant={estado === 'pagada' ? 'success' : 'destructive'}
+              variant={estado === 'CONDONADO' ? 'success' : 'destructive'}
               appearance="outline"
               size="md"
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${estado === 'pagada' ? 'bg-green-700' : 'bg-red-700'
+                className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : 'bg-red-700'
                   }`}
               />
-              {estado === 'pagada' ? 'Pagada' : 'POR_COBRAR'}
+              {estado === 'CONDONADO' ? 'CONDONADO' : 'POR_COBRAR'}
             </Badge>
           )
         },
@@ -438,11 +438,11 @@ export default function MultasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'pagada')} className="space-y-4">
+          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'CONDONADO')} className="space-y-4">
             <div className="flex items-center justify-between">
               <TabsList>
                 <TabsTrigger value="POR_COBRAR">Pendientes</TabsTrigger>
-                <TabsTrigger value="pagada">Pagadas</TabsTrigger>
+                <TabsTrigger value="CONDONADO">Pagadas</TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-3">
                 <div className="relative w-80">
@@ -541,7 +541,7 @@ export default function MultasPage() {
               )}
             </TabsContent>
 
-            <TabsContent value="pagada">
+            <TabsContent value="CONDONADO">
               {hasResults ? (
                 <DataGrid
                   table={table}
@@ -605,12 +605,12 @@ export default function MultasPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'pagada' ? 'bg-green-50' : 'bg-red-50'
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
                     }`}>
                     <HugeiconsIcon
                       icon={FileCorruptIcon}
                       size={18}
-                      className={selectedMulta.estadoPago === 'pagada' ? 'text-green-700' : 'text-red-600'}
+                      className={selectedMulta.estadoPago === 'CONDONADO' ? 'text-green-700' : 'text-red-600'}
                     />
                   </div>
                   <h3 className="text-lg font-bold text-gray-900">{selectedMulta.motivo}</h3>
@@ -647,11 +647,11 @@ export default function MultasPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Estado:</div>
                       <Badge
-                        variant={selectedMulta.estadoPago === 'pagada' ? 'success' : 'destructive'}
+                        variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : 'destructive'}
                         appearance="outline"
                         size="sm"
                       >
-                        {selectedMulta.estadoPago === 'pagada' ? 'Pagada' : 'POR_COBRAR'}
+                        {selectedMulta.estadoPago === 'CONDONADO' ? 'CONDONADO' : 'POR_COBRAR'}
                       </Badge>
                     </div>
                   </div>

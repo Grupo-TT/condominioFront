@@ -24,7 +24,7 @@ export interface Multa {
   motivo: string;
   monto: number;
   fecha: string;
-  estadoPago: 'POR_COBRAR' | 'pagada' | 'cancelada';
+  estadoPago: 'POR_COBRAR' | 'CONDONADO' | 'cancelada';
   observaciones?: string;
   tipoPago?: 'efectivo' | 'labor-social';
 }
