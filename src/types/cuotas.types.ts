@@ -2,7 +2,7 @@ export interface Obligacion {
   id: string;
   motivo: string;
   valorTotal: number;
-  saldoPendiente: number;
+  valorPendiente: number;
   abonado: number;
 }
 

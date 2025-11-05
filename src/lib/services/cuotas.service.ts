@@ -8,7 +8,7 @@ export const getEstadoCuenta = async (casaId: number) => {
 
 export const getPorCobrar = async () => {
   try {
-    const { data } = await apiClient.get("/casa/por-cobrar");
+    const { data } = await apiClient.get("/casa/obligaciones-casa");
     return data;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

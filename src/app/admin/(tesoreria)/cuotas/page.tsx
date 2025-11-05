@@ -102,7 +102,7 @@ function ObligacionesSubTable({
         size: 150,
       },
       {
-        accessorKey: 'saldoPendiente',
+        accessorKey: 'valorPendiente',
         header: ({ column }) => <DataGridColumnHeader title="Saldo Pendiente" column={column} />,
         cell: (info) => {
           const value = info.getValue() as number
@@ -276,7 +276,6 @@ export default function CuotasPage() {
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
-
   // Formulario con validaciones
   const form = useForm<PagoFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -306,7 +305,7 @@ export default function CuotasPage() {
     setSelectedObligacion(obligacion) // Preseleccionar la obligación
     form.reset({
       obligacionId: String(obligacion.id), // Asegurar que sea string
-      monto: obligacion.saldoPendiente,
+      monto: obligacion.valorPendiente,
     })
     setShowAllErrors(false)
     setIsSheetOpen(true)
@@ -315,7 +314,7 @@ export default function CuotasPage() {
   const handleFormSubmit = async (data: PagoFormData) => {
     // Validación adicional: verificar que el monto no supere el saldo pendiente
     const obligacion = selectedCasa?.obligacionesPendientes.find(o => String(o.id) === String(data.obligacionId))
-    if (obligacion && data.monto > obligacion.saldoPendiente) {
+    if (obligacion && data.monto > obligacion.valorPendiente) {
       form.setError('monto', {
         type: 'manual',
         message: 'El valor ingresado supera la deuda actual.'
@@ -340,7 +339,7 @@ export default function CuotasPage() {
       setSelectedObligacion(null);
     } catch (error) {
       console.error("Error al registrar pago", error);
-      alert("Error al registrar el pago. Por favor, inténtalo de nuevo.");
+      console.log("Error al registrar el pago. Por favor, inténtalo de nuevo.");
     }
   }
 
@@ -380,10 +379,10 @@ export default function CuotasPage() {
         accessorKey: 'numeroCasa',
         id: 'numeroCasa',
         header: ({ column }) => <DataGridColumnHeader title="Número de Casa" column={column} />,
-        cell: ({ row }) => (
+        cell: ({ row}) => (
           <div>
             <div className="font-semibold text-gray-900">Casa No. {row.original.numeroCasa}</div>
-            <div className="text-sm text-gray-500">{row.original.propietario.nombreCompleto}</div>
+            <div className="text-sm text-gray-500">{row.original.propietario?.nombreCompleto ?? "Sin propietario"}</div>
           </div>
         ),
         size: 250,
@@ -745,7 +744,7 @@ export default function CuotasPage() {
                           </div>
                           <div className="space-y-1">
                             <h3 className="text-xl font-bold text-gray-900">Casa No. {selectedCasa?.numeroCasa}</h3>
-                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario.nombreCompleto}</p>
+                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario?.nombreCompleto ?? "Sin Propietario"}</p>
                           </div>
                         </div>
                       </div>
@@ -785,7 +784,7 @@ export default function CuotasPage() {
                                       {new Intl.NumberFormat('es-CO', {
                                         style: 'currency',
                                         currency: 'COP',
-                                      }).format(obligacionSeleccionada.saldoPendiente)}
+                                      }).format(obligacionSeleccionada.valorPendiente)}
                                     </span>
                                   </div>
                                 ) : (
@@ -809,12 +808,12 @@ export default function CuotasPage() {
                                             value={`${obligacion.motivo} ${new Intl.NumberFormat('es-CO', {
                                               style: 'currency',
                                               currency: 'COP',
-                                            }).format(obligacion.saldoPendiente)}`}
+                                            }).format(obligacion.valorPendiente)}`}
                                             onSelect={() => {
                                               const obligacionId = String(obligacion.id)
                                               field.onChange(obligacionId)
                                               setSelectedObligacion(obligacion)
-                                              form.setValue('monto', obligacion.saldoPendiente)
+                                              form.setValue('monto', obligacion.valorPendiente)
                                               setComboboxOpen(false)
                                             }}
                                             className="py-3"
@@ -825,7 +824,7 @@ export default function CuotasPage() {
                                                 {new Intl.NumberFormat('es-CO', {
                                                   style: 'currency',
                                                   currency: 'COP',
-                                                }).format(obligacion.saldoPendiente)}
+                                                }).format(obligacion.valorPendiente)}
                                               </span>
                                             </div>
                                             {isSelected && <CommandCheck className="ms-auto" />}
@@ -887,7 +886,7 @@ export default function CuotasPage() {
                       Saldo pendiente: {new Intl.NumberFormat('es-CO', {
                         style: 'currency',
                         currency: 'COP',
-                      }).format(selectedObligacion.saldoPendiente)}
+                      }).format(selectedObligacion.valorPendiente)}
                     </div>
                   )}
                 </div>
