@@ -1,12 +1,21 @@
 export interface Reserva {
     id: number;
-    recurso: string;
-    fecha: string;
+    recursoComun: RecursoComun;
+    fechaSolicitud: string;
     horaInicio: string;
     horaFin: string;
-    estado: "APROBADA" | "RECHAZADA" | "PENDIENTE";
     solicitante: {
+      nombreCompleto: string;
+    }
+    estadoSolicitud: "APROBADA" | "RECHAZADA" | "PENDIENTE";
+    casa: {
+      id: number;
       numeroCasa: number;
-      nombre: string;
     };
   }
+
+export interface RecursoComun {
+  nombre : string;
+  descripcion: string;
+  tipoRecursoComun : 'ZONA' | 'OBJETO';
+}

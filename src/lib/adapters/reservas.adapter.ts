@@ -5,25 +5,25 @@ import type { IEventExtended, IUser } from "@/types/reservas-calendar.types";
 export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
   return reservas.map((reserva) => {
     // Crear fecha de inicio combinando fecha y hora
-    const startDate = new Date(`${reserva.fecha}T${reserva.horaInicio}`);
-    const endDate = new Date(`${reserva.fecha}T${reserva.horaFin}`);
+    const startDate = new Date(`${reserva.fechaSolicitud}T${reserva.horaInicio}`);
+    const endDate = new Date(`${reserva.fechaSolicitud}T${reserva.horaFin}`);
 
     // Determinar el color basado en el tipo de recurso
-    const isZona = reserva.recurso.toLowerCase().includes('salón') || 
-                   reserva.recurso.toLowerCase().includes('piscina') ||
-                   reserva.recurso.toLowerCase().includes('gimnasio') ||
-                   reserva.recurso.toLowerCase().includes('cancha') ||
-                   reserva.recurso.toLowerCase().includes('bbq') ||
-                   reserva.recurso.toLowerCase().includes('sala') ||
-                   reserva.recurso.toLowerCase().includes('área');
+    const isZona = reserva.recursoComun.nombre.toLowerCase().includes('salón') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('piscina') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('gimnasio') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('cancha') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('bbq') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('sala') ||
+      reserva.recursoComun.nombre.toLowerCase().includes('área');
 
-    const tipoRecurso: 'Zona' | 'Objeto' = isZona ? 'Zona' : 'Objeto';
+    const tipoRecurso: 'ZONA' | 'OBJETO' = isZona ? 'ZONA' : 'OBJETO';
     const color: 'orange' | 'purple' = isZona ? 'orange' : 'purple';
 
     // Crear usuario basado en el solicitante
     const user: IUser = {
-      id: `propietario-${reserva.solicitante.numeroCasa}`,
-      name: reserva.solicitante.nombre,
+      id: reserva.casa.numeroCasa.toString(),
+      name: reserva.solicitante.nombreCompleto,
       picturePath: null,
     };
 
@@ -31,14 +31,14 @@ export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
       id: reserva.id,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      title: `Reserva - ${reserva.recurso}`,
+      title: `Reserva - ${reserva.recursoComun}`,
       color,
-      description: `Reserva de ${reserva.recurso} por ${reserva.solicitante.nombre}`,
+      description: `Reserva de ${reserva.recursoComun} por ${reserva.solicitante.nombreCompleto}`,
       user,
       tipoRecurso,
       numeroInvitados: 0, // No disponible en la API actual
-      casaNumero: reserva.solicitante.numeroCasa.toString(),
-      estado: reserva.estado.toLowerCase() as 'pendiente' | 'aprobada' | 'rechazada',
+      casaNumero: reserva.casa.numeroCasa.toString(),
+      estado: reserva.estadoSolicitud.toLowerCase() as 'PENDIENTE' | 'APROBADA' | 'RECHAZADA',
     };
   });
 }
@@ -46,13 +46,13 @@ export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
 // Función para obtener usuarios únicos de las reservas
 export function extractUsersFromReservas(reservas: Reserva[]): IUser[] {
   const userMap = new Map<string, IUser>();
-  
+
   reservas.forEach((reserva) => {
-    const userId = `propietario-${reserva.solicitante.numeroCasa}`;
-    if (!userMap.has(userId)) {
-      userMap.set(userId, {
-        id: userId,
-        name: reserva.solicitante.nombre,
+    const userId = reserva.casa.numeroCasa;
+    if (!userMap.has(userId.toString())) {
+      userMap.set(userId.toString(), {
+        id: userId.toString(),
+        name: reserva.solicitante.nombreCompleto,
         picturePath: null,
       });
     }
@@ -65,6 +65,6 @@ export function extractUsersFromReservas(reservas: Reserva[]): IUser[] {
 export function addColorToReservas(reservas: IEventExtended[]): IEventExtended[] {
   return reservas.map((reserva) => ({
     ...reserva,
-    color: reserva.tipoRecurso === 'Zona' ? 'orange' : 'purple',
+    color: reserva.tipoRecurso === 'ZONA' ? 'orange' : 'purple',
   }));
 }

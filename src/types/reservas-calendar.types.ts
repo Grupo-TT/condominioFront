@@ -1,7 +1,7 @@
 import type { IEvent, IUser } from '@/calendar/interfaces'
 
-export type TipoRecurso = 'Zona' | 'Objeto'
-export type EstadoReserva = 'pendiente' | 'aprobada' | 'rechazada'
+export type TipoRecurso = 'ZONA' | 'OBJETO'
+export type EstadoReserva = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA'
 
 export interface IEventExtended extends IEvent {
   tipoRecurso?: TipoRecurso

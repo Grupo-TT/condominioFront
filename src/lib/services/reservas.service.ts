@@ -15,7 +15,7 @@ export const reservasService = {
 
     async getReservasAprobadas(): Promise<Reserva[]> {
         try {
-            const response = await apiClient.get("/solicitud-recurso/reservas?estado=APROBADA");
+            const response = await apiClient.get("/solicitud-recurso/reservas?estado=APROBADA")
             return response.data.data || [];
         } catch (error) {
             console.error("Error al obtener reservas aprobadas:", error);
@@ -36,7 +36,7 @@ export const reservasService = {
     async getAllReservas(): Promise<Reserva[]> {
         try {
             const response = await apiClient.get("/solicitud-recurso/reservas");
-            return response.data.data || [];
+            return response.data || [];
         } catch (error) {
             console.error("Error al obtener todas las reservas:", error);
             throw error;
@@ -46,7 +46,7 @@ export const reservasService = {
     async createReserva(data: Partial<Reserva>): Promise<Reserva> {
         try {
             const response = await apiClient.post("/solicitud-recurso/reservas", data);
-            return response.data.data;
+            return response.data;
         } catch (error) {
             console.error("Error al crear reserva:", error);
             throw error;

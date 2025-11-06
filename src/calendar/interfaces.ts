@@ -4,7 +4,7 @@ export interface IUser {
   id: string;
   name: string;
   picturePath: string | null;
-  correo: string;
+  correo?: string;
 }
 
 export interface IEvent {

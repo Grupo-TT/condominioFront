@@ -1,4 +1,4 @@
-// 📁 src/hooks/useReserva.ts
+
 import { useEffect, useState } from "react";
 import { Reserva } from "@/types/reserva.types";
 import { reservasService } from "@/lib/services/reservas.service";
@@ -15,11 +15,13 @@ export function useReservas() {
     setLoading(true);
     setError(null);
     try {
-      const [aprobadas, rechazadas, pendientes] = await Promise.all([
-        reservasService.getReservasAprobadas(),
-        reservasService.getReservasRechazadas(),
-        reservasService.getReservasPendientes(),
-      ]);
+      
+      const aprobadas = await reservasService.getReservasAprobadas()
+      const rechazadas = await reservasService.getReservasRechazadas()
+      const pendientes = await reservasService.getReservasPendientes()
+
+      console.log(aprobadas)
+      
       setReservasAprobadas(aprobadas);
       setReservasRechazadas(rechazadas);
       setReservasPendientes(pendientes);
