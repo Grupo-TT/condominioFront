@@ -55,9 +55,9 @@ export function ReservasList({ reservas }: ReservasListProps) {
     }
   }, [reservas])
 
-  const extractEspacioName = (title: string): string => {
-    return title.replace('Reserva - ', '')
-  }
+  // const extractEspacioName = (title: string): string => {
+  //   return title.replace('Reserva - ', '')
+  // }
 
   // Colores y estilos según tipo de recurso (igual que en la vista de recursos)
   const getStylesByTipo = (tipo: 'Zona' | 'Objeto' | undefined) => {
@@ -103,7 +103,8 @@ export function ReservasList({ reservas }: ReservasListProps) {
         <TabsContent value={activeTab} className="mt-0">
           <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
             {reservasFiltradas.map((reserva) => {
-              const espacioNombre = extractEspacioName(reserva.title)
+              // const espacioNombre = extractEspacioName(reserva.title)
+              const espacioNombre = reserva.title
               const startDate = parseISO(reserva.startDate)
               const endDate = parseISO(reserva.endDate)
               const styles = getStylesByTipo(reserva.tipoRecurso)

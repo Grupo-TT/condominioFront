@@ -145,7 +145,7 @@ const generateReservasMock = (): IEventExtended[] => {
       id: currentId++,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      title: `Reserva - ${espacio.nombre}`,
+      title: espacio.nombre,
       color: 'gray', // El color se asignará dinámicamente según el tipoRecurso
       description: descripciones[espacio.nombre] || "Reserva de espacio común.",
       user: propietario,

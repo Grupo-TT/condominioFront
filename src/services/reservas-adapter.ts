@@ -117,7 +117,7 @@ export function transformReservaFromAPI(reservaAPI: ReservaFromAPI): IEventExten
     id: reservaAPI.id,
     startDate,
     endDate,
-    title: `Reserva - ${reservaAPI.recursoComun.nombre}`,
+    title: reservaAPI.recursoComun.nombre,
     color: 'gray', // Se asignará después con addColorToReservas()
     description: reservaAPI.recursoComun.descripcion,
     user: mapSolicitanteToUser(reservaAPI.solicitante, reservaAPI.casa),

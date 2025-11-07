@@ -4,6 +4,8 @@ import type { IEventExtended, IUser } from "@/types/reservas-calendar.types";
 // Función para convertir datos de la API al formato del calendario
 export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
   return reservas.map((reserva) => {
+    console.log("🧭 Reservas recibidas:", reservas);
+
     // Crear fecha de inicio combinando fecha y hora
     const startDate = new Date(`${reserva.fechaSolicitud}T${reserva.horaInicio}`);
     const endDate = new Date(`${reserva.fechaSolicitud}T${reserva.horaFin}`);
@@ -17,7 +19,7 @@ export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
       reserva.recursoComun.nombre.toLowerCase().includes('sala') ||
       reserva.recursoComun.nombre.toLowerCase().includes('área');
 
-    const tipoRecurso: 'ZONA' | 'OBJETO' = isZona ? 'ZONA' : 'OBJETO';
+    const tipoRecurso: 'Zona' | 'Objeto' = isZona ? 'Zona' : 'Objeto';
     const color: 'orange' | 'purple' = isZona ? 'orange' : 'purple';
 
     // Crear usuario basado en el solicitante
@@ -31,14 +33,14 @@ export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
       id: reserva.id,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      title: `Reserva - ${reserva.recursoComun}`,
+      title: reserva.recursoComun.nombre.toString(),
       color,
-      description: `Reserva de ${reserva.recursoComun} por ${reserva.solicitante.nombreCompleto}`,
+      description: `Reserva de ${reserva.recursoComun.nombre} por ${reserva.solicitante.nombreCompleto}`,
       user,
       tipoRecurso,
       numeroInvitados: 0, // No disponible en la API actual
       casaNumero: reserva.casa.numeroCasa.toString(),
-      estado: reserva.estadoSolicitud.toLowerCase() as 'PENDIENTE' | 'APROBADA' | 'RECHAZADA',
+      estado: reserva.estadoSolicitud.toLowerCase() as 'pendiente' | 'aprobada' | 'rechazada',
     };
   });
 }
@@ -65,6 +67,6 @@ export function extractUsersFromReservas(reservas: Reserva[]): IUser[] {
 export function addColorToReservas(reservas: IEventExtended[]): IEventExtended[] {
   return reservas.map((reserva) => ({
     ...reserva,
-    color: reserva.tipoRecurso === 'ZONA' ? 'orange' : 'purple',
+    color: reserva.tipoRecurso === 'Zona' ? 'orange' : 'purple',
   }));
 }

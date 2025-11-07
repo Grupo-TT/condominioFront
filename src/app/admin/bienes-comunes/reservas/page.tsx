@@ -30,13 +30,22 @@ export default function ReservasPage() {
   }, [reservasAprobadas, reservasRechazadas, reservasPendientes])
 
   // Adaptar reservas al formato del calendario
-  const reservasAdaptadas = useMemo(() => {
-    return adaptReservasToCalendar(todasLasReservas)
-  }, [todasLasReservas])
+  const reservasAprobadasAdaptadas = useMemo(() => {
+  return adaptReservasToCalendar(reservasAprobadas)
+}, [reservasAprobadas])
 
+const reservasTodasAdaptadas = useMemo(() => {
+  return adaptReservasToCalendar(todasLasReservas)
+}, [todasLasReservas])
   // Aplicar colores dinámicamente según el tipo de recurso
-  const reservasConColor = useMemo(() => addColorToReservas(reservasAdaptadas), [reservasAdaptadas])
-
+const reservasAprobadasConColor = useMemo(
+  () => addColorToReservas(reservasAprobadasAdaptadas),
+  [reservasAprobadasAdaptadas]
+)
+const reservasTodasConColor = useMemo(
+  () => addColorToReservas(reservasTodasAdaptadas),
+  [reservasTodasAdaptadas]
+)
   // Extraer usuarios únicos de las reservas
   const usuarios = useMemo(() => extractUsersFromReservas(todasLasReservas), [todasLasReservas])
 
@@ -172,7 +181,7 @@ export default function ReservasPage() {
           </div>
 
           {/* Layout de dos columnas: Calendario + Lista de Reservas */}
-          <CalendarProvider users={usuarios} events={reservasConColor}>
+          <CalendarProvider users={usuarios} events={reservasAprobadasConColor}>
             <div className="flex flex-col xl:flex-row gap-6 overflow-hidden min-h-0" style={{ height: 'calc(100vh - 210px)', maxHeight: '875px' }}>
               {/* Calendario de Reservas */}
               <div className="flex-1 min-w-0 max-w-full xl:max-w-[calc(100%-444px)]">
@@ -181,7 +190,7 @@ export default function ReservasPage() {
 
               {/* Lista de Reservas */}
               <div className="border rounded-xl p-4 bg-white overflow-hidden flex flex-col xl:w-[420px] xl:flex-shrink-0">
-                <ReservasList reservas={reservasConColor} />
+                <ReservasList reservas={reservasTodasConColor} />
               </div>
             </div>
           </CalendarProvider>
