@@ -4,7 +4,6 @@ import type { IEventExtended, IUser } from "@/types/reservas-calendar.types";
 // Función para convertir datos de la API al formato del calendario
 export function adaptReservasToCalendar(reservas: Reserva[]): IEventExtended[] {
   return reservas.map((reserva) => {
-    console.log("🧭 Reservas recibidas:", reservas);
 
     // Crear fecha de inicio combinando fecha y hora
     const startDate = new Date(`${reserva.fechaSolicitud}T${reserva.horaInicio}`);

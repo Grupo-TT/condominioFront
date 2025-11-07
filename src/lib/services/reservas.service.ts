@@ -1,4 +1,3 @@
-// 📁 src/lib/services/reservas.service.ts
 import apiClient from "../config/axios.config";
 import { Reserva } from "@/types/reserva.types";
 
@@ -33,6 +32,8 @@ export const reservasService = {
         }
     },
 
+    //Este no existe
+    //Necesita el estado
     async getAllReservas(): Promise<Reserva[]> {
         try {
             const response = await apiClient.get("/solicitud-recurso/reservas");
@@ -45,7 +46,7 @@ export const reservasService = {
 
     async createReserva(data: Partial<Reserva>): Promise<Reserva> {
         try {
-            const response = await apiClient.post("/solicitud-recurso/reservas", data);
+            const response = await apiClient.post("/solicitud-recurso/crear", data);
             return response.data;
         } catch (error) {
             console.error("Error al crear reserva:", error);
@@ -55,7 +56,7 @@ export const reservasService = {
 
     async updateReserva(id: number, data: Partial<Reserva>): Promise<Reserva> {
         try {
-            const response = await apiClient.put(`/solicitud-recurso/reservas/${id}`, data);
+            const response = await apiClient.put(`/solicitud-recurso/edit/${id}`, data);
             return response.data.data;
         } catch (error) {
             console.error("Error al actualizar reserva:", error);
@@ -65,9 +66,29 @@ export const reservasService = {
 
     async deleteReserva(id: number): Promise<void> {
         try {
-            await apiClient.delete(`/solicitud-recurso/reservas/${id}`);
+            await apiClient.delete(`/solicitud-recurso/delete/${id}`);
         } catch (error) {
             console.error("Error al eliminar reserva:", error);
+            throw error;
+        }
+    },
+    
+    async rejectReserva(id: number): Promise<Reserva> {
+        try {
+            const response = await apiClient.put(`/solicitud-recurso/reject/${id}`);
+            return response.data.data;
+        } catch (error) {
+            console.error("Error al actualizar reserva:", error);
+            throw error;
+        }
+    },
+
+    async approveReserva(id: number): Promise<Reserva> {
+        try {
+            const response = await apiClient.put(`/solicitud-recurso/approve/${id}`);
+            return response.data.data;
+        } catch (error) {
+            console.error("Error al actualizar reserva:", error);
             throw error;
         }
     }

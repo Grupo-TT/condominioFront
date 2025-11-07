@@ -55,3 +55,15 @@ export function useReservas() {
     recargar: cargarReservas,
   };
 }
+
+export async function aprobarReserva(id: number) {
+  await reservasService.approveReserva(id);
+}
+
+export async function rechazarReserva(id: number) {
+  await reservasService.rejectReserva(id);
+}
+
+export async function eliminarReserva(id: number) {
+  await reservasService.deleteReserva(id);
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Users, MapPin, Package, Home, MoreVertical, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react'
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { EditEventDialog } from '@/calendar/components/dialogs/edit-event-dialog'
 import type { IEventExtended } from '@/types/reservas-calendar.types'
+import { aprobarReserva,rechazarReserva,eliminarReserva} from '@/hooks/useReserva'
 
 interface ReservasListProps {
   reservas: IEventExtended[]
@@ -33,7 +34,10 @@ interface ReservasListProps {
 
 // Los tipos y constantes de estado se manejan directamente en el componente
 
-export function ReservasList({ reservas }: ReservasListProps) {
+interface ReservasListHandlerProps extends ReservasListProps {
+}
+
+export function ReservasList({ reservas }: ReservasListHandlerProps) {
   const [activeTab, setActiveTab] = useState('pendiente')
 
   // Filtrar y ordenar reservas por estado
@@ -199,6 +203,8 @@ export function ReservasList({ reservas }: ReservasListProps) {
                             className="h-8 text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
                             onClick={() => {
                               console.log('Aprobar reserva:', reserva.id)
+                              aprobarReserva(reserva.id)
+                              //recarga la lista solament
                             }}
                           >
                             <CheckCircle className="w-4 h-4 mr-1.5" />
@@ -209,7 +215,9 @@ export function ReservasList({ reservas }: ReservasListProps) {
                             variant="outline"
                             className="h-8 text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700"
                             onClick={() => {
+                              
                               console.log('Rechazar reserva:', reserva.id)
+                              rechazarReserva(reserva.id)
                             }}
                           >
                             <XCircle className="w-4 h-4 mr-1.5" />
@@ -261,6 +269,7 @@ export function ReservasList({ reservas }: ReservasListProps) {
                                   onClick={() => {
                                     console.log('Eliminar reserva:', reserva.id)
                                     // Aquí se implementará la lógica para eliminar la reserva
+                                    eliminarReserva(reserva.id)
                                   }}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
