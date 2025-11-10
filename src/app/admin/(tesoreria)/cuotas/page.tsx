@@ -332,9 +332,21 @@ export default function CuotasPage() {
       setIsSheetOpen(false);
       form.reset();
       setSelectedObligacion(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error al registrar pago", error);
-      const errorMessage = error.response?.data?.message || error.message || 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
+      let errorMessage = 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       alert(errorMessage);
     }
   }
@@ -736,7 +748,7 @@ export default function CuotasPage() {
               id="pago-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                form.handleSubmit(handleFormSubmit, (errors) => {
+                form.handleSubmit(handleFormSubmit, () => {
                   setShowAllErrors(true);
                 })(e);
               }}
