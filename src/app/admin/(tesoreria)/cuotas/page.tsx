@@ -51,139 +51,10 @@ import {
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button, ButtonArrow } from '@/components/ui/button'
-import {
-  Command,
-  CommandCheck,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
 import { useCuotas } from '@/hooks/useCuotas'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-// Componente de prueba exacto del ejemplo con ScrollArea
-const groupedCountries = [
-  {
-    group: 'Europe',
-    countries: [
-      { value: 'netherlands', label: 'Netherlands', flag: '🇳🇱' },
-      { value: 'united_kingdom', label: 'United Kingdom', flag: '🇬🇧' },
-      { value: 'france', label: 'France', flag: '🇫🇷' },
-      { value: 'germany', label: 'Germany', flag: '🇩🇪' },
-      { value: 'italy', label: 'Italy', flag: '🇮🇹' },
-    ],
-  },
-  {
-    group: 'Asia',
-    countries: [
-      { value: 'japan', label: 'Japan', flag: '🇯🇵' },
-      { value: 'china', label: 'China', flag: '🇨🇳' },
-      { value: 'india', label: 'India', flag: '🇮🇳' },
-      { value: 'uae', label: 'United Arab Emirates', flag: '🇦🇪' },
-      { value: 'south_korea', label: 'South Korea', flag: '🇰🇷' },
-    ],
-  },
-  {
-    group: 'Africa',
-    countries: [
-      { value: 'south_africa', label: 'South Africa', flag: '🇿🇦' },
-      { value: 'nigeria', label: 'Nigeria', flag: '🇳🇬' },
-      { value: 'egypt', label: 'Egypt', flag: '🇪🇬' },
-      { value: 'kenya', label: 'Kenya', flag: '🇰🇪' },
-      { value: 'morocco', label: 'Morocco', flag: '🇲🇦' },
-    ],
-  },
-  {
-    group: 'North America',
-    countries: [
-      { value: 'united_states', label: 'United States', flag: '🇺🇸' },
-      { value: 'canada', label: 'Canada', flag: '🇨🇦' },
-      { value: 'mexico', label: 'Mexico', flag: '🇲🇽' },
-      { value: 'cuba', label: 'Cuba', flag: '🇨🇺' },
-      { value: 'jamaica', label: 'Jamaica', flag: '🇯🇲' },
-    ],
-  },
-  {
-    group: 'South America',
-    countries: [
-      { value: 'brazil', label: 'Brazil', flag: '🇧🇷' },
-      { value: 'argentina', label: 'Argentina', flag: '🇦🇷' },
-      { value: 'colombia', label: 'Colombia', flag: '🇨🇴' },
-      { value: 'chile', label: 'Chile', flag: '🇨🇱' },
-      { value: 'peru', label: 'Peru', flag: '🇵🇪' },
-    ],
-  },
-  {
-    group: 'Oceania',
-    countries: [
-      { value: 'australia', label: 'Australia', flag: '🇦🇺' },
-      { value: 'new_zealand', label: 'New Zealand', flag: '🇳🇿' },
-      { value: 'fiji', label: 'Fiji', flag: '🇫🇯' },
-      { value: 'papua_new_guinea', label: 'Papua New Guinea', flag: '🇵🇬' },
-      { value: 'samoa', label: 'Samoa', flag: '🇼🇸' },
-    ],
-  },
-]
-
-function ComboboxDemo() {
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState('')
-
-  return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          mode="input"
-          placeholder={!value}
-          aria-expanded={open}
-          className="w-[250px]"
-        >
-          <span className={cn('truncate')}>
-            {value
-              ? groupedCountries.flatMap((group) => group.countries).find((country) => country.value === value)?.label
-              : 'Select country...'}
-          </span>
-          <ButtonArrow />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
-        <Command>
-          <CommandInput placeholder="Search country..." />
-          <CommandList className="max-h-[300px] overflow-y-auto scroll-smooth">
-            <CommandEmpty>No country found.</CommandEmpty>
-            {groupedCountries.map((group) => (
-              <CommandGroup key={group.group} heading={group.group}>
-                {group.countries.map((country) => (
-                  <CommandItem
-                    key={country.value}
-                    value={country.value}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue === value ? '' : currentValue)
-                      setOpen(false)
-                    }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-sm">{country.flag}</span>
-                      {country.label}
-                    </span>
-                    {value === country.value && <CommandCheck />}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  )
-}
+import { ObligacionCombobox } from '@/components/obligacion-combobox'
 
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
@@ -353,7 +224,6 @@ export default function CuotasPage() {
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
-  const [comboboxOpen, setComboboxOpen] = useState(false)
   const { casas, loading, fetchCasas, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
@@ -927,90 +797,17 @@ export default function CuotasPage() {
                     <Controller
                       name="obligacionId"
                       control={form.control}
-                      render={({ field }) => {
-                        const obligacionSeleccionada = field.value && selectedCasa?.obligacionesPendientes
-                          ? selectedCasa.obligacionesPendientes.find(o => String(o.id) === String(field.value))
-                          : null
-
-                        return (
-                          <Popover open={comboboxOpen} onOpenChange={setComboboxOpen} modal={false}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                id="obligacion"
-                                name="obligacionId"
-                                variant="outline"
-                                role="combobox"
-                                mode="input"
-                                placeholder={!field.value}
-                                aria-expanded={comboboxOpen}
-                                className="w-full h-16 justify-between"
-                              >
-                                {obligacionSeleccionada ? (
-                                  <div className="flex flex-col items-start text-left w-full pr-8">
-                                    <span className="font-medium text-gray-900 leading-tight">{obligacionSeleccionada.motivo}</span>
-                                    <span className="text-sm text-gray-500 mt-1">
-                                      {new Intl.NumberFormat('es-CO', {
-                                        style: 'currency',
-                                        currency: 'COP',
-                                      }).format(obligacionSeleccionada.valorPendiente)}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-muted-foreground">Selecciona una obligación pendiente</span>
-                                )}
-                                <ButtonArrow />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
-                              <Command>
-                                <CommandInput placeholder="Buscar obligación..." />
-                                <CommandList>
-                                  <ScrollArea viewportClassName="max-h-[300px]">
-                                    <CommandEmpty>No se encontró la obligación.</CommandEmpty>
-                                    <CommandGroup>
-                                      {selectedCasa?.obligacionesPendientes.map((obligacion) => {
-                                        const isSelected = String(field.value) === String(obligacion.id)
-                                        return (
-                                          <CommandItem
-                                            key={obligacion.id}
-                                            value={`${obligacion.motivo} ${new Intl.NumberFormat('es-CO', {
-                                              style: 'currency',
-                                              currency: 'COP',
-                                            }).format(obligacion.valorPendiente)}`}
-                                            onSelect={(currentValue) => {
-                                              const obligacionId = String(obligacion.id)
-                                              const newValue = obligacionId === String(field.value) ? '' : obligacionId
-                                              field.onChange(newValue)
-                                              if (newValue) {
-                                                setSelectedObligacion(obligacion)
-                                                form.setValue('monto', obligacion.valorPendiente)
-                                              }
-                                              setComboboxOpen(false)
-                                            }}
-                                            className="py-3.5"
-                                          >
-                                            <div className="flex flex-col items-start flex-1 min-w-0 pr-8">
-                                              <span className="font-medium text-gray-900 truncate">{obligacion.motivo}</span>
-                                              <span className="text-sm text-gray-500 mt-1">
-                                                {new Intl.NumberFormat('es-CO', {
-                                                  style: 'currency',
-                                                  currency: 'COP',
-                                                }).format(obligacion.valorPendiente)}
-                                              </span>
-                                            </div>
-                                            {isSelected && <CommandCheck />}
-                                          </CommandItem>
-                                        )
-                                      })}
-                                    </CommandGroup>
-                                    <ScrollBar />
-                                  </ScrollArea>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        )
-                      }}
+                      render={({ field }) => (
+                        <ObligacionCombobox
+                          obligaciones={selectedCasa?.obligacionesPendientes || []}
+                          value={field.value}
+                          onChange={field.onChange}
+                          onObligacionSelect={(obligacion) => {
+                            setSelectedObligacion(obligacion)
+                            form.setValue('monto', obligacion.valorPendiente)
+                          }}
+                        />
+                      )}
                     />
                   </div>
 
