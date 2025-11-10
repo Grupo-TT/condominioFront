@@ -5,6 +5,7 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -65,6 +66,7 @@ import { PropietarioFormData } from '@/lib/validations/propietario.validation'
 import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
 import { useCasas } from '@/hooks/useCasas'
 import { useRouter } from 'next/navigation'
+import { useCasaContext } from '@/contexts/CasaContext'
 import { propietarioService } from '@/lib/services/propietario.service'
 
 // Componente para renderizar iconos de miembros
@@ -130,7 +132,8 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
 export default function CasasPage() {
   const router = useRouter()
-  const { casas } = useCasas()
+  const { casas, loading } = useCasas()
+  const { setCasaInCache } = useCasaContext()
   
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -242,6 +245,8 @@ export default function CasasPage() {
               <div>
                 <button
                   onClick={() => {
+                    // Guardar la casa en el contexto para evitar otra petición
+                    setCasaInCache(row.original.numeroCasa, row.original)
                     router.push(`/admin/casas/${row.original.numeroCasa}`)
                   }}
                   className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
@@ -258,6 +263,17 @@ export default function CasasPage() {
         size: 250,
         enableSorting: true,
         enableHiding: false,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'miembros',
@@ -266,6 +282,9 @@ export default function CasasPage() {
         cell: ({ row }) => <MiembrosIcons cantidad={row.original.cantidadMiembros} />,
         size: 200,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-12" />,
+        },
       },
       {
         accessorKey: 'mascotas',
@@ -274,6 +293,9 @@ export default function CasasPage() {
         cell: ({ row }) => <MascotasIcons mascotas={row.original.mascotas} />,
         size: 180,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-12" />,
+        },
       },
       {
         accessorKey: 'estadoFinancieroCasa',
@@ -305,6 +327,9 @@ export default function CasasPage() {
         },
         size: 120,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-20" />,
+        },
       },
       {
         accessorKey: 'usoCasa',
@@ -331,6 +356,9 @@ export default function CasasPage() {
         },
         size: 140,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-24" />,
+        },
       },
       {
         id: 'actions',
@@ -388,9 +416,12 @@ export default function CasasPage() {
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
-    [handleDelete, router]
+    [handleDelete, router, setCasaInCache]
   )
 
   const table = useReactTable({
@@ -508,11 +539,13 @@ export default function CasasPage() {
             </div>
 
             <TabsContent value="todas">
-              {hasResults ? (
-                /* Tabla */
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
                 <DataGrid
                   table={table}
                   recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
                   tableLayout={{
                     headerBackground: false,
                     rowBorder: true,
@@ -558,11 +591,13 @@ export default function CasasPage() {
             </TabsContent>
 
             <TabsContent value="residencial">
-              {hasResults ? (
-                /* Tabla */
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
                 <DataGrid
                   table={table}
                   recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
                   tableLayout={{
                     headerBackground: false,
                     rowBorder: true,
@@ -604,11 +639,13 @@ export default function CasasPage() {
             </TabsContent>
 
             <TabsContent value="arrendada">
-              {hasResults ? (
-                /* Tabla */
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
                 <DataGrid
                   table={table}
                   recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
                   tableLayout={{
                     headerBackground: false,
                     rowBorder: true,
