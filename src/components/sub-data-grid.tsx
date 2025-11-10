@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { VariantProps } from 'class-variance-authority';
-import { SquareMinus, SquarePlus, User } from 'lucide-react';
+import { SquareMinus, SquarePlus } from 'lucide-react';
 
 interface OrderItemData {
   id: string;

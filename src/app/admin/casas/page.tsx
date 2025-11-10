@@ -5,29 +5,22 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat } from 'lucide-react'
+import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { toast } from 'sonner'
+import axios from 'axios'
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -68,180 +61,80 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { Casa, Miembro, Mascota } from '@/types/casa.types'
+import { Casa, Mascotas } from '@/types/casa.types'
 import { PropietarioFormData } from '@/lib/validations/propietario.validation'
 import { PropietarioForm } from '@/components/forms/examples/PropietarioForm'
-
-// Usar el tipo importado del archivo de validaciones
-type FormData = PropietarioFormData
-
-// Datos de ejemplo basados en la imagen
-const casasData: Casa[] = [
-  {
-    id: '1',
-    numero: '15',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' },
-      { genero: 'masculino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'perro' },
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'En Mora',
-    uso: 'Residencial'
-  },
-  {
-    id: '2',
-    numero: '12',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' }
-    ],
-    estado: 'Al Día',
-    uso: 'Arrendada'
-  },
-  {
-    id: '3',
-    numero: '11',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'gato' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '4',
-    numero: '10',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '5',
-    numero: '19',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '6',
-    numero: '14',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  },
-  {
-    id: '7',
-    numero: '16',
-    propietario: 'Jose Pérez Hurtado',
-    miembros: [
-      { genero: 'masculino' },
-      { genero: 'femenino' }
-    ],
-    mascotas: [
-      { tipo: 'perro' },
-      { tipo: 'gato' }
-    ],
-    estado: 'Al Día',
-    uso: 'Residencial'
-  }
-]
+import { useCasas } from '@/hooks/useCasas'
+import { useRouter } from 'next/navigation'
+import { useCasaContext } from '@/contexts/CasaContext'
+import { propietarioService } from '@/lib/services/propietario.service'
 
 // Componente para renderizar iconos de miembros
-function MiembrosIcons({ miembros }: { miembros: Miembro[] }) {
+function MiembrosIcons({ cantidad }: { cantidad: number }) {
   return (
-    <div className="flex gap-1 flex-wrap">
-      {miembros.map((miembro, idx) => (
-        <div
-          key={idx}
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            miembro.genero === 'masculino' ? 'bg-blue-50' : 'bg-pink-50'
-          }`}
-        >
-          <HugeiconsIcon
-            icon={User03Icon}
-            size={20}
-            className={miembro.genero === 'masculino' ? 'text-blue-600' : 'text-pink-600'}
-          />
-        </div>
-      ))}
+    <div className="flex items-center gap-2">
+      <HugeiconsIcon
+        icon={User03Icon}
+        size={18}
+        className="text-gray-500"
+      />
+      <span className="text-sm font-medium text-gray-700">
+        {cantidad}
+      </span>
     </div>
   )
 }
 
 // Componente para renderizar iconos de mascotas
-function MascotasIcons({ mascotas }: { mascotas: Mascota[] }) {
+function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
+  const tipos = [
+    { tipo: 'perro', cantidad: mascotas.perro },
+    { tipo: 'gato', cantidad: mascotas.gato },
+    { tipo: 'otro', cantidad: mascotas.otro },
+  ]
+
   return (
     <div className="flex gap-1 flex-wrap">
-      {mascotas.map((mascota, idx) => (
-        <div
-          key={idx}
-          className="w-10 h-10 rounded-full flex items-center justify-center"
-          style={{
-            backgroundColor: mascota.tipo === 'perro' ? '#A3917020' : '#595D7520'
-          }}
-        >
-          {mascota.tipo === 'perro' ? (
-            <Dog 
-              className="w-5 h-5" 
-              style={{ color: '#A39170' }}
-            />
-          ) : (
-            <Cat 
-              className="w-5 h-5" 
-              style={{ color: '#595D75' }}
-            />
-          )}
-        </div>
-      ))}
+      {tipos.map(({ tipo, cantidad }, idx) =>
+        Array.from({ length: cantidad }).map((_, i) => {
+          // Colores personalizados para cada tipo
+          const bgColor =
+            tipo === 'perro'
+              ? '#F1E8D6' // Beige/Dorado claro
+              : tipo === 'gato'
+              ? '#E3E4EA' // Azul grisáceo claro
+              : '#E6EFEA' // Verde claro
+
+          const iconColor =
+            tipo === 'perro'
+              ? '#A39170' // Dorado/Marrón
+              : tipo === 'gato'
+              ? '#595D75' // Azul grisáceo oscuro
+              : '#4C6C5A' // Verde oscuro
+
+          const Icon =
+            tipo === 'perro' ? Dog : tipo === 'gato' ? Cat : PawPrint
+
+          return (
+            <div
+              key={`${idx}-${i}`}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: bgColor }}
+            >
+              <Icon className="w-5 h-5" style={{ color: iconColor }} />
+            </div>
+          )
+        })
+      )}
     </div>
   )
 }
 
 export default function CasasPage() {
+  const router = useRouter()
+  const { casas, loading } = useCasas()
+  const { setCasaInCache } = useCasaContext()
+  
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -252,8 +145,6 @@ export default function CasasPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // No necesitamos estado local del formulario, React Hook Form maneja todo
-
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
     if (searchInputRef.current) {
@@ -261,12 +152,32 @@ export default function CasasPage() {
     }
   }, [])
 
-  const handleSubmit = useCallback((data: FormData) => {
-    // Aquí agregarías la lógica para crear el nuevo propietario
-    console.log('Nuevo propietario:', data)
-    // Solo cerrar sheet si el formulario es válido
-    setIsSheetOpen(false)
-  }, [])
+
+  const handleCrearPropietario = async (data: PropietarioFormData) => {
+    try {
+      await propietarioService.create(data)
+
+      // Mostrar toast de éxito
+      toast.success('Propietario creado exitosamente', {
+        duration: 5000,
+      })
+
+      // Cerrar el sheet
+      setIsSheetOpen(false)
+      // Recargar la lista de casas si es necesario
+      // fetchCasas()
+    } catch (err) {
+      // Extraer mensaje de error usando axios.isAxiosError
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || "Error al crear el propietario"
+        : "Error al crear el propietario. Intenta de nuevo."
+      
+      // Mostrar toast de error
+      toast.error(errorMessage, {
+        duration: 5000,
+      })
+    }
+  }
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setIsSheetOpen(open)
@@ -282,30 +193,30 @@ export default function CasasPage() {
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
     if (!searchTerm && filterType === 'todas') {
-      return casasData
+      return casas || []
     }
 
     const searchLower = searchTerm.toLowerCase()
-    
-    return casasData.filter(casa => {
+
+    return (casas || []).filter(casa => {
       // Filtrar por tipo de uso
-      if (filterType !== 'todas' && casa.uso.toLowerCase() !== filterType) {
+      if (filterType !== 'todas' && casa.usoCasa.toLowerCase().trim() !== filterType) {
         return false
       }
 
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          casa.propietario.toLowerCase().includes(searchLower) ||
-          casa.numero.toLowerCase().includes(searchLower) ||
-          casa.estado.toLowerCase().includes(searchLower) ||
-          casa.uso.toLowerCase().includes(searchLower)
+          casa.propietario.nombreCompleto.toLowerCase().includes(searchLower) ||
+          casa.numeroCasa.toLowerCase().includes(searchLower) ||
+          casa.estadoFinancieroCasa.toLowerCase().includes(searchLower) ||
+          casa.usoCasa.toLowerCase().includes(searchLower)
         )
       }
 
       return true
     })
-  }, [searchTerm, filterType])
+  }, [casas, searchTerm, filterType])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -316,41 +227,64 @@ export default function CasasPage() {
         accessorKey: 'propietario',
         id: 'propietario',
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={Home07Icon} 
-                size={20} 
-                color="currentColor" 
-                strokeWidth={1.5}
-                className="text-gray-600"
-              />
+        cell: ({ row }) => {
+          const esArrendada = row.original.usoCasa.toUpperCase() === 'ARRENDADA'
+          const rol = esArrendada ? 'Arrendatario' : 'Propietario'
+          
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                <HugeiconsIcon
+                  icon={Home07Icon}
+                  size={20}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className="text-gray-600"
+                />
+              </div>
+              <div>
+                <button
+                  onClick={() => {
+                    // Guardar la casa en el contexto para evitar otra petición
+                    setCasaInCache(row.original.numeroCasa, row.original)
+                    router.push(`/admin/casas/${row.original.numeroCasa}`)
+                  }}
+                  className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                >
+                  {row.original.propietario.nombreCompleto}
+                </button>
+                <div className="text-sm text-gray-500">
+                  <span className="font-medium">{rol}</span> · Casa No.{row.original.numeroCasa}
+                </div>
+              </div>
             </div>
-            <div>
-              <button
-                onClick={() => {
-                  window.location.href = `/admin/casas/${row.original.id}`
-                }}
-                className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
-              >
-                {row.original.propietario}
-              </button>
-              <div className="text-sm text-gray-500">Casa No.{row.original.numero}</div>
-            </div>
-          </div>
-        ),
+          )
+        },
         size: 250,
         enableSorting: true,
         enableHiding: false,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'miembros',
         id: 'miembros',
         header: ({ column }) => <DataGridColumnHeader title="Miembros" column={column} />,
-        cell: ({ row }) => <MiembrosIcons miembros={row.original.miembros} />,
+        cell: ({ row }) => <MiembrosIcons cantidad={row.original.cantidadMiembros} />,
         size: 200,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-12" />,
+        },
       },
       {
         accessorKey: 'mascotas',
@@ -359,50 +293,72 @@ export default function CasasPage() {
         cell: ({ row }) => <MascotasIcons mascotas={row.original.mascotas} />,
         size: 180,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-12" />,
+        },
       },
       {
-        accessorKey: 'estado',
+        accessorKey: 'estadoFinancieroCasa',
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
         cell: ({ row }) => {
-          const estado = row.original.estado
+          const estado = row.original.estadoFinancieroCasa
+          const capitalizeText = (text: string) => {
+            return text
+              .toLowerCase()
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          }
           return (
             <Badge
-              variant={estado === 'Al Día' ? 'success' : 'destructive'}
+              variant={estado.toUpperCase() === 'AL DIA' ? 'success' : 'destructive'}
               appearance="outline"
               size="md"
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  estado === 'Al Día' ? 'bg-green-700' : 'bg-red-700'
-                }`}
+                className={`w-2 h-2 rounded-full ${estado.toUpperCase() === 'AL DIA' ? 'bg-green-700' : 'bg-red-700'
+                  }`}
               />
-              {estado}
+              {capitalizeText(estado)}
             </Badge>
           )
         },
         size: 120,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-20" />,
+        },
       },
       {
-        accessorKey: 'uso',
+        accessorKey: 'usoCasa',
         id: 'uso',
         header: ({ column }) => <DataGridColumnHeader title="Uso" column={column} />,
         cell: ({ row }) => {
-          const uso = row.original.uso
+          const uso = row.original.usoCasa
+          const capitalizeText = (text: string) => {
+            return text
+              .toLowerCase()
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          }
           return (
             <Badge
-              variant={uso === 'Residencial' ? 'outline' : 'secondary'}
+              variant={uso.toUpperCase() === 'RESIDENCIAL' ? 'outline' : 'secondary'}
               appearance="light"
               size="md"
             >
-              {uso}
+              {capitalizeText(uso)}
             </Badge>
           )
         },
         size: 140,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-24" />,
+        },
       },
       {
         id: 'actions',
@@ -418,7 +374,7 @@ export default function CasasPage() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={() => {
-                    console.log('Editar casa:', row.original.id)
+                    console.log('Editar casa:', row.original.numeroCasa)
                   }}
                 >
                   <Pencil className="mr-2 h-4 w-4" />
@@ -439,14 +395,14 @@ export default function CasasPage() {
                       <AlertDialogTitle>¿Eliminar propietario?</AlertDialogTitle>
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se eliminará permanentemente el propietario{' '}
-                        <strong>{row.original.propietario}</strong> de la casa{' '}
-                        <strong>{row.original.numero}</strong> y toda su información asociada.
+                        <strong>{row.original.propietario.nombreCompleto}</strong> de la casa{' '}
+                        <strong>{row.original.numeroCasa}</strong> y toda su información asociada.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => handleDelete(row.original.id)}
+                        onClick={() => handleDelete(row.original.numeroCasa)}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         Eliminar
@@ -460,16 +416,19 @@ export default function CasasPage() {
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
-    [handleDelete]
+    [handleDelete, router, setCasaInCache]
   )
 
   const table = useReactTable({
     columns,
     data: filteredCasas,
     pageCount: Math.ceil((filteredCasas?.length || 0) / pagination.pageSize),
-    getRowId: (row: Casa) => row.id,
+    getRowId: (row: Casa) => row.numeroCasa,
     state: {
       pagination,
       sorting,
@@ -515,212 +474,218 @@ export default function CasasPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Casas</h1>
               <p className="text-gray-500 mt-1">
-              Gestiona la información de propietarios, miembros y mascotas de cada casa.
+                Gestiona la información de propietarios, miembros y mascotas de cada casa.
               </p>
             </div>
           </div>
 
           {/* Filtros y controles */}
           <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="residencial">Residenciales</TabsTrigger>
-            <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
-          </TabsList>
-          
-          <div className="flex items-center gap-3">
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-              <Input
-                placeholder="Buscar casas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10"
-                ref={searchInputRef}
-              />
-              {searchTerm !== '' && (
-                <Button 
-                  onClick={handleClearSearch} 
-                  variant="ghost" 
-                  size="icon"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100" 
-                >
-                  <X size={14} />
-                </Button>
-              )}
-            </div>
-            <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-              <SheetTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Nuevo Propietario
-                </Button>
-                      </SheetTrigger>
-                      <SheetContent 
-                        side="right" 
-                        className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-                        style={{ width: '650px', maxWidth: 'none' }}
-                      >
-                <SheetHeader>
-                  <SheetTitle>Nuevo Propietario</SheetTitle>
-                  <SheetDescription>
-                    Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col h-full">
-                  <PropietarioForm
-                    onSubmit={handleSubmit}
-                    onCancel={() => setIsSheetOpen(false)}
+            <div className="flex items-center justify-between">
+              <TabsList>
+                <TabsTrigger value="todas">Todas</TabsTrigger>
+                <TabsTrigger value="residencial">Residenciales</TabsTrigger>
+                <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-3">
+                <div className="relative w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Input
+                    placeholder="Buscar casas..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                    ref={searchInputRef}
                   />
+                  {searchTerm !== '' && (
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100"
+                    >
+                      <X size={14} />
+                    </Button>
+                  )}
                 </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-
-        <TabsContent value="todas">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
+                <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+                  <SheetTrigger asChild>
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Nuevo Propietario
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent
+                    side="right"
+                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
+                    style={{ width: '650px', maxWidth: 'none' }}
+                  >
+                    <SheetHeader>
+                      <SheetTitle>Nuevo Propietario</SheetTitle>
+                      <SheetDescription>
+                        Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="flex flex-col h-full">
+                      <PropietarioForm
+                        onSubmit={handleCrearPropietario}
+                        onCancel={() => setIsSheetOpen(false)}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas que coincidan con "${searchTerm}"`
-                  : filterType === 'residencial' 
-                    ? 'No hay casas residenciales registradas'
-                    : filterType === 'arrendada'
-                      ? 'No hay casas arrendadas registradas'
-                      : 'No hay casas registradas'
-                }
-              </p>
             </div>
-          )}
-        </TabsContent>
 
-        <TabsContent value="residencial">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas residenciales que coincidan con "${searchTerm}"`
-                  : 'No hay casas residenciales registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
+            <TabsContent value="todas">
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas que coincidan con "${searchTerm}"`
+                      : filterType === 'residencial'
+                        ? 'No hay casas residenciales registradas'
+                        : filterType === 'arrendada'
+                          ? 'No hay casas arrendadas registradas'
+                          : 'No hay casas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-        <TabsContent value="arrendada">
-          {hasResults ? (
-            /* Tabla */
-            <DataGrid
-              table={table}
-              recordCount={filteredCasas?.length || 0}
-              tableLayout={{
-                headerBackground: false,
-                rowBorder: true,
-                rowRounded: false,
-              }}
-            >
-              <div className="w-full space-y-2.5">
-                <DataGridContainer border={false}>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination
-                  rowsPerPageLabel="Filas por página"
-                  info="{from} - {to} de {count}"
-                  previousPageLabel="Ir a la página anterior"
-                  nextPageLabel="Ir a la página siguiente"
-                />
-              </div>
-            </DataGrid>
-          ) : (
-            /* Sin resultados */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="text-gray-400 mb-2">
-                <Search className="w-12 h-12 mx-auto" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No se encontraron resultados
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchTerm 
-                  ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
-                  : 'No hay casas arrendadas registradas'
-                }
-              </p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="residencial">
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas residenciales que coincidan con "${searchTerm}"`
+                      : 'No hay casas residenciales registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="arrendada">
+              {loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm
+                      ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
+                      : 'No hay casas arrendadas registradas'
+                    }
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>

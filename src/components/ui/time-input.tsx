@@ -3,9 +3,14 @@
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+interface TimeValue {
+  hour: number;
+  minute: number;
+}
+
 interface TimeInputProps {
-  value?: any;
-  onChange?: (value: any) => void;
+  value?: TimeValue | string;
+  onChange?: (value: TimeValue | null) => void;
   hourCycle?: 12 | 24;
   className?: string;
   'data-invalid'?: boolean;
@@ -20,7 +25,7 @@ export function TimeInput({
   ...props 
 }: TimeInputProps) {
   // Convertir valor a string para mostrar en el input
-  const formatTimeValue = (timeValue?: any): string => {
+  const formatTimeValue = (timeValue?: TimeValue | string): string => {
     if (!timeValue) return '';
     
     // Si es un objeto con hour y minute
@@ -41,7 +46,7 @@ export function TimeInput({
   };
 
   // Convertir string a objeto con hour y minute
-  const parseTimeString = (timeString: string): any => {
+  const parseTimeString = (timeString: string): TimeValue | null => {
     if (!timeString) return null;
     
     const match = timeString.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);

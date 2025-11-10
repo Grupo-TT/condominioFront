@@ -28,7 +28,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { SquareMinus, SquarePlus, Search, X } from 'lucide-react'
+import { SquareMinus, SquarePlus, Search, X, Settings } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
@@ -36,8 +36,9 @@ import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
 import { FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ConfiguracionCuotasDialog } from '@/components/configuracion-cuotas-dialog'
 import {
   Sheet,
   SheetClose,
@@ -585,6 +586,24 @@ export default function CuotasPage() {
                     </Button>
                   )}
                 </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <ConfiguracionCuotasDialog>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-10 w-10"
+                        >
+                          <Settings className="h-5 w-5" />
+                        </Button>
+                      </TooltipTrigger>
+                    </ConfiguracionCuotasDialog>
+                    <TooltipContent side="top" align="end" alignOffset={-20} sideOffset={5}>
+                      <p>Configurar valores constantes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
@@ -916,6 +935,41 @@ export default function CuotasPage() {
                         style: 'currency',
                         currency: 'COP',
                       }).format(selectedObligacion.valorPendiente)}
+                {/* Monto a pagar */}
+                <Controller
+                  name="monto"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <div className="space-y-2">
+                      <Label htmlFor="monto" className="text-sm font-medium text-gray-700">
+                        Monto a pagar
+                        <span className="text-red-500 ml-1">*</span>
+                      </Label>
+                      <FormFieldWithTooltip
+                        label=""
+                        invalid={fieldState.invalid}
+                        error={showAllErrors ? fieldState.error?.message : undefined}
+                        className="-mt-3"
+                      >
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                            $
+                          </span>
+                          <Input
+                            id="monto"
+                            type="number"
+                            placeholder="0"
+                            value={field.value?.toString() || ''}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              field.onChange(value ? parseFloat(value) : 0)
+                            }}
+                            className={`w-full h-12 pl-8 text-lg font-medium ${
+                              fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
+                            }`}
+                          />
+                        </div>
+                      </FormFieldWithTooltip>
                     </div>
                   )}
                 </div>

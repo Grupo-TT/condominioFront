@@ -39,18 +39,6 @@ const getRandomEstado = (id: number): ReservaEstado => {
   return estados[id % 3]
 }
 
-const estadoColors = {
-  pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  aprobada: 'bg-green-100 text-green-800 border-green-200',
-  rechazada: 'bg-red-100 text-red-800 border-red-200',
-}
-
-const estadoLabels = {
-  pendiente: 'Pendiente',
-  aprobada: 'Aprobada',
-  rechazada: 'Rechazada',
-}
-
 export function ReservasList({ reservas }: ReservasListProps) {
   const [activeTab, setActiveTab] = useState('pendiente')
 
@@ -134,7 +122,6 @@ export function ReservasList({ reservas }: ReservasListProps) {
               const endDate = parseISO(reserva.endDate)
               const styles = getStylesByTipo(reserva.tipoRecurso)
               const RecursoIcon = styles.Icon
-              const isAllDay = format(startDate, 'HH:mm') === '00:00' && format(endDate, 'HH:mm') === '23:59'
 
               return (
                 <div
