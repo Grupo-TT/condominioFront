@@ -1,11 +1,6 @@
 import { PagoPayload } from "@/types/cuotas.types";
 import apiClient from "../config/axios.config";
 
-export const getEstadoCuenta = async (casaId: number) => {
-  const { data } = await apiClient.get(`/casa/${casaId}/estado-cuenta`);
-  return data;
-};
-
 export const getPorCobrar = async () => {
   try {
     const { data } = await apiClient.get("/casa/obligaciones-casa");

@@ -1,25 +1,30 @@
 export interface Obligacion {
-  id: string;
+  id: number;
   motivo: string;
   valorTotal: number;
   valorPendiente: number;
-  abonado: number;
+  montoPagado: number;
+  // Campos opcionales que pueden venir de la API
+  propietario?: string;
+  estado?: string;
+  titulo?: string;
+  casa?: number;
+  monto?: number;
+  tipoObligacion?: string;
+  estadoPago?: string;
 }
 
 export interface CuotaCasa {
-  id: string;
   numeroCasa: number;
-  propietario: Propietario;
+  propietario: Propietario | null;
   saldoPendiente: number;
-  cantidadPagosPendientes: number;
   ultimoPago: string;
   obligacionesPendientes: Obligacion[];
 }
 
 export interface Propietario {
-  id: string;
   nombreCompleto: string;
-  telefono: string;
+  telefono: number;
   correo: string;
 }
 

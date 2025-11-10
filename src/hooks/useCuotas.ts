@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { getEstadoCuenta, getPorCobrar, registrarPago } from '@/lib/services/cuotas.service'
+import { getPorCobrar, registrarPago } from '@/lib/services/cuotas.service'
 import { CuotaCasa, PagoPayload } from '@/types/cuotas.types'
 
 export const useCuotas = () => {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Iniciar en true para mostrar skeleton al cargar
   const [error, setError] = useState<string | null>(null)
-  const [estadoCuenta, setEstadoCuenta] = useState<CuotaCasa | null>(null)
   const [casas, setCasas] = useState<CuotaCasa[]>([]);
 
 
@@ -26,23 +25,6 @@ export const useCuotas = () => {
       }
       console.error('Error al obtener estados de cuenta:', err)
       setError('No se pudieron obtener los estados de cuenta.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-  /**
-   * Obtener estado de cuenta por casa
-   */
-  const fetchEstadoCuenta = useCallback(async (casaId: number) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await getEstadoCuenta(casaId)
-      setEstadoCuenta(response?.data || response)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error(' Error al obtener estado de cuenta:', err)
-      setError('No se pudo obtener el estado de cuenta, por favor intenta nuevamente.')
     } finally {
       setLoading(false)
     }
@@ -79,8 +61,6 @@ export const useCuotas = () => {
     loading, 
     error,
     fetchCasas,
-    estadoCuenta, 
-    fetchEstadoCuenta,
     handleRegistrarPago 
   }
 }

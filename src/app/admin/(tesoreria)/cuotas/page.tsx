@@ -61,6 +61,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCuotas } from '@/hooks/useCuotas'
+import { Skeleton } from '@/components/ui/skeleton'
 
 
 // Componente para la sub-tabla de obligaciones
@@ -163,7 +164,7 @@ function ObligacionesSubTable({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getRowId: (row: Obligacion) => row.id,
+    getRowId: (row: Obligacion) => String(row.id),
   })
 
   return (
@@ -232,17 +233,11 @@ export default function CuotasPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
   const [comboboxOpen, setComboboxOpen] = useState(false)
-  const { casas, fetchCasas, fetchEstadoCuenta, handleRegistrarPago } = useCuotas()
+  const { casas, loading, fetchCasas, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
     setSearchTerm('')
   }
-
-  useEffect(() => {
-    if (selectedCasa) {
-      fetchEstadoCuenta(Number(selectedCasa.numeroCasa))
-    }
-  }, [selectedCasa, fetchEstadoCuenta])
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
@@ -264,7 +259,7 @@ export default function CuotasPage() {
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          casa.propietario.nombreCompleto.toLowerCase().includes(searchLower) ||
+          casa.propietario?.nombreCompleto?.toLowerCase().includes(searchLower) ||
           casa.numeroCasa.toString().toLowerCase().includes(searchLower) ||
           casa.saldoPendiente.toString().includes(searchLower)
         )
@@ -337,9 +332,10 @@ export default function CuotasPage() {
       setIsSheetOpen(false);
       form.reset();
       setSelectedObligacion(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al registrar pago", error);
-      console.log("Error al registrar el pago. Por favor, inténtalo de nuevo.");
+      const errorMessage = error.response?.data?.message || error.message || 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
+      alert(errorMessage);
     }
   }
 
@@ -373,13 +369,14 @@ export default function CuotasPage() {
         enableResizing: false,
         meta: {
           expandedContent: (row: CuotaCasa) => <ObligacionesSubTable obligaciones={row.obligacionesPendientes} casa={row} onObligacionClick={handleObligacionClick} />,
+          skeleton: <Skeleton className="h-6 w-6" />,
         },
       },
       {
         accessorKey: 'numeroCasa',
         id: 'numeroCasa',
         header: ({ column }) => <DataGridColumnHeader title="Número de Casa" column={column} />,
-        cell: ({ row}) => (
+        cell: ({ row }) => (
           <div>
             <div className="font-semibold text-gray-900">Casa No. {row.original.numeroCasa}</div>
             <div className="text-sm text-gray-500">{row.original.propietario?.nombreCompleto ?? "Sin propietario"}</div>
@@ -388,6 +385,14 @@ export default function CuotasPage() {
         size: 250,
         enableSorting: true,
         enableHiding: false,
+        meta: {
+          skeleton: (
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'saldoPendiente',
@@ -406,6 +411,9 @@ export default function CuotasPage() {
         },
         size: 150,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-5 w-24" />,
+        },
       },
       {
         accessorKey: 'obligacionesPendientes',  
@@ -425,6 +433,9 @@ export default function CuotasPage() {
         },
         size: 140,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-16 rounded-full" />,
+        },
       },
       {
         accessorKey: 'ultimoPago',
@@ -444,6 +455,9 @@ export default function CuotasPage() {
         },
         size: 130,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-4 w-20" />,
+        },
       },
       {
         id: 'actions',
@@ -463,6 +477,9 @@ export default function CuotasPage() {
         ),
         size: 120,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-9 w-24" />,
+        },
       },
     ],
     [handleCasaClick, handleObligacionClick]
@@ -560,17 +577,17 @@ export default function CuotasPage() {
             </div>
 
             <TabsContent value="todas">
-              {hasResults ? (
-                /* Tabla */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
+              <DataGrid
+                table={table}
+                recordCount={loading ? 10 : filteredCasas?.length || 0}
+                isLoading={loading}
+                loadingMode="skeleton"
+                tableLayout={{
+                  headerBackground: false,
+                  rowBorder: true,
+                  rowRounded: false,
+                }}
+              >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -586,7 +603,7 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              ) : (
+              {!loading && !hasResults && (
                 /* Sin resultados */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-gray-400 mb-2">
@@ -606,17 +623,17 @@ export default function CuotasPage() {
             </TabsContent>
 
             <TabsContent value="al-dia">
-              {hasResults ? (
-                /* Tabla */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
+              <DataGrid
+                table={table}
+                recordCount={loading ? 10 : filteredCasas?.length || 0}
+                isLoading={loading}
+                loadingMode="skeleton"
+                tableLayout={{
+                  headerBackground: false,
+                  rowBorder: true,
+                  rowRounded: false,
+                }}
+              >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -632,7 +649,7 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              ) : (
+              {!loading && !hasResults && (
                 /* Sin resultados */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-gray-400 mb-2">
@@ -652,17 +669,17 @@ export default function CuotasPage() {
             </TabsContent>
 
             <TabsContent value="pendientes">
-              {hasResults ? (
-                /* Tabla */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
+              <DataGrid
+                table={table}
+                recordCount={loading ? 10 : filteredCasas?.length || 0}
+                isLoading={loading}
+                loadingMode="skeleton"
+                tableLayout={{
+                  headerBackground: false,
+                  rowBorder: true,
+                  rowRounded: false,
+                }}
+              >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -678,7 +695,7 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              ) : (
+              {!loading && !hasResults && (
                 /* Sin resultados */
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-gray-400 mb-2">
