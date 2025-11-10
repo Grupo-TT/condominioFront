@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -63,7 +64,126 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useCuotas } from '@/hooks/useCuotas'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
+// Componente de prueba exacto del ejemplo con ScrollArea
+const groupedCountries = [
+  {
+    group: 'Europe',
+    countries: [
+      { value: 'netherlands', label: 'Netherlands', flag: '🇳🇱' },
+      { value: 'united_kingdom', label: 'United Kingdom', flag: '🇬🇧' },
+      { value: 'france', label: 'France', flag: '🇫🇷' },
+      { value: 'germany', label: 'Germany', flag: '🇩🇪' },
+      { value: 'italy', label: 'Italy', flag: '🇮🇹' },
+    ],
+  },
+  {
+    group: 'Asia',
+    countries: [
+      { value: 'japan', label: 'Japan', flag: '🇯🇵' },
+      { value: 'china', label: 'China', flag: '🇨🇳' },
+      { value: 'india', label: 'India', flag: '🇮🇳' },
+      { value: 'uae', label: 'United Arab Emirates', flag: '🇦🇪' },
+      { value: 'south_korea', label: 'South Korea', flag: '🇰🇷' },
+    ],
+  },
+  {
+    group: 'Africa',
+    countries: [
+      { value: 'south_africa', label: 'South Africa', flag: '🇿🇦' },
+      { value: 'nigeria', label: 'Nigeria', flag: '🇳🇬' },
+      { value: 'egypt', label: 'Egypt', flag: '🇪🇬' },
+      { value: 'kenya', label: 'Kenya', flag: '🇰🇪' },
+      { value: 'morocco', label: 'Morocco', flag: '🇲🇦' },
+    ],
+  },
+  {
+    group: 'North America',
+    countries: [
+      { value: 'united_states', label: 'United States', flag: '🇺🇸' },
+      { value: 'canada', label: 'Canada', flag: '🇨🇦' },
+      { value: 'mexico', label: 'Mexico', flag: '🇲🇽' },
+      { value: 'cuba', label: 'Cuba', flag: '🇨🇺' },
+      { value: 'jamaica', label: 'Jamaica', flag: '🇯🇲' },
+    ],
+  },
+  {
+    group: 'South America',
+    countries: [
+      { value: 'brazil', label: 'Brazil', flag: '🇧🇷' },
+      { value: 'argentina', label: 'Argentina', flag: '🇦🇷' },
+      { value: 'colombia', label: 'Colombia', flag: '🇨🇴' },
+      { value: 'chile', label: 'Chile', flag: '🇨🇱' },
+      { value: 'peru', label: 'Peru', flag: '🇵🇪' },
+    ],
+  },
+  {
+    group: 'Oceania',
+    countries: [
+      { value: 'australia', label: 'Australia', flag: '🇦🇺' },
+      { value: 'new_zealand', label: 'New Zealand', flag: '🇳🇿' },
+      { value: 'fiji', label: 'Fiji', flag: '🇫🇯' },
+      { value: 'papua_new_guinea', label: 'Papua New Guinea', flag: '🇵🇬' },
+      { value: 'samoa', label: 'Samoa', flag: '🇼🇸' },
+    ],
+  },
+]
+
+function ComboboxDemo() {
+  const [open, setOpen] = React.useState(false)
+  const [value, setValue] = React.useState('')
+
+  return (
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          mode="input"
+          placeholder={!value}
+          aria-expanded={open}
+          className="w-[250px]"
+        >
+          <span className={cn('truncate')}>
+            {value
+              ? groupedCountries.flatMap((group) => group.countries).find((country) => country.value === value)?.label
+              : 'Select country...'}
+          </span>
+          <ButtonArrow />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
+        <Command>
+          <CommandInput placeholder="Search country..." />
+          <CommandList className="max-h-[300px] overflow-y-auto scroll-smooth">
+            <CommandEmpty>No country found.</CommandEmpty>
+            {groupedCountries.map((group) => (
+              <CommandGroup key={group.group} heading={group.group}>
+                {group.countries.map((country) => (
+                  <CommandItem
+                    key={country.value}
+                    value={country.value}
+                    onSelect={(currentValue) => {
+                      setValue(currentValue === value ? '' : currentValue)
+                      setOpen(false)
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm">{country.flag}</span>
+                      {country.label}
+                    </span>
+                    {value === country.value && <CommandCheck />}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
@@ -813,7 +933,7 @@ export default function CuotasPage() {
                           : null
 
                         return (
-                          <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                          <Popover open={comboboxOpen} onOpenChange={setComboboxOpen} modal={false}>
                             <PopoverTrigger asChild>
                               <Button
                                 id="obligacion"
@@ -841,11 +961,11 @@ export default function CuotasPage() {
                                 <ButtonArrow />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onWheel={(e) => e.stopPropagation()}>
                               <Command>
-                                <CommandInput placeholder="Buscar obligación..." name="buscar-obligacion" />
+                                <CommandInput placeholder="Buscar obligación..." />
                                 <CommandList>
-                                  <ScrollArea viewportClassName="max-h-[300px] [&>div]:block!">
+                                  <ScrollArea viewportClassName="max-h-[300px]">
                                     <CommandEmpty>No se encontró la obligación.</CommandEmpty>
                                     <CommandGroup>
                                       {selectedCasa?.obligacionesPendientes.map((obligacion) => {
@@ -857,17 +977,20 @@ export default function CuotasPage() {
                                               style: 'currency',
                                               currency: 'COP',
                                             }).format(obligacion.valorPendiente)}`}
-                                            onSelect={() => {
+                                            onSelect={(currentValue) => {
                                               const obligacionId = String(obligacion.id)
-                                              field.onChange(obligacionId)
-                                              setSelectedObligacion(obligacion)
-                                              form.setValue('monto', obligacion.valorPendiente)
+                                              const newValue = obligacionId === String(field.value) ? '' : obligacionId
+                                              field.onChange(newValue)
+                                              if (newValue) {
+                                                setSelectedObligacion(obligacion)
+                                                form.setValue('monto', obligacion.valorPendiente)
+                                              }
                                               setComboboxOpen(false)
                                             }}
-                                            className="py-3"
+                                            className="py-3.5"
                                           >
                                             <div className="flex flex-col items-start flex-1 min-w-0 pr-8">
-                                              <span className="font-medium text-gray-900">{obligacion.motivo}</span>
+                                              <span className="font-medium text-gray-900 truncate">{obligacion.motivo}</span>
                                               <span className="text-sm text-gray-500 mt-1">
                                                 {new Intl.NumberFormat('es-CO', {
                                                   style: 'currency',
@@ -875,11 +998,12 @@ export default function CuotasPage() {
                                                 }).format(obligacion.valorPendiente)}
                                               </span>
                                             </div>
-                                            {isSelected && <CommandCheck className="ms-auto" />}
+                                            {isSelected && <CommandCheck />}
                                           </CommandItem>
                                         )
                                       })}
                                     </CommandGroup>
+                                    <ScrollBar />
                                   </ScrollArea>
                                 </CommandList>
                               </Command>
@@ -935,41 +1059,6 @@ export default function CuotasPage() {
                         style: 'currency',
                         currency: 'COP',
                       }).format(selectedObligacion.valorPendiente)}
-                {/* Monto a pagar */}
-                <Controller
-                  name="monto"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <div className="space-y-2">
-                      <Label htmlFor="monto" className="text-sm font-medium text-gray-700">
-                        Monto a pagar
-                        <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <FormFieldWithTooltip
-                        label=""
-                        invalid={fieldState.invalid}
-                        error={showAllErrors ? fieldState.error?.message : undefined}
-                        className="-mt-3"
-                      >
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                            $
-                          </span>
-                          <Input
-                            id="monto"
-                            type="number"
-                            placeholder="0"
-                            value={field.value?.toString() || ''}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              field.onChange(value ? parseFloat(value) : 0)
-                            }}
-                            className={`w-full h-12 pl-8 text-lg font-medium ${
-                              fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
-                            }`}
-                          />
-                        </div>
-                      </FormFieldWithTooltip>
                     </div>
                   )}
                 </div>
