@@ -6,6 +6,7 @@ import React, {
   useState,
   createContext,
   useContext,
+  useCallback,
 } from "react";
 import { IconX } from "@tabler/icons-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,7 +15,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 interface CarouselProps {
-  items: JSX.Element[];
+  items: React.ReactElement[];
   initialScroll?: number;
 }
 
@@ -111,7 +112,6 @@ export const Carousel = ({ items, initialScroll = 0 }: CarouselProps) => {
                     duration: 0.5,
                     delay: 0.1 * index,
                     ease: "easeOut",
-                    once: true,
                   },
                 }}
                 key={"card" + index}
@@ -156,6 +156,11 @@ export const Card = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { onCardClose } = useContext(CarouselContext);
 
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    onCardClose(index);
+  }, [onCardClose, index]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -171,17 +176,12 @@ export const Card = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [open, handleClose]);
 
-  useOnClickOutside(containerRef, () => handleClose());
+  useOnClickOutside(containerRef as React.RefObject<HTMLElement>, handleClose);
 
   const handleOpen = () => {
     setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    onCardClose(index);
   };
 
   return (
@@ -270,7 +270,7 @@ export const BlurImage = ({
   src: string;
   className?: string;
   alt?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => {
   const [isLoading, setLoading] = useState(true);
   return (
