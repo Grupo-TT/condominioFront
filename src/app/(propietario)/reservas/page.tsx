@@ -49,7 +49,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Calendar } from '@/components/ui/calendar'
-import { Label } from '@/components/ui/label'
 import { HoraCombobox } from '@/components/hora-combobox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'

@@ -4,7 +4,6 @@ import * as React from 'react'
 import { Button, ButtonArrow } from '@/components/ui/button'
 import {
   Command,
-  CommandCheck,
   CommandEmpty,
   CommandGroup,
   CommandInput,
