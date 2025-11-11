@@ -1297,32 +1297,108 @@ export default function ReservasPropietarioPage() {
                   >
                     Cancelar
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      if (reservaEditando && editDate && editHoraInicial && editHoraFinal) {
-                        // Actualizar la reserva
-                        setReservas(prev => prev.map(r => 
-                          r.id === reservaEditando.id 
-                            ? {
-                                ...r,
-                                fechaInicio: editDate,
-                                fechaFin: editDate,
-                                horaInicio: editHoraInicial,
-                                horaFin: editHoraFinal,
-                                numeroInvitados: editNumeroInvitados
-                              }
-                            : r
-                        ))
-                        setIsEditSheetOpen(false)
-                        setReservaEditando(null)
-                        // TODO: Aquí iría la llamada a la API para actualizar la reserva
-                      }
-                    }}
-                    disabled={!editDate || !editHoraInicial || !editHoraFinal}
-                    className="flex-1"
-                  >
-                    Guardar Cambios
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        disabled={!editDate || !editHoraInicial || !editHoraFinal}
+                        className="flex-1"
+                      >
+                        Guardar Cambios
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar Cambios de Reserva</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Por favor, revisa los detalles actualizados de tu reserva antes de confirmar.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      
+                      {selectedRecurso && editDate && editHoraInicial && editHoraFinal && (
+                        <div className="space-y-4 py-4">
+                          {/* Información del Recurso */}
+                          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-sm">
+                              {selectedRecurso.tipo === 'zona' ? (
+                                <MapPin className="w-5 h-5" style={{ color: '#A39170' }} />
+                              ) : (
+                                <Package className="w-5 h-5" style={{ color: '#595D75' }} />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{selectedRecurso.nombre}</p>
+                              <p className="text-xs text-gray-500 mt-1">{selectedRecurso.descripcion}</p>
+                            </div>
+                          </div>
+
+                          {/* Fecha */}
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <CalendarIcon className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {editDate.toLocaleDateString('es-ES', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                }).replace(/^\w/, c => c.toUpperCase())}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Horas */}
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <Clock className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {horas.find(h => h.value === editHoraInicial)?.label || editHoraInicial}
+                                {' - '}
+                                {horas.find(h => h.value === editHoraFinal)?.label || editHoraFinal}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Número de Invitados */}
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                            <User className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {editNumeroInvitados} {editNumeroInvitados === 1 ? 'invitado' : 'invitados'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (reservaEditando && editDate && editHoraInicial && editHoraFinal) {
+                              // Actualizar la reserva
+                              setReservas(prev => prev.map(r => 
+                                r.id === reservaEditando.id 
+                                  ? {
+                                      ...r,
+                                      fechaInicio: editDate,
+                                      fechaFin: editDate,
+                                      horaInicio: editHoraInicial,
+                                      horaFin: editHoraFinal,
+                                      numeroInvitados: editNumeroInvitados
+                                    }
+                                  : r
+                              ))
+                              setIsEditSheetOpen(false)
+                              setReservaEditando(null)
+                              // TODO: Aquí iría la llamada a la API para actualizar la reserva
+                            }
+                          }}
+                        >
+                          Confirmar Cambios
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>
@@ -1416,6 +1492,7 @@ export default function ReservasPropietarioPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </>
   )
 }
