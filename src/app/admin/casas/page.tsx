@@ -18,6 +18,18 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import axios from 'axios'
 import {
+  Command,
+  CommandCheck,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ButtonArrow } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -142,6 +154,8 @@ export default function CasasPage() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'residencial' | 'arrendada'>('todas')
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'al-dia' | 'en-mora'>('todas')
+  const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -190,18 +204,25 @@ export default function CasasPage() {
     alert(`Propietario de la casa ${casaId} eliminado`)
   }, [])
 
-  // Filtrar datos basándose en el término de búsqueda y tipo
+  // Filtrar datos basándose en el término de búsqueda, tipo y estado financiero
   const filteredCasas = useMemo(() => {
-    if (!searchTerm && filterType === 'todas') {
-      return casas || []
-    }
-
     const searchLower = searchTerm.toLowerCase()
 
     return (casas || []).filter(casa => {
       // Filtrar por tipo de uso
       if (filterType !== 'todas' && casa.usoCasa.toLowerCase().trim() !== filterType) {
         return false
+      }
+
+      // Filtrar por estado financiero
+      if (estadoFilter !== 'todas') {
+        const estadoCasa = casa.estadoFinancieroCasa.toUpperCase().trim()
+        if (estadoFilter === 'al-dia' && estadoCasa !== 'AL DIA') {
+          return false
+        }
+        if (estadoFilter === 'en-mora' && estadoCasa !== 'EN MORA') {
+          return false
+        }
       }
 
       // Filtrar por término de búsqueda
@@ -216,7 +237,7 @@ export default function CasasPage() {
 
       return true
     })
-  }, [casas, searchTerm, filterType])
+  }, [casas, searchTerm, filterType, estadoFilter])
 
   // Verificar si hay resultados
   const hasResults = filteredCasas.length > 0
@@ -489,13 +510,91 @@ export default function CasasPage() {
               </TabsList>
 
               <div className="flex items-center gap-3">
+                <Popover open={estadoComboboxOpen} onOpenChange={setEstadoComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      mode="input"
+                      placeholder={estadoFilter === 'todas'}
+                      className="w-[180px] h-10 text-sm font-normal justify-between bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {estadoFilter !== 'todas' ? (
+                        <span className="flex items-center gap-2.5">
+                          <span className={cn(
+                            'ms-0.5 size-1.5 rounded-full',
+                            estadoFilter === 'al-dia' ? 'bg-green-500' :
+                            'bg-red-500'
+                          )}></span>
+                          <span className="truncate text-sm">
+                            {estadoFilter === 'al-dia' ? 'Al día' : 'En mora'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-500">Filtrar por estado</span>
+                      )}
+                      <ButtonArrow />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[180px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar estado..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontró estado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="todas"
+                            onSelect={() => {
+                              setEstadoFilter('todas')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-gray-400"></span>
+                              <span className="truncate">Todas</span>
+                            </span>
+                            {estadoFilter === 'todas' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="al-dia"
+                            onSelect={() => {
+                              setEstadoFilter('al-dia')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-green-500"></span>
+                              <span className="truncate">Al día</span>
+                            </span>
+                            {estadoFilter === 'al-dia' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="en-mora"
+                            onSelect={() => {
+                              setEstadoFilter('en-mora')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
+                              <span className="truncate">En mora</span>
+                            </span>
+                            {estadoFilter === 'en-mora' && <CommandCheck />}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <div className="relative w-80">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
                   <Input
                     placeholder="Buscar casas..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 h-10 text-sm bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                     ref={searchInputRef}
                   />
                   {searchTerm !== '' && (
@@ -503,9 +602,9 @@ export default function CasasPage() {
                       onClick={handleClearSearch}
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 hover:bg-gray-100"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
-                      <X size={14} />
+                      <X size={16} className="text-gray-500" />
                     </Button>
                   )}
                 </div>
@@ -577,8 +676,8 @@ export default function CasasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas que coincidan con "${searchTerm}"`
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''}${filterType !== 'todas' ? ` de tipo ${filterType === 'residencial' ? 'residencial' : 'arrendada'}` : ''}`
                       : filterType === 'residencial'
                         ? 'No hay casas residenciales registradas'
                         : filterType === 'arrendada'
@@ -629,8 +728,8 @@ export default function CasasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas residenciales que coincidan con "${searchTerm}"`
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo residencial`
                       : 'No hay casas residenciales registradas'
                     }
                   </p>
@@ -677,8 +776,8 @@ export default function CasasPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas arrendadas que coincidan con "${searchTerm}"`
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo arrendada`
                       : 'No hay casas arrendadas registradas'
                     }
                   </p>

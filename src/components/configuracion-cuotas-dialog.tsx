@@ -286,7 +286,7 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
             icon={<HugeiconsIcon icon={Wallet01Icon} size={20} />}
             iconBgColor="bg-[#E3E4EA]"
             iconColor="text-[#595D75]"
-            showDateField={true}
+            showDateField={false}
           />
           
           <CollapsibleConfigCard

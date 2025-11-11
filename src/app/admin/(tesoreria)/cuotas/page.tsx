@@ -55,6 +55,8 @@ import { Button } from '@/components/ui/button'
 import { useCuotas } from '@/hooks/useCuotas'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ObligacionCombobox } from '@/components/obligacion-combobox'
+import { toast } from 'sonner'
+import axios from 'axios'
 
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
@@ -224,7 +226,7 @@ export default function CuotasPage() {
   const [showAllErrors, setShowAllErrors] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
-  const { casas, loading, fetchCasas, handleRegistrarPago } = useCuotas()
+  const { casas, loading, error, fetchCasas, handleRegistrarPago } = useCuotas()
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -320,25 +322,27 @@ export default function CuotasPage() {
 
     try {
       await handleRegistrarPago(payload);
+      
+      // Mostrar toast de éxito
+      toast.success('Pago registrado exitosamente', {
+        duration: 5000,
+      });
+      
       setIsSheetOpen(false);
       form.reset();
       setSelectedObligacion(null);
     } catch (error: unknown) {
-      console.error("Error al registrar pago", error);
-      let errorMessage = 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
+      // Extraer mensaje de error usando axios.isAxiosError
+      const errorMessage = axios.isAxiosError(error)
+        ? (error.response?.data as { message?: string })?.message || error.message || 'Error al registrar el pago. Por favor, inténtalo de nuevo.'
+        : error instanceof Error
+          ? error.message
+          : 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
       
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        if (axiosError.response?.data?.message) {
-          errorMessage = axiosError.response.data.message;
-        } else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      alert(errorMessage);
+      // Mostrar toast de error
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
     }
   }
 
@@ -355,6 +359,15 @@ export default function CuotasPage() {
   useEffect(() => {
     fetchCasas();
   }, [fetchCasas]);
+
+  // Mostrar toast de error cuando haya un error de carga
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        duration: 5000,
+      });
+    }
+  }, [error]);
 
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
@@ -598,17 +611,41 @@ export default function CuotasPage() {
             </div>
 
             <TabsContent value="todas">
-              <DataGrid
-                table={table}
-                recordCount={loading ? 10 : filteredCasas?.length || 0}
-                isLoading={loading}
-                loadingMode="skeleton"
-                tableLayout={{
-                  headerBackground: false,
-                  rowBorder: true,
-                  rowRounded: false,
-                }}
-              >
+              {!loading && !hasResults ? (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={MoneyReceiveFlow01Icon}
+                        size={24}
+                        className="text-gray-400"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">
+                        {searchTerm ? 'No se encontraron resultados' : 'No hay cuotas registradas'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {searchTerm
+                          ? `No hay casas que coincidan con "${searchTerm}"`
+                          : 'No hay registros de cuotas disponibles en este momento'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <DataGrid
+                  table={table}
+                  recordCount={loading ? 10 : filteredCasas?.length || 0}
+                  isLoading={loading}
+                  loadingMode="skeleton"
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -624,37 +661,45 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              {!loading && !hasResults && (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas que coincidan con "${searchTerm}"`
-                      : 'No hay casas registradas'
-                    }
-                  </p>
-                </div>
               )}
             </TabsContent>
 
             <TabsContent value="al-dia">
-              <DataGrid
-                table={table}
-                recordCount={loading ? 10 : filteredCasas?.length || 0}
-                isLoading={loading}
-                loadingMode="skeleton"
-                tableLayout={{
-                  headerBackground: false,
-                  rowBorder: true,
-                  rowRounded: false,
-                }}
-              >
+              {!loading && !hasResults ? (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={MoneyReceiveFlow01Icon}
+                        size={24}
+                        className="text-gray-400"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">
+                        {searchTerm ? 'No se encontraron resultados' : 'No hay casas al día'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {searchTerm
+                          ? `No hay casas al día que coincidan con "${searchTerm}"`
+                          : 'No hay casas con todas sus cuotas al día registradas'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <DataGrid
+                  table={table}
+                  recordCount={loading ? 10 : filteredCasas?.length || 0}
+                  isLoading={loading}
+                  loadingMode="skeleton"
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -670,37 +715,45 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              {!loading && !hasResults && (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas al día que coincidan con "${searchTerm}"`
-                      : 'No hay casas al día registradas'
-                    }
-                  </p>
-                </div>
               )}
             </TabsContent>
 
             <TabsContent value="pendientes">
-              <DataGrid
-                table={table}
-                recordCount={loading ? 10 : filteredCasas?.length || 0}
-                isLoading={loading}
-                loadingMode="skeleton"
-                tableLayout={{
-                  headerBackground: false,
-                  rowBorder: true,
-                  rowRounded: false,
-                }}
-              >
+              {!loading && !hasResults ? (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={MoneyReceiveFlow01Icon}
+                        size={24}
+                        className="text-gray-400"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">
+                        {searchTerm ? 'No se encontraron resultados' : 'No hay pagos pendientes'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {searchTerm
+                          ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
+                          : 'No hay casas con pagos pendientes registradas'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <DataGrid
+                  table={table}
+                  recordCount={loading ? 10 : filteredCasas?.length || 0}
+                  isLoading={loading}
+                  loadingMode="skeleton"
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
                   <div className="w-full space-y-2.5">
                     <DataGridContainer border={false}>
                       <ScrollArea>
@@ -716,22 +769,6 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              {!loading && !hasResults && (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
-                      : 'No hay casas con pagos pendientes'
-                    }
-                  </p>
-                </div>
               )}
             </TabsContent>
           </Tabs>

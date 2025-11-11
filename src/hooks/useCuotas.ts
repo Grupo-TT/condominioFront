@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { getPorCobrar, registrarPago } from '@/lib/services/cuotas.service'
 import { CuotaCasa, PagoPayload } from '@/types/cuotas.types'
+import axios from 'axios'
 
 export const useCuotas = () => {
   const [loading, setLoading] = useState(true) // Iniciar en true para mostrar skeleton al cargar
@@ -16,15 +17,17 @@ export const useCuotas = () => {
     try {
       const response = await getPorCobrar()
       setCasas(response?.data || [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err) {
       // Si el error es 400 con mensaje de "no hay casas", simplemente establecer casas vacías
-      if (err.response?.status === 400 && err.response?.data?.message?.includes('No hay casas')) {
+      if (axios.isAxiosError(err) && err.response?.status === 400 && 
+          (err.response?.data as { message?: string })?.message?.includes('No hay casas')) {
         setCasas([])
         return
       }
-      console.error('Error al obtener estados de cuenta:', err)
-      setError('No se pudieron obtener los estados de cuenta.')
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'No se pudieron obtener los estados de cuenta.'
+        : 'No se pudieron obtener los estados de cuenta.'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -42,14 +45,12 @@ export const useCuotas = () => {
       await fetchCasas()
       return data
     } catch (err) {
-      if (err instanceof Error) {
-        console.error('Error al registrar pago:', err)
-        const responseErr = (err as { response?: { data?: { message?: string } } })
-        setError(responseErr.response?.data?.message || 'Error al registrar el pago')
-      } else {
-        console.error('Error al registrar pago:', err)
-        setError('Error al registrar el pago')
-      }
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al registrar el pago'
+        : err instanceof Error
+          ? err.message
+          : 'Error al registrar el pago'
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)
