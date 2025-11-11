@@ -1,3 +1,5 @@
+import { propietario } from './casa.types'
+
 export interface Obligacion {
   id: number;
   motivo: string;
@@ -16,20 +18,35 @@ export interface Obligacion {
 
 export interface CuotaCasa {
   numeroCasa: number;
-  propietario: Propietario | null;
+  propietario: propietario | null;
   saldoPendiente: number;
   ultimoPago: string;
   obligacionesPendientes: Obligacion[];
-}
-
-export interface Propietario {
-  nombreCompleto: string;
-  telefono: number;
-  correo: string;
 }
 
 export interface PagoPayload {
   soporte: string;
   idObligacion: number;
   montoAPagar: number;
+}
+
+export interface Multa {
+  id: string;
+  casaId: string;
+  casa: string; //numero de la casa
+  propietario: string;
+  titulo: string;
+  motivo: string;
+  monto: number;
+  fecha: string;
+  estadoPago: 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE';
+  tipoPago?: 'DINERO' | 'LABOR_SOCIAL';
+}
+
+export interface MultaForm {
+  idCasa?: string | undefined;
+  monto: number;
+  titulo: string;
+  motivo: string;
+  tipoPago?: string | null;
 }
