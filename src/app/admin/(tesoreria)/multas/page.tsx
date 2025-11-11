@@ -69,7 +69,9 @@ import {
 } from '@tanstack/react-table'
 import { Multa } from '@/types/cuotas.types'
 import { useMultas } from '@/hooks/useMultas'
-import { updateMulta } from '@/lib/services/multas.service'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import axios from 'axios'
 
 export default function MultasPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -121,16 +123,28 @@ export default function MultasPage() {
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Debe enviar el formato correcto a createNuevaMulta
-    const ok = await modificarMulta(Number(editingMulta?.id),{
-      titulo: editTitulo,
-      motivo: editDescripcion,
-      monto: Number(editValor),
-      tipoPago: editTipoPago,
-    })
+    try {
+      await modificarMulta(Number(editingMulta?.id), {
+        titulo: editTitulo,
+        motivo: editDescripcion,
+        monto: Number(editValor),
+        tipoPago: editTipoPago,
+      })
 
-    // Aquí irá la llamada a la API para actualizar la multa
-    setIsEditSheetOpen(false)
+      toast.success('Multa actualizada exitosamente', {
+        duration: 5000,
+      })
+
+      setIsEditSheetOpen(false)
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al actualizar la multa'
+        : 'Error al actualizar la multa. Intenta de nuevo.'
+
+      toast.error(errorMessage, {
+        duration: 5000,
+      })
+    }
   }
 
   const handleEditCancel = () => {
@@ -201,9 +215,11 @@ export default function MultasPage() {
             <div className="min-w-0 flex-1">
               <button
                 onClick={() => handleViewDetail(row.original)}
-                className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                className="group font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left truncate inline-block max-w-full"
               >
-                {row.original.titulo}
+                <span className="relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 group-hover:after:w-full">
+                  {row.original.titulo}
+                </span>
               </button>
               <div className="text-sm text-gray-500 truncate">{row.original.motivo || 'Sin descripción'}</div>
             </div>
@@ -212,6 +228,17 @@ export default function MultasPage() {
         size: 300,
         enableSorting: true,
         enableHiding: false,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'propietario',
@@ -224,14 +251,25 @@ export default function MultasPage() {
               size={14}
               className="text-gray-400"
             />
-            <div>
-              <div className="font-medium text-gray-900">{row.original.propietario}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 truncate">{row.original.propietario}</div>
               <div className="text-xs text-gray-500">Casa No.{row.original.casa}</div>
             </div>
           </div>
         ),
         size: 180,
         enableSorting: true,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="w-3.5 h-3.5 rounded" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'monto',
@@ -250,6 +288,9 @@ export default function MultasPage() {
         },
         size: 130,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-5 w-24" />,
+        },
       },
       {
         accessorKey: 'fecha',
@@ -269,6 +310,9 @@ export default function MultasPage() {
         },
         size: 130,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-4 w-20" />,
+        },
       },
       {
         accessorKey: 'estado',
@@ -278,25 +322,28 @@ export default function MultasPage() {
           const estado = row.original.estadoPago
           return (
             <Badge
-              variant={estado === 'CONDONADO' ? 'success' : 'destructive'}
+              variant={estado === 'CONDONADO' ? 'success' : estado === 'POR_COBRAR' ? 'warning' : 'destructive'}
               appearance="outline"
               size="md"
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : 'bg-red-700'
+                className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : estado === 'POR_COBRAR' ? 'bg-yellow-600' : 'bg-red-700'
                   }`}
               />
               {estado === 'CONDONADO'
                 ? 'CONDONADO'
                 : estado === 'PENDIENTE'
                   ? 'PENDIENTE'
-                  : 'POR COBRAR'}
+                  : 'ABONADO'}
             </Badge>
           )
         },
         size: 120,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-20 rounded-full" />,
+        },
       },
       {
         accessorKey: 'tipoPago',
@@ -316,6 +363,9 @@ export default function MultasPage() {
         },
         size: 80,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-16 rounded-full" />,
+        },
       },
       {
         id: 'actions',
@@ -379,6 +429,9 @@ export default function MultasPage() {
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
     [handleEdit, handleViewDetail]
@@ -420,9 +473,7 @@ export default function MultasPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/tesoreria">
-                  Tesorería
-                </BreadcrumbLink>
+                <span className="text-muted-foreground">Tesorería</span>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -481,17 +532,7 @@ export default function MultasPage() {
             </div>
 
             <TabsContent value="PENDIENTE">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto animate-pulse" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    Cargando multas...
-                  </h3>
-                  <p className="text-gray-500 text-sm">Por favor espera un momento.</p>
-                </div>
-              ) : error ? (
+              {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-red-500 mb-2">
                     <X className="w-12 h-12 mx-auto" />
@@ -504,90 +545,113 @@ export default function MultasPage() {
                     Reintentar
                   </Button>
                 </div>
-              ) : hasResults ? (
-                <DataGrid
-                  table={table}
-                  recordCount={filteredMultas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay multas pendientes que coincidan con "${searchTerm}"`
-                      : 'No hay multas pendientes'
-                    }
-                  </p>
-                </div>
+                <>
+                  <DataGrid
+                    table={table}
+                    recordCount={loading ? 10 : filteredMultas?.length || 0}
+                    isLoading={loading}
+                    loadingMode="skeleton"
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                  {!loading && !hasResults && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <Search className="w-12 h-12 mx-auto" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        No se encontraron resultados
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {searchTerm
+                          ? `No hay multas pendientes que coincidan con "${searchTerm}"`
+                          : 'No hay multas pendientes'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 
             <TabsContent value="CONDONADO">
-              {hasResults ? (
-                <DataGrid
-                  table={table}
-                  recordCount={filteredMultas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
+              {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
+                  <div className="text-red-500 mb-2">
+                    <X className="w-12 h-12 mx-auto" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
+                    Error al cargar multas
                   </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm
-                      ? `No hay multas pagadas que coincidan con "${searchTerm}"`
-                      : 'No hay multas pagadas'
-                    }
-                  </p>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                  <Button onClick={refreshMultas} className="mt-4">
+                    Reintentar
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <DataGrid
+                    table={table}
+                    recordCount={loading ? 10 : filteredMultas?.length || 0}
+                    isLoading={loading}
+                    loadingMode="skeleton"
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                  {!loading && !hasResults && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <Search className="w-12 h-12 mx-auto" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        No se encontraron resultados
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {searchTerm
+                          ? `No hay multas pagadas que coincidan con "${searchTerm}"`
+                          : 'No hay multas pagadas'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
@@ -653,7 +717,7 @@ export default function MultasPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Estado:</div>
                       <Badge
-                        variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : 'destructive'}
+                        variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : selectedMulta.estadoPago === 'POR_COBRAR' ? 'warning' : 'destructive'}
                         appearance="outline"
                         size="sm"
                       >
@@ -661,7 +725,7 @@ export default function MultasPage() {
                           ? 'CONDONADO'
                           : selectedMulta.estadoPago === 'PENDIENTE'
                             ? 'PENDIENTE'
-                            : 'POR COBRAR'}
+                            : 'ABONADO'}
 
                       </Badge>
                     </div>
@@ -736,23 +800,37 @@ export default function MultasPage() {
           </SheetHeader>
 
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault()
-              const formNuevaMulta = {
-                idCasa: formCasa,
-                titulo: formTitulo,
-                motivo: formDescripcion,
-                monto: Number(formValor),
+              try {
+                const formNuevaMulta = {
+                  idCasa: formCasa,
+                  titulo: formTitulo,
+                  motivo: formDescripcion,
+                  monto: Number(formValor),
+                }
+
+                await nuevaMulta(formNuevaMulta)
+
+                toast.success('Multa asignada exitosamente', {
+                  duration: 5000,
+                })
+
+                setIsFormSheetOpen(false)
+                // Limpiar formulario
+                setFormCasa('')
+                setFormTitulo('')
+                setFormDescripcion('')
+                setFormValor('')
+              } catch (err) {
+                const errorMessage = axios.isAxiosError(err)
+                  ? (err.response?.data as { message?: string })?.message || err.message || 'Error al asignar la multa'
+                  : 'Error al asignar la multa. Intenta de nuevo.'
+
+                toast.error(errorMessage, {
+                  duration: 5000,
+                })
               }
-              console.log('Asignar multa:', formNuevaMulta)
-              // Aquí iría la lógica para guardar la multa
-              nuevaMulta(formNuevaMulta)
-              setIsFormSheetOpen(false)
-              // Limpiar formulario
-              setFormCasa('')
-              setFormTitulo('')
-              setFormDescripcion('')
-              setFormValor('')
             }}
             className="flex flex-col h-full"
           >
