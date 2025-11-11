@@ -20,6 +20,16 @@ export function mapFormToRequest(form: { nombre: string; descripcion: string; ti
 
 export function mapResponseToUI(resp: RecursoResponse): RecursoUI {
   const tipo = resp.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto'
+  const getEstado = (disponibilidad: DisponibilidadRecurso) => {
+    switch (disponibilidad) {
+      case 'DISPONIBLE':
+        return 'Disponible'
+      case 'EN_MANTENIMIENTO':
+        return 'En Mantenimiento'
+      default:
+        return 'No disponible'
+    }
+  }
   return {
     id: resp.id != null ? resp.id.toString() : String(Date.now()),
     nombre: resp.nombre,
@@ -27,7 +37,7 @@ export function mapResponseToUI(resp: RecursoResponse): RecursoUI {
     tipo: tipo as 'zona' | 'objeto',
     tipoRecursoComun: resp.tipoRecursoComun,
     disponibilidadRecurso: resp.disponibilidadRecurso,
-    estado: resp.disponibilidadRecurso === 'DISPONIBLE' ? 'Disponible' : 'No disponible',
+    estado: getEstado(resp.disponibilidadRecurso),
     habilitado: resp.disponibilidadRecurso === 'DISPONIBLE'
   }
 }

@@ -57,6 +57,18 @@ import {
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
+  Command,
+  CommandCheck,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ButtonArrow } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import {
   ColumnDef,
   ExpandedState,
   getCoreRowModel,
@@ -71,6 +83,7 @@ import { RecursoResponse } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
 import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
 import type { RecursoUI } from '@/services/recurso.adapter'
+import { useRecurso } from '@/hooks/useRecurso'
 
 export default function RecursosPage() {
   const [recursos, setRecursos] = useState<RecursoUI[]>([])
@@ -81,6 +94,8 @@ export default function RecursosPage() {
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'zonas' | 'objetos'>('todas')
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'disponible' | 'no-disponible' | 'en-mantenimiento'>('todas')
+  const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [formNombre, setFormNombre] = useState('')
   const [formDescripcion, setFormDescripcion] = useState('')
@@ -88,6 +103,7 @@ export default function RecursosPage() {
   const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
+  const { habilitarRecurso, deshabilitarRecurso } = useRecurso()
 
   useEffect(() => {
     let mounted = true
@@ -119,15 +135,25 @@ export default function RecursosPage() {
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
     return recursos.filter((r) => {
+      // Filtrar por tipo
       if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
       if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
+      
+      // Filtrar por estado
+      if (estadoFilter !== 'todas') {
+        if (estadoFilter === 'disponible' && r.disponibilidadRecurso !== 'DISPONIBLE') return false
+        if (estadoFilter === 'no-disponible' && r.disponibilidadRecurso !== 'NO_DISPONIBLE') return false
+        if (estadoFilter === 'en-mantenimiento' && r.disponibilidadRecurso !== 'EN_MANTENIMIENTO') return false
+      }
+      
+      // Filtrar por término de búsqueda
       if (!term) return true
       return (
         r.nombre.toLowerCase().includes(term) ||
         r.descripcion.toLowerCase().includes(term)
       )
     })
-  }, [searchTerm, filterType, recursos])
+  }, [searchTerm, filterType, estadoFilter, recursos])
 
   const validateForm = () => {
     const nextErrors: { nombre?: string; descripcion?: string; tipo?: string } = {}
@@ -261,10 +287,10 @@ export default function RecursosPage() {
         cell: ({ row }) => {
           const isZona = row.original.tipo === 'zona'
           return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-3">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: isZona ? '#A3917020' : '#595D7520' }}
+                style={{ backgroundColor: isZona ? '#F1E8D6' : '#E3E4EA' }}
               >
                 {isZona ? (
                   <MapPin className="w-4 h-4" style={{ color: '#A39170' }} />
@@ -333,14 +359,22 @@ export default function RecursosPage() {
         accessorKey: 'estado',
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.habilitado ? 'success' : 'destructive'}
-            appearance="outline"
-          >
-            {row.original.habilitado ? 'Disponible' : 'No disponible'}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const estado = row.original.disponibilidadRecurso
+          const getBadgeVariant = () => {
+            if (estado === 'DISPONIBLE') return 'success'
+            if (estado === 'EN_MANTENIMIENTO') return 'warning'
+            return 'destructive'
+          }
+          return (
+            <Badge
+              variant={getBadgeVariant()}
+              appearance="outline"
+            >
+              {row.original.estado}
+            </Badge>
+          )
+        },
         enableSorting: true,
         size: 140,
         meta: {
@@ -401,8 +435,23 @@ export default function RecursosPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          setRecursos((prev) => prev.map((r) => r.id === row.original.id ? { ...r, habilitado: !r.habilitado } : r))
+                        onClick={async () => {
+                          try {
+                            const id = parseInt(row.original.id)
+                            const nuevoEstado = !row.original.habilitado
+                            if (nuevoEstado) {
+                              await habilitarRecurso(id)
+                            } else {
+                              await deshabilitarRecurso(id)
+                            }
+                            setRecursos(prev =>
+                              prev.map(r =>
+                                r.id === row.original.id ? { ...r, habilitado: nuevoEstado, estado: nuevoEstado ? 'Disponible' : 'No disponible' } : r
+                              )
+                            )
+                          } catch (err) {
+                            console.error('No se pudo actualizar el estado del recurso, por favor intenta nuevamente.', err)
+                          }
                         }}
                         className={row.original.habilitado ? 'bg-red-600 hover:bg-red-700' : 'text-white hover:opacity-90'}
                         style={row.original.habilitado ? undefined : { backgroundColor: '#4C6C5B' }}
@@ -423,7 +472,7 @@ export default function RecursosPage() {
         },
       },
     ],
-    [setRecursos]
+    [setRecursos, habilitarRecurso, deshabilitarRecurso]
   )
 
   const table = useReactTable({
@@ -498,6 +547,98 @@ export default function RecursosPage() {
                 <TabsTrigger value="objetos">Objetos</TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-3">
+                <Popover open={estadoComboboxOpen} onOpenChange={setEstadoComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      mode="input"
+                      placeholder={estadoFilter === 'todas'}
+                      className="w-[180px] h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {estadoFilter !== 'todas' ? (
+                        <span className="flex items-center gap-2.5">
+                          <span className={cn(
+                            'ms-0.5 size-1.5 rounded-full',
+                            estadoFilter === 'disponible' ? 'bg-green-500' :
+                            estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          )}></span>
+                          <span className="truncate">
+                            {estadoFilter === 'disponible' ? 'Disponible' :
+                             estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
+                             'No disponible'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span>Filtrar por estado</span>
+                      )}
+                      <ButtonArrow />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[180px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar estado..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontró estado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="todas"
+                            onSelect={() => {
+                              setEstadoFilter('todas')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-gray-400"></span>
+                              <span className="truncate">Todas</span>
+                            </span>
+                            {estadoFilter === 'todas' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="disponible"
+                            onSelect={() => {
+                              setEstadoFilter('disponible')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-green-500"></span>
+                              <span className="truncate">Disponible</span>
+                            </span>
+                            {estadoFilter === 'disponible' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="no-disponible"
+                            onSelect={() => {
+                              setEstadoFilter('no-disponible')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
+                              <span className="truncate">No disponible</span>
+                            </span>
+                            {estadoFilter === 'no-disponible' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="en-mantenimiento"
+                            onSelect={() => {
+                              setEstadoFilter('en-mantenimiento')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-yellow-500"></span>
+                              <span className="truncate">En Mantenimiento</span>
+                            </span>
+                            {estadoFilter === 'en-mantenimiento' && <CommandCheck />}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <div className="relative w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-gray-400" />
@@ -527,28 +668,55 @@ export default function RecursosPage() {
             </div>
 
             <TabsContent value={filterType}>
-              <DataGrid
-                table={table}
-                recordCount={filteredData?.length || 0}
-                loadingMode="skeleton"
-                isLoading={loading}
-                tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
-              >
-            <div className="w-full space-y-2.5">
-              <DataGridContainer border={false}>
-                <ScrollArea>
-                  <DataGridTable />
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </DataGridContainer>
-              <DataGridPagination
-                rowsPerPageLabel="Filas por página"
-                info="{from} - {to} de {count}"
-                previousPageLabel="Ir a la página anterior"
-                nextPageLabel="Ir a la página siguiente"
-              />
-            </div>
-              </DataGrid>
+              {!loading && filteredData.length === 0 ? (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Package className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">
+                        {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {searchTerm
+                          ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                          : estadoFilter !== 'todas'
+                            ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                            : filterType === 'zonas'
+                              ? 'No hay zonas comunes registradas'
+                              : filterType === 'objetos'
+                                ? 'No hay objetos registrados'
+                                : 'No hay registros de recursos disponibles en este momento'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <DataGrid
+                  table={table}
+                  recordCount={filteredData?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -618,7 +786,7 @@ export default function RecursosPage() {
                     <SelectContent>
                       <SelectItem value="zona">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#A3917020' }}>
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#F1E8D6' }}>
                             <MapPin className="w-3.5 h-3.5" style={{ color: '#A39170' }} />
                           </span>
                           <span>Zona</span>
@@ -626,7 +794,7 @@ export default function RecursosPage() {
                       </SelectItem>
                       <SelectItem value="objeto">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#595D7520' }}>
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#E3E4EA' }}>
                             <Package className="w-3.5 h-3.5" style={{ color: '#595D75' }} />
                           </span>
                           <span>Objeto</span>
