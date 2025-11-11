@@ -9,7 +9,7 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs } from '@/components/animated-tabs'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -424,12 +424,12 @@ export default function RecursosPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {row.original.habilitado ? '¿Deshabilitar recurso?' : '¿Habilitar recurso?'}
+                        {row.original.habilitado ? `¿Deshabilitar recurso "${row.original.nombre}"?` : `¿Habilitar recurso "${row.original.nombre}"?`}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         {row.original.habilitado
-                          ? 'El recurso quedará no disponible para reservas o uso hasta que lo habilites nuevamente.'
-                          : 'El recurso quedará disponible para su uso.'}
+                          ? `El recurso "${row.original.nombre}" quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
+                          : `El recurso "${row.original.nombre}" quedará disponible para su uso.`}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -446,7 +446,12 @@ export default function RecursosPage() {
                             }
                             setRecursos(prev =>
                               prev.map(r =>
-                                r.id === row.original.id ? { ...r, habilitado: nuevoEstado, estado: nuevoEstado ? 'Disponible' : 'No disponible' } : r
+                                r.id === row.original.id ? { 
+                                  ...r, 
+                                  habilitado: nuevoEstado, 
+                                  estado: nuevoEstado ? 'Disponible' : 'No disponible',
+                                  disponibilidadRecurso: nuevoEstado ? 'DISPONIBLE' : 'NO_DISPONIBLE'
+                                } : r
                               )
                             )
                           } catch (err) {
@@ -539,14 +544,172 @@ export default function RecursosPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'todas' | 'zonas' | 'objetos')} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="todas">Todos</TabsTrigger>
-                <TabsTrigger value="zonas">Zonas</TabsTrigger>
-                <TabsTrigger value="objetos">Objetos</TabsTrigger>
-              </TabsList>
-              <div className="flex items-center gap-3">
+          <AnimatedTabs
+            value={filterType}
+            onValueChange={(v) => setFilterType(v as 'todas' | 'zonas' | 'objetos')}
+            tabs={[
+              {
+                value: 'todas',
+                label: 'Todos',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+              {
+                value: 'zonas',
+                label: 'Zonas',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+              {
+                value: 'objetos',
+                label: 'Objetos',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+            ]}
+            rightContent={
+              <>
                 <Popover open={estadoComboboxOpen} onOpenChange={setEstadoComboboxOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -664,61 +827,9 @@ export default function RecursosPage() {
                   <Plus className="w-4 h-4" />
                   Nuevo recurso
                 </Button>
-              </div>
-            </div>
-
-            <TabsContent value={filterType}>
-              {!loading && filteredData.length === 0 ? (
-                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Package className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-base font-semibold text-gray-700">
-                        {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {searchTerm
-                          ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
-                          : estadoFilter !== 'todas'
-                            ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
-                            : filterType === 'zonas'
-                              ? 'No hay zonas comunes registradas'
-                              : filterType === 'objetos'
-                                ? 'No hay objetos registrados'
-                                : 'No hay registros de recursos disponibles en este momento'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <DataGrid
-                  table={table}
-                  recordCount={filteredData?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              )}
-            </TabsContent>
-          </Tabs>
+              </>
+            }
+          />
         </div>
       </div>
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

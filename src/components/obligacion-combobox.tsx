@@ -54,7 +54,7 @@ export function ObligacionCombobox({
           {obligacionSeleccionada ? (
             <div className="flex flex-col items-start text-left w-full pr-8">
               <span className="font-medium text-gray-900 leading-tight">
-                {obligacionSeleccionada.motivo}
+                {obligacionSeleccionada.titulo || obligacionSeleccionada.motivo}
               </span>
               <span className="text-sm text-gray-500 mt-1">
                 {new Intl.NumberFormat('es-CO', {
@@ -84,7 +84,7 @@ export function ObligacionCombobox({
                   return (
                     <CommandItem
                       key={obligacion.id}
-                      value={`${obligacion.motivo} ${new Intl.NumberFormat('es-CO', {
+                      value={`${obligacion.titulo || obligacion.motivo} ${new Intl.NumberFormat('es-CO', {
                         style: 'currency',
                         currency: 'COP',
                       }).format(obligacion.valorPendiente)}`}
@@ -101,7 +101,7 @@ export function ObligacionCombobox({
                     >
                       <div className="flex flex-col items-start flex-1 min-w-0 pr-8">
                         <span className="font-medium text-gray-900 truncate">
-                          {obligacion.motivo}
+                          {obligacion.titulo || obligacion.motivo}
                         </span>
                         <span className="text-sm text-gray-500 mt-1">
                           {new Intl.NumberFormat('es-CO', {
