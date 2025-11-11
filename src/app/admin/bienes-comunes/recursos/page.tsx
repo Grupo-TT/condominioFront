@@ -424,12 +424,12 @@ export default function RecursosPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {row.original.habilitado ? `¿Deshabilitar recurso "${row.original.nombre}"?` : `¿Habilitar recurso "${row.original.nombre}"?`}
+                        {row.original.habilitado ? `¿Deshabilitar recurso &quot;${row.original.nombre}&quot;?` : `¿Habilitar recurso &quot;${row.original.nombre}&quot;?`}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         {row.original.habilitado
-                          ? `El recurso "${row.original.nombre}" quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
-                          : `El recurso "${row.original.nombre}" quedará disponible para su uso.`}
+                          ? `El recurso &quot;${row.original.nombre}&quot; quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
+                          : `El recurso &quot;${row.original.nombre}&quot; quedará disponible para su uso.`}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -480,10 +480,10 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Poner recurso "{row.original.nombre}" en mantenimiento?
+                          ¿Poner recurso &quot;{row.original.nombre}&quot; en mantenimiento?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          El recurso "{row.original.nombre}" quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
+                          El recurso &quot;{row.original.nombre}&quot; quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -538,7 +538,7 @@ export default function RecursosPage() {
         },
       },
     ],
-    [setRecursos, habilitarRecurso, deshabilitarRecurso]
+    [setRecursos, habilitarRecurso, deshabilitarRecurso, recursosResponse]
   )
 
   const table = useReactTable({
