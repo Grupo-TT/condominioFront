@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
@@ -466,6 +466,67 @@ export default function RecursosPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                {row.original.disponibilidadRecurso !== 'EN_MANTENIMIENTO' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        className="text-amber-700 focus:bg-yellow-50 focus:text-amber-700 hover:bg-yellow-50 hover:text-amber-700"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <Wrench className="mr-2 h-4 w-4" />
+                        En Mantenimiento
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          ¿Poner recurso "{row.original.nombre}" en mantenimiento?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          El recurso "{row.original.nombre}" quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            try {
+                              const id = parseInt(row.original.id)
+                              const existing = recursosResponse.find(r => r.id === id)
+                              if (existing) {
+                                const payload = mapFormToRequest(
+                                  { 
+                                    nombre: existing.nombre, 
+                                    descripcion: existing.descripcion, 
+                                    tipo: existing.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto' 
+                                  }, 
+                                  'EN_MANTENIMIENTO'
+                                )
+                                const updated = await recursoService.putRecurso(id, payload)
+                                setRecursosResponse((prev) => prev.map((resp) => resp.id === id ? updated : resp))
+                                setRecursos((prev) =>
+                                  prev.map(r =>
+                                    r.id === row.original.id ? {
+                                      ...r,
+                                      disponibilidadRecurso: 'EN_MANTENIMIENTO',
+                                      estado: 'En Mantenimiento',
+                                      habilitado: false
+                                    } : r
+                                  )
+                                )
+                              }
+                            } catch (err) {
+                              console.error('No se pudo poner el recurso en mantenimiento, por favor intenta nuevamente.', err)
+                            }
+                          }}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        >
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
