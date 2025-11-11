@@ -1,5 +1,5 @@
 import { apiClient } from '../config/axios.config'
-import { Multa, MultaForm } from '@/types/cuotas.types'
+import { MultaForm } from '@/types/cuotas.types'
 
 
 // GET /obligacion/multas

@@ -27,7 +27,7 @@ export function useMultas(): UseMultasReturn {
       const response = await getMultas()
 
       setMultasData(response.data)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error cargando multas:', err)
       setError('No se pudieron cargar las multas.')
     } finally {
@@ -45,7 +45,7 @@ export function useMultas(): UseMultasReturn {
       try {
         await createMulta(multa)
         await fetchMultas()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error creando multa:', err)
         throw new Error('No se pudo registrar la multa, intenta nuevamente.')
       }
@@ -57,10 +57,9 @@ export function useMultas(): UseMultasReturn {
   const modificarMulta = useCallback(
     async (id: number, multa: MultaForm) => {
       try {
-        const response = await updateMulta(id, multa)
-
+        await updateMulta(id, multa)
         await fetchMultas()
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error actualizando multa:', err)
         throw new Error('No se pudo actualizar la multa, intenta nuevamente.')
       }

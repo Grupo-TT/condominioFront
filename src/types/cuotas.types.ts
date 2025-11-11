@@ -1,3 +1,5 @@
+import { propietario } from './casa.types'
+
 export interface Obligacion {
   id: number;
   motivo: string;
@@ -16,10 +18,16 @@ export interface Obligacion {
 
 export interface CuotaCasa {
   numeroCasa: number;
-  propietario: Propietario | null;
+  propietario: propietario | null;
   saldoPendiente: number;
   ultimoPago: string;
   obligacionesPendientes: Obligacion[];
+}
+
+export interface PagoPayload {
+  soporte: string;
+  idObligacion: number;
+  montoAPagar: number;
 }
 
 export interface Multa {

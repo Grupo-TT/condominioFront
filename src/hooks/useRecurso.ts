@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { recursoService } from '@/services/recurso.service'
-import { mapResponseToUI, RecursoUI } from '@/services/recurso.adapter'
 import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
+import axios from 'axios'
 
 export const useRecurso = () => {
   const [loading, setLoading] = useState(false)
@@ -33,8 +33,11 @@ export const useRecurso = () => {
       setError(null)
       const response = await recursoService.putRecursoEnable(id)
       setRecurso(response)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al habilitar el recurso')
+    } catch (err: unknown) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al habilitar el recurso'
+        : 'Error al habilitar el recurso'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -46,8 +49,11 @@ export const useRecurso = () => {
       setError(null)
       const response = await recursoService.putRecursosDisable(id)
       setRecurso(response)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al deshabilitar el recurso')
+    } catch (err: unknown) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al deshabilitar el recurso'
+        : 'Error al deshabilitar el recurso'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

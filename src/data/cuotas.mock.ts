@@ -1,123 +1,102 @@
 import { CuotaCasa } from '@/types/cuotas.types'
+import { propietario } from '@/types/casa.types'
 
 export const cuotasData: CuotaCasa[] = [
   {
-    id: '1',
-    numeroCasa: '15',
-    propietario: 'Jose Pérez Hurtado',
+    numeroCasa: 15,
+    propietario: {
+      nombreCompleto: 'Jose Pérez Hurtado',
+      telefono: 3001234567,
+      correo: 'jose.perez@example.com'
+    } as propietario,
     saldoPendiente: 300000,
-    cantidadPagosPendientes: 2,
     ultimoPago: '2024-01-15',
-    obligaciones: [
+    obligacionesPendientes: [
       {
-        id: '1-1',
-        titulo: 'Cuota de Administración - Enero 2024',
+        id: 1,
+        motivo: 'Cuota de Administración - Enero 2024',
         valorTotal: 150000,
-        saldoPendiente: 150000,
-        abonado: 0,
+        valorPendiente: 150000,
+        montoPagado: 0,
+        titulo: 'Cuota de Administración - Enero 2024',
       },
       {
-        id: '1-2',
-        titulo: 'Cuota de Administración - Febrero 2024',
+        id: 2,
+        motivo: 'Cuota de Administración - Febrero 2024',
         valorTotal: 150000,
-        saldoPendiente: 150000,
-        abonado: 0,
+        valorPendiente: 150000,
+        montoPagado: 0,
+        titulo: 'Cuota de Administración - Febrero 2024',
       },
     ],
   },
   {
-    id: '2',
-    numeroCasa: '12',
-    propietario: 'María García López',
+    numeroCasa: 12,
+    propietario: {
+      nombreCompleto: 'María García López',
+      telefono: 3001234568,
+      correo: 'maria.garcia@example.com'
+    } as propietario,
     saldoPendiente: 225000,
-    cantidadPagosPendientes: 2,
     ultimoPago: '2024-01-10',
-    obligaciones: [
+    obligacionesPendientes: [
       {
-        id: '2-1',
-        titulo: 'Cuota de Administración - Febrero 2024',
+        id: 3,
+        motivo: 'Cuota de Administración - Febrero 2024',
         valorTotal: 150000,
-        saldoPendiente: 150000,
-        abonado: 0,
+        valorPendiente: 150000,
+        montoPagado: 0,
+        titulo: 'Cuota de Administración - Febrero 2024',
       },
       {
-        id: '2-2',
-        titulo: 'Multa por mascota sin correa',
+        id: 4,
+        motivo: 'Multa por mascota sin correa',
         valorTotal: 75000,
-        saldoPendiente: 75000,
-        abonado: 0,
+        valorPendiente: 75000,
+        montoPagado: 0,
+        titulo: 'Multa por mascota sin correa',
       },
     ],
   },
   {
-    id: '3',
-    numeroCasa: '11',
-    propietario: 'Carlos Rodríguez Silva',
+    numeroCasa: 11,
+    propietario: {
+      nombreCompleto: 'Carlos Rodríguez Silva',
+      telefono: 3001234569,
+      correo: 'carlos.rodriguez@example.com'
+    } as propietario,
     saldoPendiente: 0,
-    cantidadPagosPendientes: 0,
     ultimoPago: '2024-02-01',
-    obligaciones: [
-      {
-        id: '3-1',
-        titulo: 'Cuota de Administración - Marzo 2024',
-        valorTotal: 150000,
-        saldoPendiente: 0,
-        abonado: 150000,
-      },
-      {
-        id: '3-2',
-        titulo: 'Multa por estacionamiento indebido',
-        valorTotal: 50000,
-        saldoPendiente: 0,
-        abonado: 50000,
-      },
-    ],
+    obligacionesPendientes: [],
   },
   {
-    id: '4',
-    numeroCasa: '10',
-    propietario: 'Ana Martínez Ruiz',
+    numeroCasa: 10,
+    propietario: {
+      nombreCompleto: 'Ana Martínez Ruiz',
+      telefono: 3001234570,
+      correo: 'ana.martinez@example.com'
+    } as propietario,
     saldoPendiente: 0,
-    cantidadPagosPendientes: 0,
     ultimoPago: '2024-02-05',
-    obligaciones: [
-      {
-        id: '4-1',
-        titulo: 'Cuota de Administración - Diciembre 2023',
-        valorTotal: 150000,
-        saldoPendiente: 0,
-        abonado: 150000,
-      },
-      {
-        id: '4-2',
-        titulo: 'Cuota de Administración - Enero 2024',
-        valorTotal: 150000,
-        saldoPendiente: 0,
-        abonado: 150000,
-      },
-    ],
+    obligacionesPendientes: [],
   },
   {
-    id: '5',
-    numeroCasa: '19',
-    propietario: 'Pedro López González',
+    numeroCasa: 19,
+    propietario: {
+      nombreCompleto: 'Pedro López González',
+      telefono: 3001234571,
+      correo: 'pedro.lopez@example.com'
+    } as propietario,
     saldoPendiente: 150000,
-    cantidadPagosPendientes: 1,
     ultimoPago: '2024-01-20',
-    obligaciones: [
+    obligacionesPendientes: [
       {
-        id: '5-1',
-        titulo: 'Cuota de Administración - Febrero 2024',
+        id: 5,
+        motivo: 'Cuota de Administración - Febrero 2024',
         valorTotal: 150000,
-        saldoPendiente: 150000,
-        abonado: 0,
-      },
-      {
-        id: '5-2',
-        titulo: 'Multa por daños en área común',
-        valorTotal: 100000,
-        saldoPendiente: 0,
-        abonado: 100000,
+        valorPendiente: 150000,
+        montoPagado: 0,
+        titulo: 'Cuota de Administración - Febrero 2024',
       },
     ],
   },
