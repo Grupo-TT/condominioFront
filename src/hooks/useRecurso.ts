@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { recursoService } from '@/services/recurso.service'
 import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
+import axios from 'axios'
 
 export const useRecurso = () => {
   const [loading, setLoading] = useState(false)

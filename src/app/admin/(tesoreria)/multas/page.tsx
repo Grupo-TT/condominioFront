@@ -68,7 +68,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Multa } from '@/types/cuotas.types'
-import { multasData } from '@/data/multas.mock'
+import { useMultas } from '@/hooks/useMultas'
+import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+import axios from 'axios'
 
 export default function MultasPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -77,7 +80,7 @@ export default function MultasPage() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'pendiente' | 'pagada'>('pendiente')
+  const [filterType, setFilterType] = useState<'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'>('PENDIENTE')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<Multa | null>(null)
@@ -93,7 +96,9 @@ export default function MultasPage() {
   const [editTitulo, setEditTitulo] = useState('')
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editValor, setEditValor] = useState('')
-  const [editTipoPago, setEditTipoPago] = useState<'efectivo' | 'labor-social'>('efectivo')
+  const [editTipoPago, setEditTipoPago] = useState<'DINERO' | 'LABOR_SOCIAL'>('DINERO')
+
+  const { multasData, loading, error, refreshMultas, nuevaMulta, modificarMulta } = useMultas()
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -109,58 +114,79 @@ export default function MultasPage() {
 
   const handleEdit = useCallback((multa: Multa) => {
     setEditingMulta(multa)
-    setEditTitulo(multa.motivo)
-    setEditDescripcion(multa.observaciones || '')
+    setEditTitulo(multa.titulo)
+    setEditDescripcion(multa.motivo || '')
     setEditValor(multa.monto.toString())
-    setEditTipoPago(multa.tipoPago || 'efectivo')
+    setEditTipoPago(multa.tipoPago || 'DINERO')
     setIsEditSheetOpen(true)
   }, [])
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Editando multa:', {
-      id: editingMulta?.id,
-      titulo: editTitulo,
-      descripcion: editDescripcion,
-      valor: editValor,
-      tipoPago: editTipoPago
-    })
-    // Aquí irá la llamada a la API para actualizar la multa
-    setIsEditSheetOpen(false)
+    try {
+      await modificarMulta(Number(editingMulta?.id), {
+        titulo: editTitulo,
+        motivo: editDescripcion,
+        monto: Number(editValor),
+        tipoPago: editTipoPago,
+      })
+
+      toast.success('Multa actualizada exitosamente', {
+        duration: 5000,
+      })
+
+      setIsEditSheetOpen(false)
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al actualizar la multa'
+        : 'Error al actualizar la multa. Intenta de nuevo.'
+
+      toast.error(errorMessage, {
+        duration: 5000,
+      })
+    }
   }
 
   const handleEditCancel = () => {
     setEditTitulo('')
     setEditDescripcion('')
     setEditValor('')
-    setEditTipoPago('efectivo')
+    setEditTipoPago('DINERO')
     setEditingMulta(null)
     setIsEditSheetOpen(false)
   }
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredMultas = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase()
-    
-    return multasData.filter(multa => {
-      // Filtrar por estado (siempre aplica)
-      if (multa.estado !== filterType) {
-        return false
+    if (!multasData || multasData.length === 0) return [];
+    const searchLower = searchTerm.toLowerCase();
+
+    return multasData.filter((multa) => {
+      // 🔹 Filtrar por estado agrupado
+      if (filterType === "PENDIENTE") {
+        if (multa.estadoPago !== "PENDIENTE" && multa.estadoPago !== "POR_COBRAR") {
+          return false;
+        }
+      } else if (filterType === "CONDONADO") {
+        if (multa.estadoPago !== "CONDONADO") {
+          return false;
+        }
       }
 
-      // Filtrar por término de búsqueda
+      // 🔹 Filtrar por término de búsqueda (si hay)
       if (searchTerm) {
         return (
-          multa.propietario.toLowerCase().includes(searchLower) ||
-          multa.numeroCasa.toLowerCase().includes(searchLower) ||
-          multa.motivo.toLowerCase().includes(searchLower) ||
-          multa.monto.toString().includes(searchLower)
-        )
+          multa.propietario?.toLowerCase().includes(searchLower) ||
+          multa.casa?.toString().toLowerCase().includes(searchLower) ||
+          multa.titulo?.toLowerCase().includes(searchLower) ||
+          multa.monto?.toString().includes(searchLower)
+        );
       }
 
-      return true
-    })
-  }, [searchTerm, filterType])
+      return true;
+    });
+  }, [multasData, filterType, searchTerm]);
+
 
   // Verificar si hay resultados
   const hasResults = filteredMultas.length > 0
@@ -168,7 +194,7 @@ export default function MultasPage() {
   const columns = useMemo<ColumnDef<Multa>[]>(
     () => [
       {
-        accessorKey: 'motivo',
+        accessorKey: 'titulo',
         id: 'titulo',
         header: ({ column }) => (
           <div className="pl-[52px]">
@@ -178,10 +204,10 @@ export default function MultasPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={FileCorruptIcon} 
-                size={18} 
-                color="currentColor" 
+              <HugeiconsIcon
+                icon={FileCorruptIcon}
+                size={18}
+                color="currentColor"
                 strokeWidth={1.5}
                 className="text-gray-600"
               />
@@ -189,17 +215,30 @@ export default function MultasPage() {
             <div className="min-w-0 flex-1">
               <button
                 onClick={() => handleViewDetail(row.original)}
-                className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                className="group font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left truncate inline-block max-w-full"
               >
-                {row.original.motivo}
+                <span className="relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 group-hover:after:w-full">
+                  {row.original.titulo}
+                </span>
               </button>
-              <div className="text-sm text-gray-500 truncate">{row.original.observaciones || 'Sin descripción'}</div>
+              <div className="text-sm text-gray-500 truncate">{row.original.motivo || 'Sin descripción'}</div>
             </div>
           </div>
         ),
         size: 300,
         enableSorting: true,
         enableHiding: false,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'propietario',
@@ -207,19 +246,30 @@ export default function MultasPage() {
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
         cell: ({ row }) => (
           <div className="flex items-center gap-2.5">
-            <HugeiconsIcon 
-              icon={Home07Icon} 
-              size={14} 
+            <HugeiconsIcon
+              icon={Home07Icon}
+              size={14}
               className="text-gray-400"
             />
-            <div>
-              <div className="font-medium text-gray-900">{row.original.propietario}</div>
-              <div className="text-xs text-gray-500">Casa No.{row.original.numeroCasa}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 truncate">{row.original.propietario}</div>
+              <div className="text-xs text-gray-500">Casa No.{row.original.casa}</div>
             </div>
           </div>
         ),
         size: 180,
         enableSorting: true,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="w-3.5 h-3.5 rounded" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'monto',
@@ -238,6 +288,9 @@ export default function MultasPage() {
         },
         size: 130,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-5 w-24" />,
+        },
       },
       {
         accessorKey: 'fecha',
@@ -257,50 +310,62 @@ export default function MultasPage() {
         },
         size: 130,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-4 w-20" />,
+        },
       },
       {
         accessorKey: 'estado',
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
         cell: ({ row }) => {
-          const estado = row.original.estado
+          const estado = row.original.estadoPago
           return (
             <Badge
-              variant={estado === 'pagada' ? 'success' : 'destructive'}
+              variant={estado === 'CONDONADO' ? 'success' : estado === 'POR_COBRAR' ? 'warning' : 'destructive'}
               appearance="outline"
               size="md"
               className="gap-1.5"
             >
               <span
-                className={`w-2 h-2 rounded-full ${
-                  estado === 'pagada' ? 'bg-green-700' : 'bg-red-700'
-                }`}
+                className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : estado === 'POR_COBRAR' ? 'bg-yellow-600' : 'bg-red-700'
+                  }`}
               />
-              {estado === 'pagada' ? 'Pagada' : 'Pendiente'}
+              {estado === 'CONDONADO'
+                ? 'CONDONADO'
+                : estado === 'PENDIENTE'
+                  ? 'PENDIENTE'
+                  : 'ABONADO'}
             </Badge>
           )
         },
         size: 120,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-20 rounded-full" />,
+        },
       },
       {
         accessorKey: 'tipoPago',
         id: 'tipoPago',
         header: ({ column }) => <DataGridColumnHeader title="Tipo de Pago" column={column} />,
         cell: ({ row }) => {
-          const tipoPago = row.original.tipoPago || 'efectivo'
+          const tipoPago = row.original.tipoPago || 'DINERO'
           return (
             <Badge
-              variant={tipoPago === 'efectivo' ? 'outline' : 'secondary'}
+              variant={tipoPago === 'DINERO' ? 'outline' : 'secondary'}
               appearance="light"
               size="md"
             >
-              {tipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}
+              {tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
             </Badge>
           )
         },
         size: 80,
         enableSorting: true,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-16 rounded-full" />,
+        },
       },
       {
         id: 'actions',
@@ -341,7 +406,7 @@ export default function MultasPage() {
                       <AlertDialogTitle>¿Eliminar multa?</AlertDialogTitle>
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Se eliminará permanentemente la multa{' '}
-                        <strong>{row.original.motivo}</strong> del propietario{' '}
+                        <strong>{row.original.titulo}</strong> del propietario{' '}
                         <strong>{row.original.propietario}</strong>.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -364,6 +429,9 @@ export default function MultasPage() {
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
     [handleEdit, handleViewDetail]
@@ -405,9 +473,7 @@ export default function MultasPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/tesoreria">
-                  Tesorería
-                </BreadcrumbLink>
+                <span className="text-muted-foreground">Tesorería</span>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -429,11 +495,11 @@ export default function MultasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'pendiente' | 'pagada')} className="space-y-4">
+          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE')} className="space-y-4">
             <div className="flex items-center justify-between">
               <TabsList>
-                <TabsTrigger value="pendiente">Pendientes</TabsTrigger>
-                <TabsTrigger value="pagada">Pagadas</TabsTrigger>
+                <TabsTrigger value="PENDIENTE">Pendientes</TabsTrigger>
+                <TabsTrigger value="CONDONADO">Pagadas</TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-3">
                 <div className="relative w-80">
@@ -448,11 +514,11 @@ export default function MultasPage() {
                     ref={searchInputRef}
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -465,91 +531,127 @@ export default function MultasPage() {
               </div>
             </div>
 
-            <TabsContent value="pendiente">
-              {hasResults ? (
-                <DataGrid
-                  table={table}
-                  recordCount={filteredMultas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
+            <TabsContent value="PENDIENTE">
+              {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
+                  <div className="text-red-500 mb-2">
+                    <X className="w-12 h-12 mx-auto" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
+                    Error al cargar multas
                   </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm 
-                      ? `No hay multas pendientes que coincidan con "${searchTerm}"`
-                      : 'No hay multas pendientes'
-                    }
-                  </p>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                  <Button onClick={refreshMultas} className="mt-4">
+                    Reintentar
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <DataGrid
+                    table={table}
+                    recordCount={loading ? 10 : filteredMultas?.length || 0}
+                    isLoading={loading}
+                    loadingMode="skeleton"
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                  {!loading && !hasResults && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <Search className="w-12 h-12 mx-auto" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        No se encontraron resultados
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {searchTerm
+                          ? `No hay multas pendientes que coincidan con "${searchTerm}"`
+                          : 'No hay multas pendientes'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 
-            <TabsContent value="pagada">
-              {hasResults ? (
-                <DataGrid
-                  table={table}
-                  recordCount={filteredMultas?.length || 0}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
+            <TabsContent value="CONDONADO">
+              {error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
+                  <div className="text-red-500 mb-2">
+                    <X className="w-12 h-12 mx-auto" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
+                    Error al cargar multas
                   </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm 
-                      ? `No hay multas pagadas que coincidan con "${searchTerm}"`
-                      : 'No hay multas pagadas'
-                    }
-                  </p>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                  <Button onClick={refreshMultas} className="mt-4">
+                    Reintentar
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <DataGrid
+                    table={table}
+                    recordCount={loading ? 10 : filteredMultas?.length || 0}
+                    isLoading={loading}
+                    loadingMode="skeleton"
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                  {!loading && !hasResults && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <Search className="w-12 h-12 mx-auto" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        No se encontraron resultados
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        {searchTerm
+                          ? `No hay multas pagadas que coincidan con "${searchTerm}"`
+                          : 'No hay multas pagadas'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
@@ -558,8 +660,8 @@ export default function MultasPage() {
 
       {/* Sheet de detalle */}
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250 p-0 flex flex-col"
           style={{ width: '420px', maxWidth: 'none' }}
         >
@@ -573,19 +675,18 @@ export default function MultasPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    selectedMulta.estado === 'pagada' ? 'bg-green-50' : 'bg-red-50'
-                  }`}>
-                    <HugeiconsIcon 
-                      icon={FileCorruptIcon} 
-                      size={18} 
-                      className={selectedMulta.estado === 'pagada' ? 'text-green-700' : 'text-red-600'}
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
+                    }`}>
+                    <HugeiconsIcon
+                      icon={FileCorruptIcon}
+                      size={18}
+                      className={selectedMulta.estadoPago === 'CONDONADO' ? 'text-green-700' : 'text-red-600'}
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedMulta.motivo}</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{selectedMulta.titulo}</h3>
                 </div>
-                {selectedMulta.observaciones && (
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.observaciones}</p>
+                {selectedMulta.motivo && (
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.motivo}</p>
                 )}
               </div>
 
@@ -616,11 +717,16 @@ export default function MultasPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Estado:</div>
                       <Badge
-                        variant={selectedMulta.estado === 'pagada' ? 'success' : 'destructive'}
+                        variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : selectedMulta.estadoPago === 'POR_COBRAR' ? 'warning' : 'destructive'}
                         appearance="outline"
                         size="sm"
                       >
-                        {selectedMulta.estado === 'pagada' ? 'Pagada' : 'Pendiente'}
+                        {selectedMulta.estadoPago === 'CONDONADO'
+                          ? 'CONDONADO'
+                          : selectedMulta.estadoPago === 'PENDIENTE'
+                            ? 'PENDIENTE'
+                            : 'ABONADO'}
+
                       </Badge>
                     </div>
                   </div>
@@ -635,7 +741,7 @@ export default function MultasPage() {
                       </div>
                       <div className="flex justify-between">
                         <div className="text-xs text-gray-500">Casa:</div>
-                        <div className="text-sm text-gray-900">No. {selectedMulta.numeroCasa}</div>
+                        <div className="text-sm text-gray-900">No. {selectedMulta.casa}</div>
                       </div>
                     </div>
                   </div>
@@ -655,7 +761,7 @@ export default function MultasPage() {
                       <div className="flex justify-between">
                         <div className="text-xs text-gray-500">Tipo de pago:</div>
                         <div className="text-sm text-gray-900">
-                          {selectedMulta.tipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}
+                          {selectedMulta.tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
                         </div>
                       </div>
                     </div>
@@ -665,10 +771,8 @@ export default function MultasPage() {
 
               {/* Footer con acciones */}
               <div className="px-6 py-4 border-t border-gray-200">
-                <Button 
-                  onClick={() => {
-                    console.log('Editar multa:', selectedMulta.id)
-                  }}
+                <Button
+                  onClick={() => handleEdit(selectedMulta)}
                   className="w-full"
                   variant="outline"
                 >
@@ -683,8 +787,8 @@ export default function MultasPage() {
 
       {/* Sheet de formulario para asignar multa */}
       <Sheet open={isFormSheetOpen} onOpenChange={setIsFormSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
           style={{ width: '500px', maxWidth: 'none' }}
         >
@@ -695,17 +799,38 @@ export default function MultasPage() {
             </SheetDescription>
           </SheetHeader>
 
-          <form 
-            onSubmit={(e) => {
+          <form
+            onSubmit={async (e) => {
               e.preventDefault()
-              console.log('Asignar multa:', { formCasa, formTitulo, formDescripcion, formValor })
-              // Aquí iría la lógica para guardar la multa
-              setIsFormSheetOpen(false)
-              // Limpiar formulario
-              setFormCasa('')
-              setFormTitulo('')
-              setFormDescripcion('')
-              setFormValor('')
+              try {
+                const formNuevaMulta = {
+                  idCasa: formCasa,
+                  titulo: formTitulo,
+                  motivo: formDescripcion,
+                  monto: Number(formValor),
+                }
+
+                await nuevaMulta(formNuevaMulta)
+
+                toast.success('Multa asignada exitosamente', {
+                  duration: 5000,
+                })
+
+                setIsFormSheetOpen(false)
+                // Limpiar formulario
+                setFormCasa('')
+                setFormTitulo('')
+                setFormDescripcion('')
+                setFormValor('')
+              } catch (err) {
+                const errorMessage = axios.isAxiosError(err)
+                  ? (err.response?.data as { message?: string })?.message || err.message || 'Error al asignar la multa'
+                  : 'Error al asignar la multa. Intenta de nuevo.'
+
+                toast.error(errorMessage, {
+                  duration: 5000,
+                })
+              }
             }}
             className="flex flex-col h-full"
           >
@@ -721,9 +846,9 @@ export default function MultasPage() {
                       <SelectValue placeholder="Selecciona una casa">
                         {formCasa && (
                           <div className="flex items-center gap-2">
-                            <HugeiconsIcon 
-                              icon={Home07Icon} 
-                              size={16} 
+                            <HugeiconsIcon
+                              icon={Home07Icon}
+                              size={16}
                               className="text-gray-500"
                             />
                             <span>Casa No. {formCasa}</span>
@@ -735,9 +860,9 @@ export default function MultasPage() {
                       {Array.from({ length: 22 }, (_, i) => i + 1).map((num) => (
                         <SelectItem key={num} value={num.toString()}>
                           <div className="flex items-center gap-2">
-                            <HugeiconsIcon 
-                              icon={Home07Icon} 
-                              size={16} 
+                            <HugeiconsIcon
+                              icon={Home07Icon}
+                              size={16}
                               className="text-gray-500"
                             />
                             <span>Casa No. {num}</span>
@@ -797,9 +922,9 @@ export default function MultasPage() {
             </div>
 
             <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 className="flex-1"
                 onClick={() => {
                   setIsFormSheetOpen(false)
@@ -812,8 +937,8 @@ export default function MultasPage() {
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1"
                 disabled={!formCasa || !formTitulo || !formDescripcion || !formValor}
               >
@@ -827,7 +952,7 @@ export default function MultasPage() {
       {/* Sheet para Editar Multa */}
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <SheetContent side="right" className="sm:max-w-[540px] w-full p-0">
-          <form 
+          <form
             onSubmit={handleEditSubmit}
             className="flex flex-col h-full"
           >
@@ -846,12 +971,12 @@ export default function MultasPage() {
                     Casa
                   </Label>
                   <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
-                    <HugeiconsIcon 
-                      icon={Home07Icon} 
-                      size={16} 
+                    <HugeiconsIcon
+                      icon={Home07Icon}
+                      size={16}
                       className="text-gray-500"
                     />
-                    <span className="text-sm">Casa No. {editingMulta?.numeroCasa} - {editingMulta?.propietario}</span>
+                    <span className="text-sm">Casa No. {editingMulta?.casa} - {editingMulta?.propietario}</span>
                   </div>
                 </div>
 
@@ -891,29 +1016,29 @@ export default function MultasPage() {
                   <Label htmlFor="edit-tipo-pago" className="text-sm font-medium">
                     Tipo de Pago <span className="text-red-500">*</span>
                   </Label>
-                  <Select value={editTipoPago} onValueChange={(value: 'efectivo' | 'labor-social') => setEditTipoPago(value)}>
+                  <Select value={editTipoPago} onValueChange={(value: 'DINERO' | 'LABOR_SOCIAL') => setEditTipoPago(value)}>
                     <SelectTrigger id="edit-tipo-pago">
                       <SelectValue placeholder="Selecciona el tipo de pago">
                         {editTipoPago && (
                           <div className="flex items-center gap-2">
-                            {editTipoPago === 'efectivo' ? (
+                            {editTipoPago === 'DINERO' ? (
                               <Banknote className="h-4 w-4 text-green-600" />
                             ) : (
                               <HandHeart className="h-4 w-4 text-blue-600" />
                             )}
-                            <span>{editTipoPago === 'efectivo' ? 'Efectivo' : 'Labor Social'}</span>
+                            <span>{editTipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}</span>
                           </div>
                         )}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="efectivo">
+                      <SelectItem value="DINERO">
                         <div className="flex items-center gap-2">
                           <Banknote className="h-4 w-4 text-green-600" />
                           <span>Efectivo</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="labor-social">
+                      <SelectItem value="LABOR_SOCIAL">
                         <div className="flex items-center gap-2">
                           <HandHeart className="h-4 w-4 text-blue-600" />
                           <span>Labor Social</span>
@@ -943,16 +1068,16 @@ export default function MultasPage() {
             </div>
 
             <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-4 border-t">
-              <Button 
-                variant="outline" 
-                type="button" 
+              <Button
+                variant="outline"
+                type="button"
                 className="flex-1"
                 onClick={handleEditCancel}
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex-1"
                 disabled={!editTitulo || !editDescripcion || !editValor || !editTipoPago}
               >
