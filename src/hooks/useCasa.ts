@@ -12,10 +12,10 @@ export interface MiembroCasa {
   email?: string
 }
 
-export function useMiembros(casaNumero: string | number) {
-  const [casa, setCasa] = useState<Casa | null>(null)
+export function useMiembros(casaNumero: string | number, casaPrecargada?: Casa | null) {
+  const [casa, setCasa] = useState<Casa | null>(casaPrecargada || null)
   const [miembros, setMiembros] = useState<MiembroCasa[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!casaPrecargada)
   const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
@@ -28,33 +28,49 @@ export function useMiembros(casaNumero: string | number) {
       setLoading(true)
       setError(null)
 
-      // Hacer ambas llamadas en paralelo para mejor rendimiento
-      const [casasData, miembrosData] = await Promise.all([
-        casaService.getAll(),
-        casaService.getMembersByCasa(Number(casaNumero))
-      ])
-
-      // Buscar la casa específica
-      const casaEncontrada = casasData.find(
-        (c) => String(c.numeroCasa) === String(casaNumero)
-      )
-      
-      if (casaEncontrada) {
-        setCasa(adaptCasaFromAPI(casaEncontrada))
+      // Si ya tenemos la casa precargada, solo obtenemos los miembros
+      if (casaPrecargada) {
+        const miembrosData = await casaService.getMembersByCasa(Number(casaNumero))
+        
+        setCasa(casaPrecargada)
+        setMiembros(
+          (miembrosData || []).map(m => ({
+            nombreCompleto: m.nombreCompleto,
+            tipoMiembro: m.tipoMiembro,
+            numeroDocumento: String(m.numeroDocumento ?? ''),
+            telefono: String(m.telefono ?? ''),
+            email: m.email,
+          }))
+        )
       } else {
-        setCasa(null)
-      }
+        // Si no tenemos la casa, hacemos ambas llamadas (caso de acceso directo)
+        const [casasData, miembrosData] = await Promise.all([
+          casaService.getAll(),
+          casaService.getMembersByCasa(Number(casaNumero))
+        ])
 
-      // Mapear miembros
-      setMiembros(
-        (miembrosData || []).map(m => ({
-          nombreCompleto: m.nombreCompleto,
-          tipoMiembro: m.tipoMiembro,
-          numeroDocumento: String(m.numeroDocumento ?? ''),
-          telefono: String(m.telefono ?? ''),
-          email: m.email,
-        }))
-      )
+        // Buscar la casa específica
+        const casaEncontrada = casasData.find(
+          (c) => String(c.numeroCasa) === String(casaNumero)
+        )
+        
+        if (casaEncontrada) {
+          setCasa(adaptCasaFromAPI(casaEncontrada))
+        } else {
+          setCasa(null)
+        }
+
+        // Mapear miembros
+        setMiembros(
+          (miembrosData || []).map(m => ({
+            nombreCompleto: m.nombreCompleto,
+            tipoMiembro: m.tipoMiembro,
+            numeroDocumento: String(m.numeroDocumento ?? ''),
+            telefono: String(m.telefono ?? ''),
+            email: m.email,
+          }))
+        )
+      }
     } catch {
       setError('No se pudieron cargar los datos de la casa')
       setMiembros([])
@@ -62,7 +78,7 @@ export function useMiembros(casaNumero: string | number) {
     } finally {
       setLoading(false)
     }
-  }, [casaNumero])
+  }, [casaNumero, casaPrecargada])
 
   useEffect(() => {
     fetchData()

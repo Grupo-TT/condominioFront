@@ -16,7 +16,7 @@ interface SingleCalendarProps extends DayPickerSingleProps {
   initialFocus?: boolean;
 }
 
-function SingleCalendar({ className, classNames, showOutsideDays = true, selected, initialFocus, ...props }: SingleCalendarProps) {
+function SingleCalendar({ className, classNames, showOutsideDays = true, selected, ...props }: SingleCalendarProps) {
   const [currentMonth, setCurrentMonth] = React.useState<Date | undefined>(selected instanceof Date ? selected : undefined);
 
   return (
