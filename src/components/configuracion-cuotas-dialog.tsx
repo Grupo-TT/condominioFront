@@ -25,6 +25,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { configuracionValorSchema, ConfiguracionValorFormData } from '@/lib/validations/configuracion.validation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Wallet01Icon, AnalyticsUpIcon, Legal02Icon } from '@hugeicons/core-free-icons';
+import { useValoresConstantes } from '@/hooks/useConfiguracionFinanciera';
 
 interface CollapsibleConfigCardProps {
   title: string;
@@ -38,10 +39,10 @@ interface CollapsibleConfigCardProps {
   showDateField?: boolean;
 }
 
-function CollapsibleConfigCard({ 
+function CollapsibleConfigCard({
   title,
   subtitle,
-  currentValue, 
+  currentValue,
   unit,
   onChange,
   icon,
@@ -51,7 +52,7 @@ function CollapsibleConfigCard({
 }: CollapsibleConfigCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showAllErrors, setShowAllErrors] = useState(false);
-  
+
   const form = useForm<ConfiguracionValorFormData>({
     resolver: zodResolver(configuracionValorSchema),
     mode: 'onChange',
@@ -63,7 +64,6 @@ function CollapsibleConfigCard({
 
   const handleSave = (data: ConfiguracionValorFormData) => {
     if (showDateField && !data.fechaAplicacion) {
-      // Mostrar todos los errores si falta la fecha
       setShowAllErrors(true);
       return;
     }
@@ -208,9 +208,9 @@ function CollapsibleConfigCard({
                 <Button variant="outline" size="sm" className="h-8 text-xs px-6" onClick={handleCancel}>
                   Cancelar
                 </Button>
-                <Button 
-                  size="sm" 
-                  className="h-8 text-xs px-6" 
+                <Button
+                  size="sm"
+                  className="h-8 text-xs px-6"
                   onClick={handleSubmit}
                   disabled={!form.formState.isValid || (showDateField && !form.watch('fechaAplicacion'))}
                 >
@@ -231,28 +231,25 @@ interface ConfiguracionCuotasDialogProps {
 
 export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  
-  // Estados para los valores de configuración
-  const [valorAdmin, setValorAdmin] = useState(150000);
-  const [tasaInteresMora, setTasaInteresMora] = useState(2.5);
-  const [penalidadNoPago, setPenalidadNoPago] = useState(50000);
+  const { 
+    loading, error, obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones, tasa, pagoAdicional, cargoAdministrativo
+  } = useValoresConstantes();
 
-  const handleSaveValorAdmin = (value: number, date?: string) => {
-    setValorAdmin(value);
-    // Aquí iría la lógica para guardar en el backend
-    console.log('Guardar valor de administración:', { value, fechaAplicacion: date });
+  React.useEffect(() => {
+  obtenerConfiguraciones();
+  }, []);
+
+
+  const handleSaveValorAdmin = async (value: number) => {
+    await actualizarCargoAdministrativo(value);
   };
 
-  const handleSaveTasaInteres = (value: number) => {
-    setTasaInteresMora(value);
-    // Aquí iría la lógica para guardar en el backend
-    console.log('Guardar tasa de interés:', value);
+  const handleSaveTasaInteres = async (value: number) => {
+    await actualizarTasaInteres(value);
   };
 
-  const handleSavePenalidad = (value: number) => {
-    setPenalidadNoPago(value);
-    // Aquí iría la lógica para guardar en el backend
-    console.log('Guardar penalidad:', value);
+  const handleSavePenalidad = async (value: number) => {
+    await actualizarPagoAdicional(value);
   };
 
   return (
@@ -275,44 +272,42 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
             Configura los valores base para los cálculos de cuotas y penalizaciones.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-3 py-3">
           <CollapsibleConfigCard
             title="Valor de Administración"
             subtitle="Monto mensual base para el pago de administración"
-            currentValue={valorAdmin}
+            currentValue={configuraciones?.find(c => c.tipo === "Cargo de administración")?.valor ?? 0}
             unit="$"
             onChange={handleSaveValorAdmin}
             icon={<HugeiconsIcon icon={Wallet01Icon} size={20} />}
             iconBgColor="bg-[#E3E4EA]"
             iconColor="text-[#595D75]"
-            showDateField={true}
           />
-          
+
           <CollapsibleConfigCard
-            title="Tasa de Interés por Mora"
-            subtitle="Porcentaje de interés aplicado a pagos atrasados"
-            currentValue={tasaInteresMora}
-            unit="%"
-            onChange={handleSaveTasaInteres}
-            icon={<HugeiconsIcon icon={AnalyticsUpIcon} size={20} />}
-            iconBgColor="bg-[#F1E8D6]"
-            iconColor="text-[#A39170]"
-          />
-          
-          <CollapsibleConfigCard
-            title="Penalidad por No Pagar Administración"
+            title="Penalidad por Mora"
             subtitle="Cargo adicional por mora en el pago de administración"
-            currentValue={penalidadNoPago}
+            currentValue={configuraciones?.find(c => c.tipo === "Pago adicional")?.valor ?? 0}
             unit="$"
             onChange={handleSavePenalidad}
             icon={<HugeiconsIcon icon={Legal02Icon} size={20} />}
             iconBgColor="bg-[#E6EFEA]"
             iconColor="text-[#4C6C5A]"
           />
+
+          <CollapsibleConfigCard
+            title="Tasa de Interés No Pagar Administración"
+            subtitle="Porcentaje de interés aplicado a pagos atrasados"
+            currentValue={configuraciones?.find(c => c.tipo === "Tasa de interés")?.valor ?? 0}
+            unit="%"
+            onChange={handleSaveTasaInteres}
+            icon={<HugeiconsIcon icon={AnalyticsUpIcon} size={20} />}
+            iconBgColor="bg-[#F1E8D6]"
+            iconColor="text-[#A39170]"
+          />
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-

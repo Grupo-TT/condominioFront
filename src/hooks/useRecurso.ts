@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { recursoService } from '@/services/recurso.service'
-import { mapResponseToUI, RecursoUI } from '@/services/recurso.adapter'
 import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
 
 export const useRecurso = () => {
