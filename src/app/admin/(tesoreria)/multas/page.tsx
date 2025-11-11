@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs } from '@/components/animated-tabs'
+import { FiltersBar } from '@/components/filters-bar'
 import {
   Sheet,
   SheetContent,
@@ -81,7 +82,8 @@ export default function MultasPage() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'>('PENDIENTE')
-  const searchInputRef = useRef<HTMLInputElement>(null)
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'abonado' | 'pendiente'>('todas')
+  const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<Multa | null>(null)
   const [isFormSheetOpen, setIsFormSheetOpen] = useState(false)
@@ -99,13 +101,6 @@ export default function MultasPage() {
   const [editTipoPago, setEditTipoPago] = useState<'DINERO' | 'LABOR_SOCIAL'>('DINERO')
 
   const { multasData, loading, error, refreshMultas, nuevaMulta, modificarMulta } = useMultas()
-
-  const handleClearSearch = useCallback(() => {
-    setSearchTerm('')
-    if (searchInputRef.current) {
-      searchInputRef.current.focus()
-    }
-  }, [])
 
   const handleViewDetail = useCallback((multa: Multa) => {
     setSelectedMulta(multa)
@@ -167,6 +162,15 @@ export default function MultasPage() {
         if (multa.estadoPago !== "PENDIENTE" && multa.estadoPago !== "POR_COBRAR") {
           return false;
         }
+        // 🔹 Filtrar por estado específico dentro de pendientes (abonado/pendiente)
+        if (estadoFilter !== 'todas') {
+          if (estadoFilter === 'abonado' && multa.estadoPago !== 'POR_COBRAR') {
+            return false;
+          }
+          if (estadoFilter === 'pendiente' && multa.estadoPago !== 'PENDIENTE') {
+            return false;
+          }
+        }
       } else if (filterType === "CONDONADO") {
         if (multa.estadoPago !== "CONDONADO") {
           return false;
@@ -185,7 +189,7 @@ export default function MultasPage() {
 
       return true;
     });
-  }, [multasData, filterType, searchTerm]);
+  }, [multasData, filterType, searchTerm, estadoFilter]);
 
 
   // Verificar si hay resultados
@@ -495,44 +499,20 @@ export default function MultasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE')} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="PENDIENTE">Pendientes</TabsTrigger>
-                <TabsTrigger value="CONDONADO">Pagadas</TabsTrigger>
-              </TabsList>
-              <div className="flex items-center gap-3">
-                <div className="relative w-80">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <Input
-                    placeholder="Buscar multas..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
-                    ref={searchInputRef}
-                  />
-                  {searchTerm !== '' && (
-                    <Button
-                      onClick={handleClearSearch}
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
-                    >
-                      <X size={16} className="text-gray-500" />
-                    </Button>
-                  )}
-                </div>
-                <Button className="gap-2" onClick={() => setIsFormSheetOpen(true)}>
-                  <Plus className="w-4 h-4" />
-                  Asignar Multa
-                </Button>
-              </div>
-            </div>
-
-            <TabsContent value="PENDIENTE">
-              {error ? (
+          <AnimatedTabs
+            value={filterType}
+            onValueChange={(v) => {
+              setFilterType(v as 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE')
+              // Resetear el filtro de estado cuando cambia la pestaña
+              if (v !== 'PENDIENTE') {
+                setEstadoFilter('todas')
+              }
+            }}
+            tabs={[
+              {
+                value: 'PENDIENTE',
+                label: 'Pendientes',
+                content: error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-red-500 mb-2">
                     <X className="w-12 h-12 mx-auto" />
@@ -582,19 +562,20 @@ export default function MultasPage() {
                         No se encontraron resultados
                       </h3>
                       <p className="text-gray-500 text-sm">
-                        {searchTerm
-                          ? `No hay multas pendientes que coincidan con "${searchTerm}"`
+                        {searchTerm || estadoFilter !== 'todas'
+                          ? `No hay multas pendientes que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'abonado' ? 'abonado' : 'pendiente'}` : ''}`
                           : 'No hay multas pendientes'
                         }
                       </p>
                     </div>
                   )}
                 </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="CONDONADO">
-              {error ? (
+              ),
+              },
+              {
+                value: 'CONDONADO',
+                label: 'Pagadas',
+                content: error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="text-red-500 mb-2">
                     <X className="w-12 h-12 mx-auto" />
@@ -652,9 +633,28 @@ export default function MultasPage() {
                     </div>
                   )}
                 </>
-              )}
-            </TabsContent>
-          </Tabs>
+              ),
+              },
+            ]}
+            rightContent={
+              <>
+                <FiltersBar
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  searchPlaceholder="Buscar multas..."
+                  showEstadoFilter={filterType === 'PENDIENTE'}
+                  estadoFilter={estadoFilter}
+                  onEstadoFilterChange={setEstadoFilter}
+                  estadoComboboxOpen={estadoComboboxOpen}
+                  onEstadoComboboxOpenChange={setEstadoComboboxOpen}
+                />
+                <Button className="gap-2" onClick={() => setIsFormSheetOpen(true)}>
+                  <Plus className="w-4 h-4" />
+                  Asignar Multa
+                </Button>
+              </>
+            }
+          />
         </div>
       </div>
 

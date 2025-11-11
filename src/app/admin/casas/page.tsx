@@ -13,7 +13,7 @@ import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs } from '@/components/animated-tabs'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import axios from 'axios'
@@ -501,15 +501,164 @@ export default function CasasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="todas">Todas</TabsTrigger>
-                <TabsTrigger value="residencial">Residenciales</TabsTrigger>
-                <TabsTrigger value="arrendada">Arrendadas</TabsTrigger>
-              </TabsList>
-
-              <div className="flex items-center gap-3">
+          <AnimatedTabs
+            value={filterType}
+            onValueChange={(value) => setFilterType(value as 'todas' | 'residencial' | 'arrendada')}
+            tabs={[
+              {
+                value: 'todas',
+                label: 'Todas',
+                content: loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''}${filterType !== 'todas' ? ` de tipo ${filterType === 'residencial' ? 'residencial' : 'arrendada'}` : ''}`
+                      : filterType === 'residencial'
+                        ? 'No hay casas residenciales registradas'
+                        : filterType === 'arrendada'
+                          ? 'No hay casas arrendadas registradas'
+                          : 'No hay casas registradas'
+                    }
+                  </p>
+                </div>
+              ),
+              },
+              {
+                value: 'residencial',
+                label: 'Residenciales',
+                content: loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo residencial`
+                      : 'No hay casas residenciales registradas'
+                    }
+                  </p>
+                </div>
+              ),
+              },
+              {
+                value: 'arrendada',
+                label: 'Arrendadas',
+                content: loading || hasResults ? (
+                /* Tabla con skeleton o datos */
+                <DataGrid
+                  table={table}
+                  recordCount={filteredCasas?.length || 0}
+                  loadingMode="skeleton"
+                  isLoading={loading}
+                  tableLayout={{
+                    headerBackground: false,
+                    rowBorder: true,
+                    rowRounded: false,
+                  }}
+                >
+                  <div className="w-full space-y-2.5">
+                    <DataGridContainer border={false}>
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination
+                      rowsPerPageLabel="Filas por página"
+                      info="{from} - {to} de {count}"
+                      previousPageLabel="Ir a la página anterior"
+                      nextPageLabel="Ir a la página siguiente"
+                    />
+                  </div>
+                </DataGrid>
+              ) : (
+                /* Sin resultados */
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-2">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {searchTerm || estadoFilter !== 'todas'
+                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo arrendada`
+                      : 'No hay casas arrendadas registradas'
+                    }
+                  </p>
+                </div>
+              ),
+              },
+            ]}
+            rightContent={
+              <>
                 <Popover open={estadoComboboxOpen} onOpenChange={setEstadoComboboxOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -634,157 +783,9 @@ export default function CasasPage() {
                     </div>
                   </SheetContent>
                 </Sheet>
-              </div>
-            </div>
-
-            <TabsContent value="todas">
-              {loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''}${filterType !== 'todas' ? ` de tipo ${filterType === 'residencial' ? 'residencial' : 'arrendada'}` : ''}`
-                      : filterType === 'residencial'
-                        ? 'No hay casas residenciales registradas'
-                        : filterType === 'arrendada'
-                          ? 'No hay casas arrendadas registradas'
-                          : 'No hay casas registradas'
-                    }
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="residencial">
-              {loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo residencial`
-                      : 'No hay casas residenciales registradas'
-                    }
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="arrendada">
-              {loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo arrendada`
-                      : 'No hay casas arrendadas registradas'
-                    }
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+              </>
+            }
+          />
         </div>
       </div>
     </>

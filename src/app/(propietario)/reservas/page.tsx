@@ -50,16 +50,7 @@ import {
 } from '@/components/ui/sheet'
 import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { HoraCombobox } from '@/components/hora-combobox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import type { RecursoUI } from '@/services/recurso.adapter'
@@ -139,15 +130,20 @@ const RESERVAS_MOCK: ReservaUsuario[] = [
 export default function ReservasPropietarioPage() {
   const [activeTab, setActiveTab] = useState<string>('recursos')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
   const [selectedRecurso, setSelectedRecurso] = useState<RecursoUI | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [horaInicial, setHoraInicial] = useState<string>('')
   const [horaFinal, setHoraFinal] = useState<string>('')
   const [numeroInvitados, setNumeroInvitados] = useState<number>(1)
   const [reservas, setReservas] = useState<ReservaUsuario[]>(RESERVAS_MOCK)
-  const [openHoraInicial, setOpenHoraInicial] = useState(false)
-  const [openHoraFinal, setOpenHoraFinal] = useState(false)
   const [openDialogConfirmacion, setOpenDialogConfirmacion] = useState(false)
+  const [reservaEditando, setReservaEditando] = useState<ReservaUsuario | null>(null)
+  // Estados para el formulario de edición
+  const [editDate, setEditDate] = useState<Date | undefined>(undefined)
+  const [editHoraInicial, setEditHoraInicial] = useState<string>('')
+  const [editHoraFinal, setEditHoraFinal] = useState<string>('')
+  const [editNumeroInvitados, setEditNumeroInvitados] = useState<number>(1)
 
   // Separar recursos por tipo
   const zonas = useMemo(() => RECURSOS_MOCK.filter(r => r.tipo === 'zona' && r.habilitado), [])
@@ -171,7 +167,7 @@ export default function ReservasPropietarioPage() {
     return horasArray
   }, [])
 
-  // Obtener horas ocupadas para el recurso y fecha seleccionada
+  // Obtener horas ocupadas para el recurso y fecha seleccionada (para crear)
   const horasOcupadas = useMemo(() => {
     if (!selectedRecurso || !selectedDate) {
       return new Set<string>()
@@ -226,6 +222,64 @@ export default function ReservasPropietarioPage() {
     return ocupadas
   }, [selectedRecurso, selectedDate, reservas])
 
+  // Obtener horas ocupadas para el recurso y fecha seleccionada (para editar)
+  const horasOcupadasEdit = useMemo(() => {
+    if (!selectedRecurso || !editDate) {
+      return new Set<string>()
+    }
+    
+    const ocupadas = new Set<string>()
+    
+    // Filtrar reservas que coincidan con el recurso y la fecha (excluyendo la reserva que se está editando)
+    const reservasDelDia = reservas.filter(reserva => {
+      // Excluir la reserva que se está editando
+      if (reservaEditando && reserva.id === reservaEditando.id) {
+        return false
+      }
+      
+      // Comparar recursoId
+      if (reserva.recursoId !== selectedRecurso.id) {
+        return false
+      }
+      
+      // Comparar fecha (solo día, mes y año)
+      const fechaReserva = new Date(reserva.fechaInicio)
+      fechaReserva.setHours(0, 0, 0, 0)
+      const fechaSeleccionada = new Date(editDate)
+      fechaSeleccionada.setHours(0, 0, 0, 0)
+      
+      // Comparar año, mes y día por separado para evitar problemas de zona horaria
+      const mismoDia = fechaReserva.getDate() === fechaSeleccionada.getDate()
+      const mismoMes = fechaReserva.getMonth() === fechaSeleccionada.getMonth()
+      const mismoAnio = fechaReserva.getFullYear() === fechaSeleccionada.getFullYear()
+      
+      const fechaCoincide = mismoDia && mismoMes && mismoAnio
+      
+      if (!fechaCoincide) {
+        return false
+      }
+      
+      // Solo considerar reservas aprobadas o pendientes (no rechazadas)
+      return reserva.estado === 'aprobada' || reserva.estado === 'pendiente'
+    })
+    
+    // Marcar todas las horas ocupadas por las reservas
+    reservasDelDia.forEach(reserva => {
+      const [horaInicio] = reserva.horaInicio.split(':').map(Number)
+      const [horaFin] = reserva.horaFin.split(':').map(Number)
+      
+      // Marcar todas las horas que están dentro del rango de la reserva
+      for (let hora = horaInicio; hora < horaFin; hora++) {
+        if (hora >= 7 && hora < 24) {
+          const horaValue = `${hora.toString().padStart(2, '0')}:00`
+          ocupadas.add(horaValue)
+        }
+      }
+    })
+    
+    return ocupadas
+  }, [selectedRecurso, editDate, reservas, reservaEditando])
+
   // Filtrar horas disponibles para hora final (solo horas posteriores a la hora inicial y no ocupadas)
   const horasFinalDisponibles = useMemo(() => {
     if (!horaInicial) {
@@ -241,6 +295,22 @@ export default function ReservasPropietarioPage() {
       h.hora24 > horaInicialObj.hora24 && !horasOcupadas.has(h.value)
     )
   }, [horaInicial, horas, horasOcupadas])
+
+  // Filtrar horas disponibles para hora final en edición
+  const horasFinalDisponiblesEdit = useMemo(() => {
+    if (!editHoraInicial) {
+      // Si no hay hora inicial seleccionada, mostrar todas las horas no ocupadas
+      return horas.filter(h => !horasOcupadasEdit.has(h.value))
+    }
+    
+    const horaInicialObj = horas.find(h => h.value === editHoraInicial)
+    if (!horaInicialObj) return horas.filter(h => !horasOcupadasEdit.has(h.value))
+    
+    // Filtrar horas posteriores a la inicial y que no estén ocupadas
+    return horas.filter(h => 
+      h.hora24 > horaInicialObj.hora24 && !horasOcupadasEdit.has(h.value)
+    )
+  }, [editHoraInicial, horas, horasOcupadasEdit])
 
   // Resetear horas si se vuelven inválidas cuando cambia la fecha o el recurso
   useEffect(() => {
@@ -267,6 +337,31 @@ export default function ReservasPropietarioPage() {
     }
   }, [horaInicial, horaFinal, horas, horasOcupadas])
 
+  // Resetear horas si se vuelven inválidas cuando cambia la fecha o el recurso (edición)
+  useEffect(() => {
+    if (editHoraInicial && horasOcupadasEdit.has(editHoraInicial)) {
+      setEditHoraInicial('')
+      setEditHoraFinal('')
+    }
+  }, [editDate, selectedRecurso, horasOcupadasEdit, editHoraInicial])
+
+  // Resetear hora final si es inválida cuando cambia la hora inicial (edición)
+  useEffect(() => {
+    if (editHoraInicial && editHoraFinal) {
+      const horaInicialObj = horas.find(h => h.value === editHoraInicial)
+      const horaFinalObj = horas.find(h => h.value === editHoraFinal)
+      
+      if (horaInicialObj && horaFinalObj && horaFinalObj.hora24 <= horaInicialObj.hora24) {
+        setEditHoraFinal('')
+      }
+      
+      // También resetear si la hora final está ocupada
+      if (horasOcupadasEdit.has(editHoraFinal)) {
+        setEditHoraFinal('')
+      }
+    }
+  }, [editHoraInicial, editHoraFinal, horas, horasOcupadasEdit])
+
   const handleReservarClick = (recurso: RecursoUI) => {
     setSelectedRecurso(recurso)
     setIsSheetOpen(true)
@@ -274,8 +369,6 @@ export default function ReservasPropietarioPage() {
     setHoraInicial('')
     setHoraFinal('')
     setNumeroInvitados(1)
-    setOpenHoraInicial(false)
-    setOpenHoraFinal(false)
   }
 
   // Crear tarjetas para Zonas con diseño original
@@ -692,7 +785,16 @@ export default function ReservasPropietarioPage() {
                                         className="h-7 w-7"
                                         disabled={reserva.estado === 'aprobada' || reserva.estado === 'rechazada'}
                                         onClick={() => {
-                                          // TODO: Implementar funcionalidad de editar
+                                          const recurso = RECURSOS_MOCK.find(r => r.id === reserva.recursoId)
+                                          if (recurso) {
+                                            setReservaEditando(reserva)
+                                            setSelectedRecurso(recurso)
+                                            setEditDate(new Date(reserva.fechaInicio))
+                                            setEditHoraInicial(reserva.horaInicio)
+                                            setEditHoraFinal(reserva.horaFin)
+                                            setEditNumeroInvitados(reserva.numeroInvitados)
+                                            setIsEditSheetOpen(true)
+                                          }
                                         }}
                                       >
                                         <Pencil className="h-4 w-4" />
@@ -895,165 +997,27 @@ export default function ReservasPropietarioPage() {
                 </div>
 
                 {/* Horas */}
-                <div className="space-y-2 mt-4">
+                <div className="mt-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hora-inicial" className="text-xs text-gray-600">Hora Inicial</Label>
-                      <Popover open={openHoraInicial} onOpenChange={setOpenHoraInicial}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openHoraInicial}
-                            className="w-full justify-between h-10"
-                            disabled={!selectedDate}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-500" />
-                              {horaInicial
-                                ? horas.find((h) => h.value === horaInicial)?.label
-                                : "Selecciona hora"}
-                            </div>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent 
-                          className="w-[300px] p-0" 
-                          align="start"
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
-                          <Command shouldFilter={false}>
-                            <CommandInput placeholder="Buscar hora..." />
-                            <div 
-                              className="max-h-[300px] overflow-y-auto overscroll-contain"
-                              style={{ scrollBehavior: 'smooth' }}
-                              onWheel={(e) => {
-                                e.stopPropagation()
-                              }}
-                            >
-                              <CommandList>
-                                <CommandEmpty>No se encontró la hora.</CommandEmpty>
-                                <CommandGroup>
-                                  {horas.map((hora) => {
-                                  const estaOcupada = horasOcupadas.has(hora.value)
-                                  return (
-                                    <CommandItem
-                                      key={hora.value}
-                                      value={hora.value}
-                                      onSelect={() => {
-                                        if (!estaOcupada) {
-                                          setHoraInicial(hora.value)
-                                          setOpenHoraInicial(false)
-                                        }
-                                      }}
-                                      disabled={estaOcupada}
-                                      className={cn(
-                                        "flex flex-col items-start py-3",
-                                        estaOcupada && "opacity-50 cursor-not-allowed"
-                                      )}
-                                    >
-                                      <div className="flex items-center gap-2 w-full">
-                                        <Clock className="h-4 w-4 text-gray-500" />
-                                        <span className="font-medium">{hora.label}</span>
-                                        {horaInicial === hora.value && !estaOcupada && (
-                                          <Check className="ml-auto h-4 w-4" />
-                                        )}
-                                      </div>
-                                      <span className={cn(
-                                        "text-xs mt-1 ml-6",
-                                        estaOcupada ? "text-red-500 font-medium" : "text-green-600"
-                                      )}>
-                                        {estaOcupada ? "Ocupado" : "Disponible"}
-                                      </span>
-                                    </CommandItem>
-                                  )
-                                })}
-                                </CommandGroup>
-                              </CommandList>
-                            </div>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <HoraCombobox
+                      horas={horas}
+                      value={horaInicial}
+                      onChange={setHoraInicial}
+                      placeholder="Selecciona hora"
+                      disabled={!selectedDate}
+                      horasOcupadas={horasOcupadas}
+                      label="Hora Inicial"
+                    />
 
-                    <div className="space-y-2">
-                      <Label htmlFor="hora-final" className="text-xs text-gray-600">Hora Final</Label>
-                      <Popover open={openHoraFinal} onOpenChange={setOpenHoraFinal}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openHoraFinal}
-                            className="w-full justify-between h-10"
-                            disabled={!horaInicial || !selectedDate}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-500" />
-                              {horaFinal
-                                ? horasFinalDisponibles.find((h) => h.value === horaFinal)?.label
-                                : "Selecciona hora"}
-                            </div>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent 
-                          className="w-[300px] p-0" 
-                          align="start"
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
-                          <Command shouldFilter={false}>
-                            <CommandInput placeholder="Buscar hora..." />
-                            <div 
-                              className="max-h-[300px] overflow-y-auto overscroll-contain"
-                              style={{ scrollBehavior: 'smooth' }}
-                              onWheel={(e) => {
-                                e.stopPropagation()
-                              }}
-                            >
-                              <CommandList>
-                                <CommandEmpty>No se encontró la hora.</CommandEmpty>
-                                <CommandGroup>
-                                  {horasFinalDisponibles.map((hora) => {
-                                  const estaOcupada = horasOcupadas.has(hora.value)
-                                  return (
-                                    <CommandItem
-                                      key={hora.value}
-                                      value={hora.value}
-                                      onSelect={() => {
-                                        if (!estaOcupada) {
-                                          setHoraFinal(hora.value)
-                                          setOpenHoraFinal(false)
-                                        }
-                                      }}
-                                      disabled={estaOcupada}
-                                      className={cn(
-                                        "flex flex-col items-start py-3",
-                                        estaOcupada && "opacity-50 cursor-not-allowed"
-                                      )}
-                                    >
-                                      <div className="flex items-center gap-2 w-full">
-                                        <Clock className="h-4 w-4 text-gray-500" />
-                                        <span className="font-medium">{hora.label}</span>
-                                        {horaFinal === hora.value && !estaOcupada && (
-                                          <Check className="ml-auto h-4 w-4" />
-                                        )}
-                                      </div>
-                                      <span className={cn(
-                                        "text-xs mt-1 ml-6",
-                                        estaOcupada ? "text-red-500 font-medium" : "text-green-600"
-                                      )}>
-                                        {estaOcupada ? "Ocupado" : "Disponible"}
-                                      </span>
-                                    </CommandItem>
-                                  )
-                                })}
-                                </CommandGroup>
-                              </CommandList>
-                            </div>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                    <HoraCombobox
+                      horas={horasFinalDisponibles}
+                      value={horaFinal}
+                      onChange={setHoraFinal}
+                      placeholder="Selecciona hora"
+                      disabled={!horaInicial || !selectedDate}
+                      horasOcupadas={horasOcupadas}
+                      label="Hora Final"
+                    />
                   </div>
                 </div>
 
@@ -1110,6 +1074,255 @@ export default function ReservasPropietarioPage() {
                     className="flex-1"
                   >
                     Confirmar Reserva
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet de Edición */}
+      <Sheet open={isEditSheetOpen} onOpenChange={(open) => {
+        setIsEditSheetOpen(open)
+        if (!open) {
+          // Limpiar estados al cerrar
+          setReservaEditando(null)
+          setSelectedRecurso(null)
+          setEditDate(undefined)
+          setEditHoraInicial('')
+          setEditHoraFinal('')
+          setEditNumeroInvitados(1)
+        }
+      }}>
+        <SheetContent 
+          side="right" 
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
+          style={{ width: '500px', maxWidth: 'none' }}
+        >
+          <SheetHeader className="px-6 pt-6 pb-4 border-b">
+            <SheetTitle className="text-xl font-semibold">Editar Reserva</SheetTitle>
+          </SheetHeader>
+
+          {selectedRecurso && reservaEditando && (
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 overflow-y-auto px-6 pt-0 pb-4">
+                {/* Información del recurso */}
+                <Card className="border border-gray-200 bg-white p-3 rounded-2xl">
+                  <div className="flex flex-row gap-4">
+                    {/* Contenedor izquierdo con círculos concéntricos */}
+                    <div 
+                      className="flex-shrink-0 w-20 flex items-center justify-center relative rounded-xl"
+                      style={{
+                        background: selectedRecurso.tipo === 'zona'
+                          ? `radial-gradient(circle at center, rgba(163, 145, 112, 0.28) 0%, rgba(163, 145, 112, 0.28) 15%, transparent 15%, transparent 18%),
+                             radial-gradient(circle at center, rgba(163, 145, 112, 0.22) 0%, rgba(163, 145, 112, 0.22) 25%, transparent 25%, transparent 28%),
+                             radial-gradient(circle at center, rgba(163, 145, 112, 0.18) 0%, rgba(163, 145, 112, 0.18) 35%, transparent 35%, transparent 38%),
+                             radial-gradient(circle at center, rgba(163, 145, 112, 0.14) 0%, rgba(163, 145, 112, 0.14) 45%, transparent 45%, transparent 48%),
+                             radial-gradient(circle at center, rgba(163, 145, 112, 0.09) 0%, rgba(163, 145, 112, 0.09) 55%, transparent 55%, transparent 58%),
+                             radial-gradient(circle at center, rgba(163, 145, 112, 0.05) 0%, rgba(163, 145, 112, 0.05) 65%, transparent 65%, transparent 68%),
+                             #f3f4f6`
+                          : `radial-gradient(circle at center, rgba(89, 93, 117, 0.28) 0%, rgba(89, 93, 117, 0.28) 15%, transparent 15%, transparent 18%),
+                             radial-gradient(circle at center, rgba(89, 93, 117, 0.22) 0%, rgba(89, 93, 117, 0.22) 25%, transparent 25%, transparent 28%),
+                             radial-gradient(circle at center, rgba(89, 93, 117, 0.18) 0%, rgba(89, 93, 117, 0.18) 35%, transparent 35%, transparent 38%),
+                             radial-gradient(circle at center, rgba(89, 93, 117, 0.14) 0%, rgba(89, 93, 117, 0.14) 45%, transparent 45%, transparent 48%),
+                             radial-gradient(circle at center, rgba(89, 93, 117, 0.09) 0%, rgba(89, 93, 117, 0.09) 55%, transparent 55%, transparent 58%),
+                             radial-gradient(circle at center, rgba(89, 93, 117, 0.05) 0%, rgba(89, 93, 117, 0.05) 65%, transparent 65%, transparent 68%),
+                             #f3f4f6`,
+                      }}
+                    >
+                      {/* Contenedor del icono */}
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-md">
+                        {selectedRecurso.tipo === 'zona' ? (
+                          <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                        ) : (
+                          <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                        )}
+                      </div>
+                    </div>
+                    {/* Contenido */}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <div className="flex items-start justify-between mb-1.5">
+                        <h3 className="font-bold text-lg text-gray-900 leading-tight">{selectedRecurso.nombre}</h3>
+                        <span 
+                          className="inline-block text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2"
+                          style={{ 
+                            backgroundColor: selectedRecurso.tipo === 'zona' ? '#F1E8D6' : '#E3E4EA',
+                            color: selectedRecurso.tipo === 'zona' ? '#A39170' : '#595D75'
+                          }}
+                        >
+                          {selectedRecurso.tipo === 'zona' ? 'Zona' : 'Objeto'}
+                        </span>
+                      </div>
+                      {/* Información de la reserva */}
+                      <div className="space-y-1 mt-1">
+                        {editDate && (
+                          <div className="flex items-center gap-2">
+                            <CalendarIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                            <p className="text-sm text-gray-700 font-medium">
+                              {editDate.toLocaleDateString('es-ES', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              }).replace(/^\w/, c => c.toUpperCase())}
+                            </p>
+                          </div>
+                        )}
+                        {editHoraInicial && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                            <p className="text-sm text-gray-600">
+                              {horas.find(h => h.value === editHoraInicial)?.label || editHoraInicial}
+                              {editHoraFinal && ` - ${horas.find(h => h.value === editHoraFinal)?.label || editHoraFinal}`}
+                            </p>
+                          </div>
+                        )}
+                        {!editDate && !editHoraInicial && (
+                          <p className="text-sm text-gray-400 italic">
+                            Selecciona el día y hora para tu reserva
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                <Separator className="my-3" />
+
+                {/* Calendario */}
+                <div className="space-y-2">
+                  <Calendar
+                    mode="single"
+                    selected={editDate}
+                    onSelect={setEditDate}
+                    disabled={(date) => {
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      // Calcular la fecha mínima permitida (hoy + 3 días)
+                      const minDate = new Date(today)
+                      minDate.setDate(today.getDate() + 3)
+                      minDate.setHours(0, 0, 0, 0)
+                      const checkDate = new Date(date)
+                      checkDate.setHours(0, 0, 0, 0)
+                      // Deshabilitar fechas pasadas y fechas con menos de 3 días de antelación
+                      return checkDate.getTime() < minDate.getTime()
+                    }}
+                    className="rounded-lg border w-full"
+                    classNames={{
+                      day_button: cn(
+                        'cursor-pointer relative flex items-center justify-center whitespace-nowrap rounded-md p-0 text-foreground transition-200',
+                        'group-[[data-selected]:not(.range-middle)]:[transition-property:color,background-color,border-radius,box-shadow]',
+                        'group-[[data-selected]:not(.range-middle)]:duration-150',
+                        'group-data-disabled:pointer-events-none focus-visible:z-10',
+                        'hover:not-in-data-selected:bg-accent group-data-selected:bg-primary',
+                        'hover:not-in-data-selected:text-foreground group-data-selected:text-primary-foreground',
+                        'group-data-disabled:text-foreground/30 group-data-disabled:line-through',
+                        'group-data-outside:text-foreground/30 group-data-selected:group-data-outside:text-primary-foreground',
+                        'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+                        'size-12 md:size-14'
+                      ),
+                      day: 'group size-12 md:size-14 px-0 py-px text-sm',
+                      weekday: 'size-12 md:size-14 p-0 text-xs font-medium text-muted-foreground/80',
+                    }}
+                  />
+                </div>
+
+                {/* Horas */}
+                <div className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <HoraCombobox
+                      horas={horas}
+                      value={editHoraInicial}
+                      onChange={setEditHoraInicial}
+                      placeholder="Selecciona hora"
+                      disabled={!editDate}
+                      horasOcupadas={horasOcupadasEdit}
+                      label="Hora Inicial"
+                    />
+
+                    <HoraCombobox
+                      horas={horasFinalDisponiblesEdit}
+                      value={editHoraFinal}
+                      onChange={setEditHoraFinal}
+                      placeholder="Selecciona hora"
+                      disabled={!editHoraInicial || !editDate}
+                      horasOcupadas={horasOcupadasEdit}
+                      label="Hora Final"
+                    />
+                  </div>
+                </div>
+
+                {/* Número de invitados */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between border border-gray-200 rounded-lg px-4 py-3 bg-white">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">Invitados</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => setEditNumeroInvitados(prev => Math.max(1, prev - 1))}
+                        disabled={editNumeroInvitados <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-base font-semibold text-gray-900 min-w-[2rem] text-center">
+                        {editNumeroInvitados}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => setEditNumeroInvitados(prev => prev + 1)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer con botones */}
+              <div className="border-t px-6 py-4 bg-gray-50">
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditSheetOpen(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (reservaEditando && editDate && editHoraInicial && editHoraFinal) {
+                        // Actualizar la reserva
+                        setReservas(prev => prev.map(r => 
+                          r.id === reservaEditando.id 
+                            ? {
+                                ...r,
+                                fechaInicio: editDate,
+                                fechaFin: editDate,
+                                horaInicio: editHoraInicial,
+                                horaFin: editHoraFinal,
+                                numeroInvitados: editNumeroInvitados
+                              }
+                            : r
+                        ))
+                        setIsEditSheetOpen(false)
+                        setReservaEditando(null)
+                        // TODO: Aquí iría la llamada a la API para actualizar la reserva
+                      }
+                    }}
+                    disabled={!editDate || !editHoraInicial || !editHoraFinal}
+                    className="flex-1"
+                  >
+                    Guardar Cambios
                   </Button>
                 </div>
               </div>

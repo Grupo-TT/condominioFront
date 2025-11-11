@@ -38,7 +38,7 @@ import { FormFieldWithTooltip } from '@/components/forms'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs } from '@/components/animated-tabs'
 import { ConfiguracionCuotasDialog } from '@/components/configuracion-cuotas-dialog'
 import {
   Sheet,
@@ -77,9 +77,12 @@ function ObligacionesSubTable({
   const columns = useMemo<ColumnDef<Obligacion>[]>(
     () => [
       {
-        accessorKey: 'motivo',
+        accessorKey: 'titulo',
         header: ({ column }) => <DataGridColumnHeader title="Obligación" column={column} />,
-        cell: (info) => info.getValue() as string,
+        cell: (info) => {
+          const row = info.row.original
+          return row.titulo || row.motivo || ''
+        },
         enableSorting: true,
         size: 300,
       },
@@ -559,59 +562,14 @@ export default function CuotasPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(value) => setFilterType(value as 'todas' | 'al-dia' | 'pendientes')} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="todas">Todas</TabsTrigger>
-                <TabsTrigger value="al-dia">Al Día</TabsTrigger>
-                <TabsTrigger value="pendientes">Pendientes</TabsTrigger>
-              </TabsList>
-
-              <div className="flex items-center gap-3">
-                <div className="relative w-80">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <Input
-                    placeholder="Buscar casas..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
-                  />
-                  {searchTerm !== '' && (
-                    <Button
-                      onClick={handleClearSearch}
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
-                    >
-                      <X size={16} className="text-gray-500" />
-                    </Button>
-                  )}
-                </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <ConfiguracionCuotasDialog>
-                      <TooltipTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          className="h-10 w-10"
-                        >
-                          <Settings className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                    </ConfiguracionCuotasDialog>
-                    <TooltipContent side="top" align="end" alignOffset={-20} sideOffset={5}>
-                      <p>Configurar valores constantes</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-
-            <TabsContent value="todas">
-              {!loading && !hasResults ? (
+          <AnimatedTabs
+            value={filterType}
+            onValueChange={(value) => setFilterType(value as 'todas' | 'al-dia' | 'pendientes')}
+            tabs={[
+              {
+                value: 'todas',
+                label: 'Todas',
+                content: !loading && !hasResults ? (
                 <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -661,11 +619,12 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              )}
-            </TabsContent>
-
-            <TabsContent value="al-dia">
-              {!loading && !hasResults ? (
+              )
+              },
+              {
+                value: 'al-dia',
+                label: 'Al Día',
+                content: !loading && !hasResults ? (
                 <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -715,11 +674,12 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              )}
-            </TabsContent>
-
-            <TabsContent value="pendientes">
-              {!loading && !hasResults ? (
+              )
+              },
+              {
+                value: 'pendientes',
+                label: 'Pendientes',
+                content: !loading && !hasResults ? (
                 <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -769,9 +729,53 @@ export default function CuotasPage() {
                     />
                   </div>
                 </DataGrid>
-              )}
-            </TabsContent>
-          </Tabs>
+              )
+              },
+            ]}
+            rightContent={
+              <>
+                <div className="relative w-80">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <Input
+                    placeholder="Buscar casas..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                  />
+                  {searchTerm !== '' && (
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
+                    >
+                      <X size={16} className="text-gray-500" />
+                    </Button>
+                  )}
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <ConfiguracionCuotasDialog>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-10 w-10"
+                        >
+                          <Settings className="h-5 w-5" />
+                        </Button>
+                      </TooltipTrigger>
+                    </ConfiguracionCuotasDialog>
+                    <TooltipContent side="top" align="end" alignOffset={-20} sideOffset={5}>
+                      <p>Configurar valores constantes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
+            }
+          />
         </div>
       </div>
 
