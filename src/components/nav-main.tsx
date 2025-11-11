@@ -11,13 +11,13 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 
 export function NavMain({
   items,
@@ -42,19 +42,29 @@ export function NavMain({
         {items.map((item) => (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
               {item.items?.length ? (
                 <>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuAction className="data-[state=open]:rotate-90">
-                      <ChevronRight />
-                      <span className="sr-only">Toggle</span>
-                    </SidebarMenuAction>
+                    <SidebarMenuButton 
+                      tooltip={item.title} 
+                      className="[&[data-state=open]>span[data-sidebar=chevron]>svg]:rotate-90"
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                      <span
+                        className={cn(
+                          "text-sidebar-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-200",
+                          "peer-data-[size=sm]/menu-button:top-1",
+                          "peer-data-[size=default]/menu-button:top-1.5",
+                          "peer-data-[size=lg]/menu-button:top-2.5",
+                          "ml-auto"
+                        )}
+                        data-sidebar="chevron"
+                      >
+                        <ChevronRight />
+                        <span className="sr-only">Toggle</span>
+                      </span>
+                    </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
@@ -70,7 +80,14 @@ export function NavMain({
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </>
-              ) : null}
+              ) : (
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <a href={item.url}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </a>
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           </Collapsible>
         ))}
