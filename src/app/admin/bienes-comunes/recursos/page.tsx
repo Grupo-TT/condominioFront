@@ -472,7 +472,7 @@ export default function RecursosPage() {
         },
       },
     ],
-    [setRecursos]
+    [setRecursos, habilitarRecurso, deshabilitarRecurso]
   )
 
   const table = useReactTable({

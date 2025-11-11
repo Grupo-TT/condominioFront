@@ -88,7 +88,7 @@ export function ObligacionCombobox({
                         style: 'currency',
                         currency: 'COP',
                       }).format(obligacion.valorPendiente)}`}
-                      onSelect={(currentValue) => {
+                      onSelect={() => {
                         const obligacionId = String(obligacion.id)
                         const newValue = obligacionId === String(value) ? '' : obligacionId
                         onChange(newValue)
