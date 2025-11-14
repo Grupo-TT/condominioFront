@@ -4,7 +4,6 @@ import { useId, useMemo, useState } from 'react'
 import { CheckIcon, EyeIcon, EyeOffIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { FormFieldWithTooltip } from './FormField'
 import { cn } from '@/lib/utils'
 

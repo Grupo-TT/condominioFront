@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
@@ -21,7 +21,6 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
 import {
@@ -38,7 +37,7 @@ import { FormInput, FormSelect, PasswordStrengthInput, type SelectOption } from 
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Scrollspy } from '@/components/ui/scrollspy'
-import { Pencil, Lock, Calendar, Shield, ChevronRight, ArrowRight, User, Phone, Mail, FileText } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ResetPasswordIcon, SquareLockPasswordIcon, PassportIcon, UserListIcon, TelephoneIcon, MailAtSign01Icon, Profile02Icon, Door01Icon, Edit02Icon } from '@hugeicons/core-free-icons'
 import { useAuth } from '@/contexts/AuthContext'

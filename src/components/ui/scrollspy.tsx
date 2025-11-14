@@ -1,11 +1,11 @@
 import { ReactNode, RefObject, useCallback, useEffect, useRef } from 'react';
 
 // Throttle function to limit how often scroll events are processed
-function throttle<T extends (...args: any[]) => any>(func: T, limit: number): T {
+function throttle<T extends (...args: unknown[]) => unknown>(func: T, limit: number): T {
   let inThrottle: boolean;
-  return ((...args: any[]) => {
+  return ((...args: unknown[]) => {
     if (!inThrottle) {
-      func.apply(this, args);
+      func(...args);
       inThrottle = true;
       setTimeout(() => (inThrottle = false), limit);
     }
@@ -187,8 +187,17 @@ export function Scrollspy({
       if (targetElement) {
         scrollTo(targetElement)();
       }
+    } else {
+      // If no hash, activate the first element
+      if (anchorElementsRef.current && anchorElementsRef.current.length > 0) {
+        const firstAnchor = anchorElementsRef.current[0];
+        const firstSectionId = firstAnchor.getAttribute(`data-${dataAttribute}-anchor`);
+        if (firstSectionId) {
+          setActiveSection(firstSectionId, false);
+        }
+      }
     }
-  }, [dataAttribute, scrollTo]);
+  }, [dataAttribute, scrollTo, setActiveSection]);
 
   useEffect(() => {
     // Query elements and store them in the ref, avoiding unnecessary re-renders
