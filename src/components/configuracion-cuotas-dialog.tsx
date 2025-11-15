@@ -26,6 +26,8 @@ import { configuracionValorSchema, ConfiguracionValorFormData } from '@/lib/vali
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Wallet01Icon, AnalyticsUpIcon, Legal02Icon } from '@hugeicons/core-free-icons';
 import { useValoresConstantes } from '@/hooks/useConfiguracionFinanciera';
+import { config } from 'process';
+import { setConfig } from 'next/config';
 
 interface CollapsibleConfigCardProps {
   title: string;
@@ -232,7 +234,7 @@ interface ConfiguracionCuotasDialogProps {
 export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { 
-    loading, error, obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones, tasa, pagoAdicional, cargoAdministrativo
+    obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones, setConfiguraciones
   } = useValoresConstantes();
 
   React.useEffect(() => {
@@ -241,15 +243,30 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
 
 
   const handleSaveValorAdmin = async (value: number) => {
-    await actualizarCargoAdministrativo(value);
-  };
+    const response = await actualizarCargoAdministrativo(value);
+    setConfiguraciones(prev =>
+      prev.map(c =>
+        c.tipo === "Cargo de administración" ? { ...c, valor: value } : c
+      )
+    );
+  }
 
   const handleSaveTasaInteres = async (value: number) => {
     await actualizarTasaInteres(value);
+    setConfiguraciones(prev =>
+      prev.map(c =>
+        c.tipo === "Tasa de interés" ? { ...c, valor: value } : c
+      )
+    );
   };
 
   const handleSavePenalidad = async (value: number) => {
     await actualizarPagoAdicional(value);
+    setConfiguraciones(prev =>
+      prev.map(c =>
+        c.tipo === "Pago adicional" ? { ...c, valor: value } : c
+      )
+    );
   };
 
   return (

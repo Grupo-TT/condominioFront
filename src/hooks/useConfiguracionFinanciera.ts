@@ -72,5 +72,5 @@ export const useValoresConstantes = () => {
     }
   };
 
-  return { loading, error, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, obtenerConfiguraciones, configuraciones, tasa, pagoAdicional, cargoAdministrativo }
+  return { loading, error, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, obtenerConfiguraciones, configuraciones, setConfiguraciones, cargoAdministrativo }
 }
