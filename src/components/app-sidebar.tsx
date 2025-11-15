@@ -25,21 +25,21 @@ import {
 
 const data = {
   user: {
-    name: "Admin",
-    email: "admin@flordigital.com",
+    name: "Propietario",
+    email: "propietario@flordigital.com",
     avatar: "",
   },
   // Sección: Inicio
   navInicio: [
     {
       title: "Dashboard",
-      url: "/admin/dashboard",
+      url: "/dashboard",
       icon: Home,
       isActive: true,
     },
     {
       title: "Casas",
-      url: "/admin/casas",
+      url: "/casas",
       icon: Building2,
     },
   ],
@@ -47,20 +47,20 @@ const data = {
   navFinanzas: [
     {
       title: "Tesorería",
-      url: "/admin/tesoreria",
+      url: "/tesoreria",
       icon: Wallet,
       items: [
         {
           title: "Cuotas",
-          url: "/admin/tesoreria/cuotas",
+          url: "/tesoreria/cuotas",
         },
         {
           title: "Movimientos",
-          url: "/admin/tesoreria/movimientos",
+          url: "/tesoreria/movimientos",
         },
         {
           title: "Multas",
-          url: "/admin/tesoreria/multas",
+          url: "/tesoreria/multas",
         },
       ],
     },
@@ -69,22 +69,22 @@ const data = {
   navComunidad: [
     {
       title: "Bienes Comunes",
-      url: "/admin/bienes-comunes",
+      url: "/bienes-comunes",
       icon: Package,
     },
     {
       title: "Asamblea",
-      url: "/admin/asamblea",
+      url: "/asamblea",
       icon: Users,
     },
     {
       title: "Solicitudes",
-      url: "/admin/solicitudes",
+      url: "/solicitudes",
       icon: FileText,
     },
     {
       title: "Comunicados",
-      url: "/admin/comunicados",
+      url: "/comunicados",
       icon: Megaphone,
     },
   ],
@@ -97,13 +97,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/admin/dashboard">
+              <a href="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Building2 className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Flor Digital</span>
-                  <span className="truncate text-xs">Administración</span>
+                  <span className="truncate text-xs">Mi Residencia</span>
                 </div>
               </a>
             </SidebarMenuButton>
