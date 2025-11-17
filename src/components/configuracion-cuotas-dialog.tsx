@@ -26,8 +26,8 @@ import { configuracionValorSchema, ConfiguracionValorFormData } from '@/lib/vali
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Wallet01Icon, AnalyticsUpIcon, Legal02Icon } from '@hugeicons/core-free-icons';
 import { useValoresConstantes } from '@/hooks/useConfiguracionFinanciera';
-import { config } from 'process';
-import { setConfig } from 'next/config';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 interface CollapsibleConfigCardProps {
   title: string;
@@ -69,7 +69,12 @@ function CollapsibleConfigCard({
       setShowAllErrors(true);
       return;
     }
-    onChange(data.valor, data.fechaAplicacion?.toISOString() || undefined);
+    // Si es porcentaje, convertir el valor ingresado por el usuario a decimal para la API
+    // Ej: usuario ingresa 5, enviamos 0.05 a la API
+    const valueToSend = unit === '%' && data.valor !== undefined
+      ? data.valor / 100
+      : data.valor;
+    onChange(valueToSend, data.fechaAplicacion?.toISOString() || undefined);
     form.reset();
     setShowAllErrors(false);
     setIsOpen(false);
@@ -93,7 +98,14 @@ function CollapsibleConfigCard({
         currency: 'COP',
       }).format(value);
     } else if (unit === '%') {
-      return `${value}%`;
+      // Si el valor viene como decimal (ej: 0.05), convertirlo a porcentaje (5%)
+      // Redondear para evitar errores de precisión de punto flotante
+      const percentageValue = value < 1 ? value * 100 : value;
+      // Redondear a máximo 2 decimales y eliminar ceros innecesarios
+      const rounded = Math.round(percentageValue * 100) / 100;
+      // Si es un número entero, mostrar sin decimales
+      const formatted = rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+      return `${formatted}%`;
     }
     return value.toString();
   };
@@ -234,39 +246,67 @@ interface ConfiguracionCuotasDialogProps {
 export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { 
-    obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones, setConfiguraciones
+    obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones
   } = useValoresConstantes();
 
   React.useEffect(() => {
-  obtenerConfiguraciones();
-  }, []);
-
+    if (isOpen) {
+      obtenerConfiguraciones();
+    }
+  }, [isOpen]);
 
   const handleSaveValorAdmin = async (value: number) => {
-    const response = await actualizarCargoAdministrativo(value);
-    setConfiguraciones(prev =>
-      prev.map(c =>
-        c.tipo === "Cargo de administración" ? { ...c, valor: value } : c
-      )
-    );
+    try {
+      await actualizarCargoAdministrativo(value);
+      // Refrescar las configuraciones desde el servidor
+      await obtenerConfiguraciones();
+      toast.success('Valor de administración actualizado exitosamente', {
+        duration: 5000,
+      });
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || "Error al actualizar el valor de administración"
+        : "Error al actualizar el valor de administración. Intenta de nuevo.";
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
+    }
   }
 
   const handleSaveTasaInteres = async (value: number) => {
-    await actualizarTasaInteres(value);
-    setConfiguraciones(prev =>
-      prev.map(c =>
-        c.tipo === "Tasa de interés" ? { ...c, valor: value } : c
-      )
-    );
+    try {
+      await actualizarTasaInteres(value);
+      // Refrescar las configuraciones desde el servidor
+      await obtenerConfiguraciones();
+      toast.success('Tasa de interés actualizada exitosamente', {
+        duration: 5000,
+      });
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || "Error al actualizar la tasa de interés"
+        : "Error al actualizar la tasa de interés. Intenta de nuevo.";
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
+    }
   };
 
   const handleSavePenalidad = async (value: number) => {
-    await actualizarPagoAdicional(value);
-    setConfiguraciones(prev =>
-      prev.map(c =>
-        c.tipo === "Pago adicional" ? { ...c, valor: value } : c
-      )
-    );
+    try {
+      await actualizarPagoAdicional(value);
+      // Refrescar las configuraciones desde el servidor
+      await obtenerConfiguraciones();
+      toast.success('Penalidad por mora actualizada exitosamente', {
+        duration: 5000,
+      });
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || "Error al actualizar la penalidad por mora"
+        : "Error al actualizar la penalidad por mora. Intenta de nuevo.";
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
+    }
   };
 
   return (
@@ -316,7 +356,16 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
           <CollapsibleConfigCard
             title="Tasa de Interés No Pagar Administración"
             subtitle="Porcentaje de interés aplicado a pagos atrasados"
-            currentValue={configuraciones?.find(c => c.tipo === "Tasa de interés")?.valor ?? 0}
+            currentValue={(() => {
+              const tasa = configuraciones?.find(c => c.tipo === "Tasa de interés")?.valor ?? 0;
+              // Si el valor viene como decimal (ej: 0.05), convertirlo a porcentaje (5) para mostrar
+              // Redondear para evitar errores de precisión de punto flotante
+              if (tasa < 1) {
+                const percentage = tasa * 100;
+                return Math.round(percentage * 100) / 100;
+              }
+              return tasa;
+            })()}
             unit="%"
             onChange={handleSaveTasaInteres}
             icon={<HugeiconsIcon icon={AnalyticsUpIcon} size={20} />}
