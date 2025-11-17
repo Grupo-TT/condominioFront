@@ -39,10 +39,12 @@ export function PeriodoCombobox({
   })
   const periodoTextoCapitalizado = periodoTexto.charAt(0).toUpperCase() + periodoTexto.slice(1)
 
+  const añoSeleccionado = value.getFullYear()
+
   // Generar lista de meses para el selector
   const mesesDisponibles = React.useMemo(() => {
     const meses: { value: string; label: string; fecha: Date }[] = []
-    const añoActual = value.getFullYear()
+    const añoActual = añoSeleccionado
     
     // Generar meses del año seleccionado
     for (let mes = 0; mes < 12; mes++) {
@@ -57,7 +59,7 @@ export function PeriodoCombobox({
     }
     
     return meses
-  }, [value.getFullYear()])
+  }, [añoSeleccionado])
 
   // Verificar si un mes está seleccionado
   const mesSeleccionado = mesesDisponibles.find(
