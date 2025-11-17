@@ -32,8 +32,11 @@ export const useRecurso = () => {
       setError(null)
       const response = await recursoService.putRecursoEnable(id)
       setRecurso(response)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al habilitar el recurso')
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data
+        ? String(err.response.data.message)
+        : 'Error al habilitar el recurso'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -45,8 +48,11 @@ export const useRecurso = () => {
       setError(null)
       const response = await recursoService.putRecursosDisable(id)
       setRecurso(response)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al deshabilitar el recurso')
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data
+        ? String(err.response.data.message)
+        : 'Error al deshabilitar el recurso'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
