@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { valoresConstantesService } from '@/services/configuracionFinanciera.service'
 import { ActualizarResponse, VisualizarResponse } from '@/types/configuracionFinanciera.types'
 export const useValoresConstantes = () => {
@@ -7,7 +7,7 @@ export const useValoresConstantes = () => {
   const [cargoAdministrativo, setCargoAdministrativo] = useState<ActualizarResponse | null>(null)
   const [configuraciones, setConfiguraciones] = useState<VisualizarResponse['data']['configuraciones']>([])
 
-  const actualizarTasaInteres = async (nuevoValor: number) => {
+  const actualizarTasaInteres = useCallback(async (nuevoValor: number) => {
     try {
       setLoading(true)
       setError(null)
@@ -20,9 +20,9 @@ export const useValoresConstantes = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const actualizarPagoAdicional = async (nuevoValor: number) => {
+  const actualizarPagoAdicional = useCallback(async (nuevoValor: number) => {
     try {
       setLoading(true)
       setError(null)
@@ -35,9 +35,9 @@ export const useValoresConstantes = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const actualizarCargoAdministrativo = async (nuevoValor: number) => {
+  const actualizarCargoAdministrativo = useCallback(async (nuevoValor: number) => {
     try {
       setLoading(true)
       setError(null)
@@ -51,9 +51,9 @@ export const useValoresConstantes = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const obtenerConfiguraciones = async () => {
+  const obtenerConfiguraciones = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -64,7 +64,7 @@ export const useValoresConstantes = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [])
 
   return { loading, error, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, obtenerConfiguraciones, configuraciones, setConfiguraciones, cargoAdministrativo }
 }
