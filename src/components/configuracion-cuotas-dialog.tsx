@@ -28,6 +28,7 @@ import { Wallet01Icon, AnalyticsUpIcon, Legal02Icon } from '@hugeicons/core-free
 import { useValoresConstantes } from '@/hooks/useConfiguracionFinanciera';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CollapsibleConfigCardProps {
   title: string;
@@ -39,6 +40,7 @@ interface CollapsibleConfigCardProps {
   iconBgColor: string;
   iconColor: string;
   showDateField?: boolean;
+  isLoading?: boolean;
 }
 
 function CollapsibleConfigCard({
@@ -50,7 +52,8 @@ function CollapsibleConfigCard({
   icon,
   iconBgColor,
   iconColor,
-  showDateField = false
+  showDateField = false,
+  isLoading = false
 }: CollapsibleConfigCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showAllErrors, setShowAllErrors] = useState(false);
@@ -120,16 +123,22 @@ function CollapsibleConfigCard({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-muted-foreground text-xs font-medium">{title}</div>
-              <div className="text-foreground font-semibold text-xl mt-0.5">{formatValue(currentValue)}</div>
+              {isLoading ? (
+                <Skeleton className="h-6 w-32 mt-1" />
+              ) : (
+                <div className="text-foreground font-semibold text-xl mt-0.5">{formatValue(currentValue)}</div>
+              )}
             </div>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs flex-shrink-0">
+              <Button variant="outline" size="sm" className="h-8 text-xs flex-shrink-0" disabled={isLoading}>
                 Editar
                 {isOpen ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
               </Button>
             </CollapsibleTrigger>
           </div>
-          <div className="text-muted-foreground text-xs mt-1.5 pl-[52px]">{subtitle}</div>
+          <div className="text-muted-foreground text-xs mt-1.5 pl-[52px]">
+            {isLoading ? <Skeleton className="h-4 w-40" /> : subtitle}
+          </div>
         </CardHeader>
         <CollapsibleContent>
           <TooltipProvider>
@@ -246,7 +255,12 @@ interface ConfiguracionCuotasDialogProps {
 export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { 
-    obtenerConfiguraciones, actualizarTasaInteres, actualizarPagoAdicional, actualizarCargoAdministrativo, configuraciones
+    obtenerConfiguraciones,
+    actualizarTasaInteres,
+    actualizarPagoAdicional,
+    actualizarCargoAdministrativo,
+    configuraciones,
+    loading
   } = useValoresConstantes();
 
   React.useEffect(() => {
@@ -340,21 +354,11 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
             icon={<HugeiconsIcon icon={Wallet01Icon} size={20} />}
             iconBgColor="bg-[#E3E4EA]"
             iconColor="text-[#595D75]"
+            isLoading={loading}
           />
 
           <CollapsibleConfigCard
-            title="Penalidad por Mora"
-            subtitle="Cargo adicional por mora en el pago de administración"
-            currentValue={configuraciones?.find(c => c.tipo === "Pago adicional")?.valor ?? 0}
-            unit="$"
-            onChange={handleSavePenalidad}
-            icon={<HugeiconsIcon icon={Legal02Icon} size={20} />}
-            iconBgColor="bg-[#E6EFEA]"
-            iconColor="text-[#4C6C5A]"
-          />
-
-          <CollapsibleConfigCard
-            title="Tasa de Interés No Pagar Administración"
+            title="Tasa de Interés por Mora"
             subtitle="Porcentaje de interés aplicado a pagos atrasados"
             currentValue={(() => {
               const tasa = configuraciones?.find(c => c.tipo === "Tasa de interés")?.valor ?? 0;
@@ -371,6 +375,19 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
             icon={<HugeiconsIcon icon={AnalyticsUpIcon} size={20} />}
             iconBgColor="bg-[#F1E8D6]"
             iconColor="text-[#A39170]"
+            isLoading={loading}
+          />
+
+          <CollapsibleConfigCard
+            title="Penalidad por No Pagar Administración"
+            subtitle="Cargo adicional por no pagar la administración a tiempo"
+            currentValue={configuraciones?.find(c => c.tipo === "Pago adicional")?.valor ?? 0}
+            unit="$"
+            onChange={handleSavePenalidad}
+            icon={<HugeiconsIcon icon={Legal02Icon} size={20} />}
+            iconBgColor="bg-[#E6EFEA]"
+            iconColor="text-[#4C6C5A]"
+            isLoading={loading}
           />
         </div>
       </DialogContent>
