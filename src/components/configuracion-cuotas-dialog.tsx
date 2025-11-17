@@ -267,7 +267,7 @@ export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialo
     if (isOpen) {
       obtenerConfiguraciones();
     }
-  }, [isOpen]);
+  }, [isOpen, obtenerConfiguraciones]);
 
   const handleSaveValorAdmin = async (value: number) => {
     try {

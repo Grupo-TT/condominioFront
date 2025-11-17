@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import { valoresConstantesService } from '@/services/configuracionFinanciera.service'
 import { ActualizarResponse, VisualizarResponse } from '@/types/configuracionFinanciera.types'
-import { setConfig } from 'next/config'
-
 export const useValoresConstantes = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [tasa, setTasa] = useState<ActualizarResponse | null>(null)
-  const [pagoAdicional, setPagoAdicional] = useState<ActualizarResponse | null>(null)
   const [cargoAdministrativo, setCargoAdministrativo] = useState<ActualizarResponse | null>(null)
   const [configuraciones, setConfiguraciones] = useState<VisualizarResponse['data']['configuraciones']>([])
 
@@ -15,8 +11,7 @@ export const useValoresConstantes = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await valoresConstantesService.putTasaInteres(nuevoValor)
-      setTasa(response)
+      await valoresConstantesService.putTasaInteres(nuevoValor)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error
         ? err.message
@@ -31,8 +26,7 @@ export const useValoresConstantes = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await valoresConstantesService.putPagoAdicional(nuevoValor)
-      setPagoAdicional(response)
+      await valoresConstantesService.putPagoAdicional(nuevoValor)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error
         ? err.message
