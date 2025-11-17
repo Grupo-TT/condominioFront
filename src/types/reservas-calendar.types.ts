@@ -1,4 +1,5 @@
 import type { IEvent, IUser } from '@/calendar/interfaces'
+import { RecursoComun } from './reserva.types'
 
 export type TipoRecurso = 'Zona' | 'Objeto'
 export type EstadoReserva = 'pendiente' | 'aprobada' | 'rechazada'

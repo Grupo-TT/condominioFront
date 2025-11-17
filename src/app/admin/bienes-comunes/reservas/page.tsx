@@ -19,6 +19,8 @@ import { adaptReservasToCalendar, extractUsersFromReservas, addColorToReservas }
 import type { TCalendarView } from '@/calendar/types'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle } from 'lucide-react'
+import { httpUrl } from 'zod'
+import { HttpStatusCode } from 'axios'
 
 export default function ReservasPage() {
   const [currentView, setCurrentView] = useState<TCalendarView>('month')
@@ -88,7 +90,7 @@ const reservasTodasConColor = useMemo(
     )
   }
 
-  if (error) {
+  if (error === '400') {
     return (
       <>
         <header className="flex h-16 shrink-0 items-center gap-2">

@@ -1,3 +1,4 @@
+import { TReservaEditFormData } from "@/calendar/schemas";
 import apiClient from "../config/axios.config";
 import { Reserva } from "@/types/reserva.types";
 
@@ -54,7 +55,7 @@ export const reservasService = {
         }
     },
 
-    async updateReserva(id: number, data: Partial<Reserva>): Promise<Reserva> {
+    async updateReserva(id: number, data: TReservaEditFormData): Promise<Reserva> {
         try {
             const response = await apiClient.put(`/solicitud-recurso/edit/${id}`, data);
             return response.data.data;

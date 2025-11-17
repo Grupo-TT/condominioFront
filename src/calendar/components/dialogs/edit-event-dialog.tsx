@@ -21,6 +21,7 @@ import type { IEvent } from "@/calendar/interfaces";
 import type { IEventExtended } from "@/types/reservas-calendar.types";
 import type { TimeValue } from "react-aria-components";
 import type { TReservaEditFormData } from "@/calendar/schemas";
+import { editarReserva } from "@/hooks/useReserva";
 
 interface IProps {
   children: React.ReactNode;
@@ -59,6 +60,9 @@ export function EditEventDialog({ children, event }: IProps) {
       numeroInvitados: values.numeroInvitados,
     } as IEventExtended);
 
+    console.log("Fomulario:" ,values)
+    console.log("Reserva", event.recursoComun)
+    editarReserva(event.id ,values)
     onClose();
   };
 

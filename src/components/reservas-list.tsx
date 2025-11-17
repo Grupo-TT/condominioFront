@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { EditEventDialog } from '@/calendar/components/dialogs/edit-event-dialog'
 import type { IEventExtended } from '@/types/reservas-calendar.types'
-import { aprobarReserva,rechazarReserva,eliminarReserva} from '@/hooks/useReserva'
+import { useReservas } from '@/hooks/useReserva'
+
 
 interface ReservasListProps {
   reservas: IEventExtended[]
@@ -39,6 +40,7 @@ interface ReservasListHandlerProps extends ReservasListProps {
 
 export function ReservasList({ reservas }: ReservasListHandlerProps) {
   const [activeTab, setActiveTab] = useState('pendiente')
+  const { aprobarReserva, rechazarReserva, eliminarReserva } = useReservas()
 
   // Filtrar y ordenar reservas por estado
   const reservasFiltradas = useMemo(() => {

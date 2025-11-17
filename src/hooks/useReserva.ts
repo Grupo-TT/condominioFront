@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { Reserva } from "@/types/reserva.types";
 import { reservasService } from "@/lib/services/reservas.service";
+import { TReservaEditFormData } from "@/calendar/schemas";
 
 export function useReservas() {
   const [reservasAprobadas, setReservasAprobadas] = useState<Reserva[]>([]);
@@ -15,13 +15,13 @@ export function useReservas() {
     setLoading(true);
     setError(null);
     try {
-      
+
       const aprobadas = await reservasService.getReservasAprobadas()
       const rechazadas = await reservasService.getReservasRechazadas()
       const pendientes = await reservasService.getReservasPendientes()
 
       console.log(aprobadas)
-      
+
       setReservasAprobadas(aprobadas);
       setReservasRechazadas(rechazadas);
       setReservasPendientes(pendientes);
@@ -39,15 +39,52 @@ export function useReservas() {
     cargarReservas();
   }, []);
 
-  const reservas = tab === "APROBADA" ? reservasAprobadas : 
-                   tab === "RECHAZADA" ? reservasRechazadas : 
-                   reservasPendientes;
+  const reservas = tab === "APROBADA" ? reservasAprobadas :
+    tab === "RECHAZADA" ? reservasRechazadas :
+      reservasPendientes;
 
+  const aprobarReserva = async (id: number) => {
+    try {
+      await reservasService.approveReserva(id);
+      // recargar después de aprobar
+      await cargarReservas();
+      window.location.reload()
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || "Error al aprobar la reserva";
+      setError(errorMessage);
+      console.error("Error al aprobar:", err);
+    }
+  };
+  const rechazarReserva = async (id: number) => {
+    try {
+      await reservasService.rejectReserva(id);
+      await cargarReservas();
+      window.location.reload()
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva"; setError(errorMessage);
+      console.error("Error al rechazar:", err);
+    }
+  };
+  const eliminarReserva = async (id: number) => {
+    try {
+      await reservasService.deleteReserva(id);
+      console.log()
+      await cargarReservas();
+      window.location.reload()
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva";
+      setError(errorMessage); console.error("Error al rechazar:", err);
+    }
+  };
   return {
     reservas,
     reservasAprobadas,
     reservasRechazadas,
     reservasPendientes,
+
+    aprobarReserva,
+    rechazarReserva,
+    eliminarReserva,
     tab,
     setTab,
     loading,
@@ -56,14 +93,12 @@ export function useReservas() {
   };
 }
 
-export async function aprobarReserva(id: number) {
-  await reservasService.approveReserva(id);
-}
-
-export async function rechazarReserva(id: number) {
-  await reservasService.rejectReserva(id);
-}
-
-export async function eliminarReserva(id: number) {
-  await reservasService.deleteReserva(id);
+export async function editarReserva(id: number, data: TReservaEditFormData): Promise<void> {
+  try {
+    await reservasService.updateReserva(id, data);
+  } catch (err: any) {
+    const errorMessage = err?.response?.data?.message || "Error al editar la reserva";
+    console.error("Error al editar:", err);
+    throw new Error(errorMessage);
+  }
 }
