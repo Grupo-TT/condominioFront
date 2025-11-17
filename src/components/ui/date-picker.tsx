@@ -39,17 +39,19 @@ export function DatePicker({
         <Button 
           variant='outline' 
           id={id} 
-          className={cn('w-full justify-between font-normal h-9', className)}
+          className={cn('w-full justify-between font-normal h-9 px-3', className)}
         >
-          <span className='flex items-center'>
-            <CalendarIcon className='mr-2 h-4 w-4' />
-            {value ? value.toLocaleDateString('es-CO', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }) : placeholder}
+          <span className='flex items-center min-w-0 flex-1 overflow-hidden'>
+            <CalendarIcon className='mr-2 h-4 w-4 flex-shrink-0' />
+            <span className='truncate'>
+              {value ? value.toLocaleDateString('es-CO', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }) : placeholder}
+            </span>
           </span>
-          <ChevronDownIcon className='h-4 w-4' />
+          <ChevronDownIcon className='h-4 w-4 flex-shrink-0 ml-2' />
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto overflow-hidden p-0' align='start'>

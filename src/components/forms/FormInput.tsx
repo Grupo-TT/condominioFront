@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { FormFieldWithTooltip } from './FormField'
 import { cn } from '@/lib/utils'
 
-interface FormInputProps {
+interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   name: string
   label: string
   required?: boolean
@@ -20,6 +20,7 @@ interface FormInputProps {
   className?: string
   disabled?: boolean
   showError?: boolean
+  startIcon?: React.ReactNode
 }
 
 export function FormInput({
@@ -36,7 +37,9 @@ export function FormInput({
   onChange,
   className,
   disabled = false,
-  showError = false
+  showError = false,
+  startIcon,
+  ...inputProps
 }: FormInputProps) {
   return (
     <FormFieldWithTooltip
@@ -47,20 +50,30 @@ export function FormInput({
       error={showError ? error : undefined}
       className={className}
     >
-      <Input
-        id={name}
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        autoComplete={autoComplete}
-        disabled={disabled}
-        className={cn(
-          "w-full",
-          invalid && "border-red-500 focus:border-red-500"
+      <div className="relative">
+        {startIcon && (
+          <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
+            {startIcon}
+            <span className="sr-only">Icon</span>
+          </div>
         )}
-      />
+        <Input
+          id={name}
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          autoComplete={autoComplete}
+          disabled={disabled}
+          className={cn(
+            "w-full",
+            startIcon && "pl-9",
+            invalid && "border-red-500 focus:border-red-500"
+          )}
+          {...inputProps}
+        />
+      </div>
     </FormFieldWithTooltip>
   )
 }
