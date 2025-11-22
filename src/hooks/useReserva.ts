@@ -93,9 +93,24 @@ export function useReservas() {
   };
 }
 
+function toLocalTimeString(timeObj: { hour: number; minute: number }) {
+  return `${String(timeObj.hour).padStart(2, "0")}:${String(timeObj.minute).padStart(2, "0")}`;
+}
+
 export async function editarReserva(id: number, data: TReservaEditFormData): Promise<void> {
   try {
-    await reservasService.updateReserva(id, data);
+    const payload = {
+      idSolicitud: id,
+      fechaSolicitud: data.fechaSolicitud instanceof Date
+        ? data.fechaSolicitud.toISOString().split("T")[0]
+        : String(data.fechaSolicitud).split("T")[0],
+      horaInicio: data.horaInicio,
+      horaFin: data.horaFin,
+      numeroInvitados: data.numeroInvitados ?? 0,
+    };
+    console.log("service",payload)
+
+    await reservasService.updateReserva(id, payload);
   } catch (err: any) {
     const errorMessage = err?.response?.data?.message || "Error al editar la reserva";
     console.error("Error al editar:", err);

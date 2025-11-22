@@ -15,10 +15,10 @@ export type TEventFormData = z.infer<typeof eventSchema>;
 
 // Schema simplificado para editar reservas
 export const reservaEditSchema = z.object({
-  startDate: z.date({ required_error: "La fecha de inicio es requerida" }),
-  startTime: z.object({ hour: z.number(), minute: z.number() }, { required_error: "La hora de inicio es requerida" }),
+  fechaSolicitud: z.date({ required_error: "La fecha de inicio es requerida" }),
+  horaInicio: z.object({ hour: z.number(), minute: z.number() }, { required_error: "La hora de inicio es requerida" }),
   endDate: z.date({ required_error: "La fecha de fin es requerida" }),
-  endTime: z.object({ hour: z.number(), minute: z.number() }, { required_error: "La hora de fin es requerida" }),
+  horaFin: z.object({ hour: z.number(), minute: z.number() }, { required_error: "La hora de fin es requerida" }),
   numeroInvitados: z.number().min(1, "Debe haber al menos 1 invitado").max(100, "Máximo 100 invitados"),
 });
 

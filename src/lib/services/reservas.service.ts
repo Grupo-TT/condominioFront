@@ -55,7 +55,7 @@ export const reservasService = {
         }
     },
 
-    async updateReserva(id: number, data: TReservaEditFormData): Promise<Reserva> {
+    async updateReserva(id: number, data: any): Promise<Reserva> {
         try {
             const response = await apiClient.put(`/solicitud-recurso/edit/${id}`, data);
             return response.data.data;
