@@ -104,13 +104,15 @@ export async function editarReserva(id: number, data: TReservaEditFormData): Pro
       fechaSolicitud: data.fechaSolicitud instanceof Date
         ? data.fechaSolicitud.toISOString().split("T")[0]
         : String(data.fechaSolicitud).split("T")[0],
-      horaInicio: data.horaInicio,
-      horaFin: data.horaFin,
+      horaInicio: toLocalTimeString(data.horaInicio),
+      horaFin: toLocalTimeString(data.horaFin),
       numeroInvitados: data.numeroInvitados ?? 0,
     };
     console.log("service",payload)
 
     await reservasService.updateReserva(id, payload);
+    //recargar pagina
+    window.location.reload()
   } catch (err: any) {
     const errorMessage = err?.response?.data?.message || "Error al editar la reserva";
     console.error("Error al editar:", err);

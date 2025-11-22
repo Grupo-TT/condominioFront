@@ -58,6 +58,7 @@ export const reservasService = {
     async updateReserva(id: number, data: any): Promise<Reserva> {
         try {
             const response = await apiClient.put(`/solicitud-recurso/edit/${id}`, data);
+            
             return response.data.data;
         } catch (error) {
             console.error("Error al actualizar reserva:", error);

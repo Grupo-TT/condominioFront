@@ -62,6 +62,7 @@ export function EditEventDialog({ children, event }: IProps) {
 
     console.log("Fomulario:" ,values)
     editarReserva(event.id ,values)
+    console.log("Reserva actualizada con exito", event.description)
     onClose();
   };
 
