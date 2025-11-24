@@ -80,12 +80,12 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-y-auto">
           <form 
             id="propietario-form"
             onSubmit={form.handleSubmit(handleFormSubmit)} 
-            className="space-y-6 px-4"
+            className="space-y-6 px-6 pt-2"
           >
             {/* Información Personal */}
             <div className="space-y-6">
@@ -208,7 +208,6 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
 
             {/* Información de Contacto */}
             <div className="space-y-6">
-              <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
               <div className="grid grid-cols-1 gap-6">
                 <Controller
                   name="email"
@@ -297,10 +296,10 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
         </div>
         
         {/* Botones del footer del Sheet */}
-        <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+        <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
           <Button
             variant="outline"
-            className="flex-1"
+            className="flex-1 h-10 font-medium"
             onClick={onCancel}
             type="button"
           >
@@ -309,7 +308,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
           <Button
             type="submit"
             form="propietario-form"
-            className="flex-1"
+            className="flex-1 h-10 font-medium"
             onClick={() => setShowAllErrors(true)}
           >
             Crear Propietario

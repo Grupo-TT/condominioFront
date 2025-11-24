@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
+import { Home07Icon, User03Icon, Profile02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -157,6 +157,8 @@ export default function CasasPage() {
   const [estadoFilter, setEstadoFilter] = useState<'todas' | 'al-dia' | 'en-mora'>('todas')
   const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false)
+  const [pendingPropietarioData, setPendingPropietarioData] = useState<PropietarioFormData | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleClearSearch = useCallback(() => {
@@ -168,6 +170,27 @@ export default function CasasPage() {
 
 
   const handleCrearPropietario = async (data: PropietarioFormData) => {
+    // Verificar si la casa seleccionada ya tiene un propietario
+    const casaId = parseInt(data.idCasa, 10)
+    const casaSeleccionada = casas?.find(casa => parseInt(casa.numeroCasa, 10) === casaId)
+    
+    // Verificar si la casa tiene propietario (con datos válidos) y el rol es PROPIETARIO
+    const tienePropietario = casaSeleccionada?.propietario && 
+                             casaSeleccionada.propietario.nombreCompleto && 
+                             casaSeleccionada.propietario.nombreCompleto.trim() !== ''
+    
+    if (tienePropietario && data.rolEnCasa === 'PROPIETARIO') {
+      // Guardar los datos pendientes y mostrar el diálogo de confirmación
+      setPendingPropietarioData(data)
+      setIsReplaceDialogOpen(true)
+      return
+    }
+
+    // Si no hay propietario o el rol no es PROPIETARIO, proceder directamente
+    await crearPropietario(data)
+  }
+
+  const crearPropietario = async (data: PropietarioFormData) => {
     try {
       await propietarioService.create(data)
 
@@ -190,6 +213,14 @@ export default function CasasPage() {
       toast.error(errorMessage, {
         duration: 5000,
       })
+    }
+  }
+
+  const handleConfirmReplace = async () => {
+    if (pendingPropietarioData) {
+      await crearPropietario(pendingPropietarioData)
+      setPendingPropietarioData(null)
+      setIsReplaceDialogOpen(false)
     }
   }
 
@@ -766,23 +797,62 @@ export default function CasasPage() {
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-                    style={{ width: '650px', maxWidth: 'none' }}
+                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+                    style={{ 
+                      width: '650px', 
+                      maxWidth: 'none'
+                    }}
                   >
-                    <SheetHeader>
-                      <SheetTitle>Nuevo Propietario</SheetTitle>
-                      <SheetDescription>
-                        Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="flex flex-col h-full">
-                      <PropietarioForm
-                        onSubmit={handleCrearPropietario}
-                        onCancel={() => setIsSheetOpen(false)}
-                      />
+                    <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <HugeiconsIcon icon={Profile02Icon} size={28} style={{ color: '#4C6C5A' }} />
+                        </div>
+                        <div className="flex-1">
+                          <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                            Nuevo Propietario
+                          </SheetTitle>
+                          <SheetDescription className="text-sm text-gray-500">
+                            Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
+                          </SheetDescription>
+                        </div>
+                      </div>
                     </div>
+
+                    <PropietarioForm
+                      onSubmit={handleCrearPropietario}
+                      onCancel={() => setIsSheetOpen(false)}
+                    />
                   </SheetContent>
                 </Sheet>
+
+                {/* Dialog de confirmación para reemplazar propietario */}
+                <AlertDialog open={isReplaceDialogOpen} onOpenChange={setIsReplaceDialogOpen}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Reemplazar propietario actual?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        La casa seleccionada ya tiene un propietario asociado. Toda la información del propietario actual será reemplazada con el nuevo propietario que estás creando.
+                        <br /><br />
+                        ¿Deseas continuar?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => {
+                        setPendingPropietarioData(null)
+                        setIsReplaceDialogOpen(false)
+                      }}>
+                        Cancelar
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleConfirmReplace}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Continuar y Reemplazar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             }
           />
