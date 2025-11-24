@@ -813,7 +813,7 @@ export default function CasasPage() {
                             Nuevo Propietario
                           </SheetTitle>
                           <SheetDescription className="text-sm text-gray-500">
-                            Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
+                            Registra un nuevo propietario en el sistema con toda su información personal.
                           </SheetDescription>
                         </div>
                       </div>
