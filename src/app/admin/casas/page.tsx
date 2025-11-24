@@ -169,25 +169,29 @@ export default function CasasPage() {
   }, [])
 
 
-  const handleCrearPropietario = async (data: PropietarioFormData) => {
+  const handleCrearPropietario = async (data: PropietarioFormData): Promise<boolean> => {
     // Verificar si la casa seleccionada ya tiene un propietario
     const casaId = parseInt(data.idCasa, 10)
     const casaSeleccionada = casas?.find(casa => parseInt(casa.numeroCasa, 10) === casaId)
     
-    // Verificar si la casa tiene propietario (con datos válidos) y el rol es PROPIETARIO
-    const tienePropietario = casaSeleccionada?.propietario && 
-                             casaSeleccionada.propietario.nombreCompleto && 
-                             casaSeleccionada.propietario.nombreCompleto.trim() !== ''
+    // Verificar si la casa tiene propietario real (no los valores por defecto)
+    // El adaptador asigna 'Sin propietario' o 'Sin nombre' cuando no hay propietario
+    const nombrePropietario = casaSeleccionada?.propietario?.nombreCompleto?.trim() || ''
+    const tienePropietarioReal = nombrePropietario !== '' && 
+                                 nombrePropietario !== 'Sin propietario' && 
+                                 nombrePropietario !== 'Sin nombre'
     
-    if (tienePropietario && data.rolEnCasa === 'PROPIETARIO') {
+    // Solo mostrar el diálogo si hay un propietario real y el rol es PROPIETARIO
+    if (tienePropietarioReal && data.rolEnCasa === 'PROPIETARIO') {
       // Guardar los datos pendientes y mostrar el diálogo de confirmación
       setPendingPropietarioData(data)
       setIsReplaceDialogOpen(true)
-      return
+      return false // Retornar false para indicar que no se debe resetear el formulario
     }
 
-    // Si no hay propietario o el rol no es PROPIETARIO, proceder directamente
+    // Si no hay propietario real o el rol no es PROPIETARIO, proceder directamente
     await crearPropietario(data)
+    return true // Retornar true para indicar que se puede resetear el formulario
   }
 
   const crearPropietario = async (data: PropietarioFormData) => {
@@ -203,6 +207,7 @@ export default function CasasPage() {
       setIsSheetOpen(false)
       // Recargar la lista de casas si es necesario
       // fetchCasas()
+      return true
     } catch (err) {
       // Extraer mensaje de error usando axios.isAxiosError
       const errorMessage = axios.isAxiosError(err)
@@ -213,14 +218,18 @@ export default function CasasPage() {
       toast.error(errorMessage, {
         duration: 5000,
       })
+      return false
     }
   }
 
   const handleConfirmReplace = async () => {
     if (pendingPropietarioData) {
-      await crearPropietario(pendingPropietarioData)
-      setPendingPropietarioData(null)
-      setIsReplaceDialogOpen(false)
+      const success = await crearPropietario(pendingPropietarioData)
+      if (success) {
+        // Si fue exitoso, resetear el formulario
+        setPendingPropietarioData(null)
+        setIsReplaceDialogOpen(false)
+      }
     }
   }
 
@@ -282,6 +291,8 @@ export default function CasasPage() {
         cell: ({ row }) => {
           const esArrendada = row.original.usoCasa.toUpperCase() === 'ARRENDADA'
           const rol = esArrendada ? 'Arrendatario' : 'Propietario'
+          const nombrePropietario = row.original.propietario.nombreCompleto
+          const sinPropietario = nombrePropietario === 'Sin propietario' || nombrePropietario === 'Sin nombre'
           
           return (
             <div className="flex items-center gap-3">
@@ -301,9 +312,12 @@ export default function CasasPage() {
                     setCasaInCache(row.original.numeroCasa, row.original)
                     router.push(`/admin/casas/${row.original.numeroCasa}`)
                   }}
-                  className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                  className={cn(
+                    "font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full",
+                    sinPropietario && "opacity-50"
+                  )}
                 >
-                  {row.original.propietario.nombreCompleto}
+                  {nombrePropietario}
                 </button>
                 <div className="text-sm text-gray-500">
                   <span className="font-medium">{rol}</span> · Casa No.{row.original.numeroCasa}
@@ -827,7 +841,14 @@ export default function CasasPage() {
                 </Sheet>
 
                 {/* Dialog de confirmación para reemplazar propietario */}
-                <AlertDialog open={isReplaceDialogOpen} onOpenChange={setIsReplaceDialogOpen}>
+                <AlertDialog open={isReplaceDialogOpen} onOpenChange={(open) => {
+                  if (!open) {
+                    // Solo limpiar los datos pendientes si se cierra sin confirmar
+                    // No resetear el formulario, solo cerrar el diálogo
+                    setPendingPropietarioData(null)
+                  }
+                  setIsReplaceDialogOpen(open)
+                }}>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Reemplazar propietario actual?</AlertDialogTitle>
@@ -838,10 +859,7 @@ export default function CasasPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => {
-                        setPendingPropietarioData(null)
-                        setIsReplaceDialogOpen(false)
-                      }}>
+                      <AlertDialogCancel>
                         Cancelar
                       </AlertDialogCancel>
                       <AlertDialogAction

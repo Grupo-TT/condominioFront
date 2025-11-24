@@ -11,7 +11,7 @@ import { SheetFooter } from '@/components/ui/sheet'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 interface PropietarioFormProps {
-  onSubmit: (data: PropietarioFormData) => void
+  onSubmit: (data: PropietarioFormData) => Promise<boolean> | boolean
   onCancel?: () => void
 }
 
@@ -71,10 +71,13 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
     }
   })
 
-  const handleFormSubmit = (data: PropietarioFormData) => {
-    onSubmit(data)
-    form.reset()
-    setShowAllErrors(false)
+  const handleFormSubmit = async (data: PropietarioFormData) => {
+    const result = await onSubmit(data)
+    // Solo resetear el formulario si el submit fue exitoso
+    if (result !== false) {
+      form.reset()
+      setShowAllErrors(false)
+    }
   }
 
 
