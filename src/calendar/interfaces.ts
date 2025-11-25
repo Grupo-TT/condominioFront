@@ -4,6 +4,7 @@ import { RecursoComun, Reserva } from "@/types/reserva.types";
 export interface IUser {
   id: string;
   name: string;
+  email?: string;
   picturePath: string | null;
   correo?: string;
 }

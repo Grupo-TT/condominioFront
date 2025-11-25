@@ -19,7 +19,6 @@ import { Dialog, DialogHeader, DialogClose, DialogContent, DialogTrigger, Dialog
 
 import { eventSchema } from "@/calendar/schemas";
 
-import type { TimeValue } from "react-aria-components";
 import type { TEventFormData } from "@/calendar/schemas";
 
 interface IProps {
@@ -43,7 +42,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
     },
   });
 
-  const onSubmit = (_values: TEventFormData) => {
+  const onSubmit = () => {
     // TO DO: Create use-add-event hook
     onClose();
     form.reset();
@@ -54,7 +53,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
       startDate,
       startTime,
     });
-  }, [startDate, startTime, form.reset]);
+  }, [startDate, startTime, form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onToggle}>
@@ -150,7 +149,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
                     <FormLabel>Start Time</FormLabel>
 
                     <FormControl>
-                      <TimeInput value={field.value as TimeValue} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
+                      <TimeInput value={field.value} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
                     </FormControl>
 
                     <FormMessage />
@@ -187,7 +186,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
                     <FormLabel>End Time</FormLabel>
 
                     <FormControl>
-                      <TimeInput value={field.value as TimeValue} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
+                      <TimeInput value={field.value} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
                     </FormControl>
 
                     <FormMessage />

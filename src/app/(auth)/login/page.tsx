@@ -72,13 +72,6 @@ export default function LoginPage() {
               )}
 
               <FieldGroup>
-                {/* Mensaje de error */}
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
                 {/* Campo de Email/Usuario */}
                 <Field>
                   <FieldLabel htmlFor="email">Correo Electrónico</FieldLabel>
@@ -90,6 +83,7 @@ export default function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
+                    className="bg-muted/50"
                   />
                 </Field>
 
@@ -111,22 +105,24 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
+                    className="bg-muted/50"
                   />
                 </Field>
 
                 {/* Checkbox "Recordarme" */}
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 -mt-2">
                   <Checkbox 
                     id="rememberMe" 
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                     disabled={isLoading}
+                    className="rounded-md data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <label
                     htmlFor="rememberMe"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    className="text-sm text-muted-foreground font-normal leading-none cursor-pointer select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Recordarme por 7 días
+                    Recordarme
                   </label>
                 </div>
 
@@ -142,14 +138,6 @@ export default function LoginPage() {
                       'Iniciar sesión'
                     )}
                   </Button>
-                  
-                  {/* Opcional: Link de registro */}
-                  {/* <FieldDescription className="text-center">
-                    ¿No tienes una cuenta?{' '}
-                    <a href="/registro" className="underline">
-                      Regístrate
-                    </a>
-                  </FieldDescription> */}
                 </Field>
               </FieldGroup>
 

@@ -7,11 +7,9 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { TimeInput } from "@/components/ui/time-input";
+import { TooltipContent, Tooltip, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-import type { TimeValue } from "react-aria-components";
-import { TooltipContent } from "@/components/ui/tooltip";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipProvider } from "@/components/ui/tooltip";
+type TimeValue = { hour: number; minute: number } | null;
 
 const DAYS_OF_WEEK = [
   { index: 0, name: "Sunday" },
@@ -100,10 +98,8 @@ export function ChangeWorkingHoursInput() {
                   <div className="flex items-center gap-2">
                     <span>From</span>
                     <TimeInput
-                      id={`${day.name.toLowerCase()}-from`}
                       hourCycle={12}
-                      granularity="hour"
-                      value={{ hour: localWorkingHours[day.index].from, minute: 0 } as TimeValue}
+                      value={{ hour: localWorkingHours[day.index].from, minute: 0 }}
                       onChange={value => handleTimeChange(day.index, "from", value)}
                     />
                   </div>
@@ -111,10 +107,8 @@ export function ChangeWorkingHoursInput() {
                   <div className="flex items-center gap-2">
                     <span>To</span>
                     <TimeInput
-                      id={`${day.name.toLowerCase()}-to`}
                       hourCycle={12}
-                      granularity="hour"
-                      value={{ hour: localWorkingHours[day.index].to, minute: 0 } as TimeValue}
+                      value={{ hour: localWorkingHours[day.index].to, minute: 0 }}
                       onChange={value => handleTimeChange(day.index, "to", value)}
                     />
                   </div>

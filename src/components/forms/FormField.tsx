@@ -28,9 +28,8 @@ export function FormFieldWithTooltip({
   className
 }: FormFieldWithTooltipProps) {
   const enhancedChildren = React.cloneElement(children, {
-    ...children.props,
     'aria-invalid': invalid,
-  })
+  } as React.HTMLAttributes<HTMLElement>)
 
   return (
     <Field data-invalid={invalid} className={className}>

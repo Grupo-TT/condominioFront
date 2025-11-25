@@ -6,6 +6,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { CasaProvider } from "@/contexts/CasaContext"
 
 export default function AdminLayout({
   children,

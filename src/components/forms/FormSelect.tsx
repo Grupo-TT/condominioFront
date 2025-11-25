@@ -33,7 +33,6 @@ interface FormSelectProps {
 }
 
 export function FormSelect({
-  name,
   label,
   required = false,
   description,

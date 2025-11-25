@@ -141,7 +141,7 @@ export function EditEventDialog({ children, event }: IProps) {
                     <FormLabel>Hora de Inicio</FormLabel>
 
                     <FormControl>
-                      <TimeInput value={field.value as TimeValue} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
+                      <TimeInput value={field.value} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
                     </FormControl>
 
                     <FormMessage />
@@ -177,7 +177,7 @@ export function EditEventDialog({ children, event }: IProps) {
                   <FormItem className="flex-1">
                     <FormLabel>Hora de Fin</FormLabel>
                     <FormControl>
-                      <TimeInput value={field.value as TimeValue} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
+                      <TimeInput value={field.value} onChange={field.onChange} hourCycle={12} data-invalid={fieldState.invalid} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

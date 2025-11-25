@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AnimatedTabs } from '@/components/animated-tabs'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,9 +20,7 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -58,6 +57,18 @@ import {
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import {
+  Command,
+  CommandCheck,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ButtonArrow } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import {
   ColumnDef,
   ExpandedState,
   getCoreRowModel,
@@ -68,85 +79,81 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-
-type Recurso = {
-  id: string
-  nombre: string
-  descripcion: string
-  tipo: 'zona' | 'objeto'
-  estado: 'Disponible' | 'No disponible'
-  habilitado: boolean
-}
-
-const data: Recurso[] = [
-  {
-    id: '1',
-    nombre: 'Salón Comunal',
-    descripcion:
-      'Espacio amplio para reuniones de copropietarios, eventos y actividades sociales. Capacidad para 60 personas, incluye sillas y sonido básico.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-  {
-    id: '2',
-    nombre: 'Parque Infantil',
-    descripcion:
-      'Área de juegos para niños con columpios y resbaladero. Horario de 8am a 6pm. Se requiere supervisión de un adulto.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-  {
-    id: '3',
-    nombre: 'Proyector Epson X200',
-    descripcion:
-      'Proyector portátil de 3500 lúmenes, entradas HDMI/VGA. Se presta con control y cable HDMI. Reservas máximo por 4 horas.',
-    tipo: 'objeto',
-    estado: 'No disponible',
-    habilitado: false,
-  },
-  {
-    id: '4',
-    nombre: 'Parrillera Zona B',
-    descripcion:
-      'Parrillera de carbón en zona B. Incluye mesa lateral y lavaplatos. Se debe dejar limpia al finalizar.',
-    tipo: 'zona',
-    estado: 'Disponible',
-    habilitado: true,
-  },
-]
+import { RecursoResponse } from '@/types/recursos.types'
+import { recursoService } from '@/services/recurso.service'
+import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/recurso.adapter'
+import { useRecurso } from '@/hooks/useRecurso'
 
 export default function RecursosPage() {
-  const [recursos, setRecursos] = useState<Recurso[]>(data)
+  const [recursos, setRecursos] = useState<RecursoUI[]>([])
+  const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
+  const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'zonas' | 'objetos'>('todas')
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'disponible' | 'no-disponible' | 'en-mantenimiento'>('todas')
+  const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [formNombre, setFormNombre] = useState('')
   const [formDescripcion, setFormDescripcion] = useState('')
   const [formTipo, setFormTipo] = useState<'zona' | 'objeto' | ''>('')
-  const [showAllErrors, setShowAllErrors] = useState(false)
   const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
+  const { habilitarRecurso, deshabilitarRecurso } = useRecurso()
+
+  useEffect(() => {
+    let mounted = true
+    async function loadRecursos() {
+      try {
+        setLoading(true)
+        const list = await recursoService.getRecurso()
+        if (!mounted) return
+        // El servicio ya devuelve un array normalizado
+        console.debug('[recursos] raw response:', list)
+        const items = Array.isArray(list) ? list : []
+
+        setRecursosResponse(items)
+        setRecursos(items.map(mapResponseToUI))
+      } catch (err) {
+        console.error('Error cargando recursos:', err)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+    loadRecursos()
+    return () => { mounted = false }
+  }, [])
 
   const handleClearSearch = () => setSearchTerm('')
 
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
     return recursos.filter((r) => {
-      if (filterType === 'zonas' && r.tipo !== 'zona') return false
-      if (filterType === 'objetos' && r.tipo !== 'objeto') return false
+      // Filtrar por tipo
+      if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
+      if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
+      
+      // Filtrar por estado
+      if (estadoFilter !== 'todas') {
+        if (estadoFilter === 'disponible' && r.disponibilidadRecurso !== 'DISPONIBLE') return false
+        if (estadoFilter === 'no-disponible' && r.disponibilidadRecurso !== 'NO_DISPONIBLE') return false
+        if (estadoFilter === 'en-mantenimiento' && r.disponibilidadRecurso !== 'EN_MANTENIMIENTO') return false
+      }
+      
+      // Filtrar por término de búsqueda
       if (!term) return true
       return (
         r.nombre.toLowerCase().includes(term) ||
         r.descripcion.toLowerCase().includes(term)
       )
     })
-  }, [searchTerm, filterType, recursos])
+  }, [searchTerm, filterType, estadoFilter, recursos])
 
   const validateForm = () => {
     const nextErrors: { nombre?: string; descripcion?: string; tipo?: string } = {}
@@ -177,39 +184,61 @@ export default function RecursosPage() {
     return undefined
   }
 
-  const handleNuevoRecursoSubmit = (e: React.FormEvent) => {
+  const handleNuevoRecursoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setShowAllErrors(true)
     if (!validateForm()) return
+
     if (isEditMode && selectedRecursoId) {
-      setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? {
-        ...r,
-        nombre: formNombre,
-        descripcion: formDescripcion,
-        tipo: formTipo as 'zona' | 'objeto',
-      } : r))
+      const idNum = parseInt(selectedRecursoId)
+      const existing = recursosResponse.find(r => r.id === idNum)
+      const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo }, existing?.disponibilidadRecurso)
+
+      try {
+        const updated = await recursoService.putRecurso(idNum, payload)
+
+        setRecursosResponse((prev) => prev.map((resp) => resp.id === idNum ? updated : resp))
+
+        setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? mapResponseToUI(updated) : r))
+
+        setIsSheetOpen(false)
+        setFormNombre('')
+        setFormDescripcion('')
+        setFormTipo('')
+        setIsEditMode(false)
+        setSelectedRecursoId(null)
+      } catch (err) {
+        console.error('Error actualizando recurso:', err)
+        setErrors((prev) => ({ ...prev, nombre: 'Error al actualizar el recurso. Intenta de nuevo.' }))
+      }
+
     } else {
-      setRecursos((prev) => [
-        ...prev,
-        {
-          id: (Math.max(0, ...prev.map(p => parseInt(p.id))) + 1).toString(),
-          nombre: formNombre,
-          descripcion: formDescripcion,
-          tipo: formTipo as 'zona' | 'objeto',
-          estado: 'Disponible',
-          habilitado: true,
-        },
-      ])
+      // Create new recurso via API
+      const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo })
+
+      try {
+        const created = await recursoService.postRecurso(payload)
+
+        setRecursosResponse((prev) => [...prev, created])
+
+        setRecursos((prev) => [
+          ...prev,
+          mapResponseToUI(created),
+        ])
+
+        setIsSheetOpen(false)
+        setFormNombre('')
+        setFormDescripcion('')
+        setFormTipo('')
+        setIsEditMode(false)
+        setSelectedRecursoId(null)
+      } catch (err) {
+        console.error('Error creando recurso:', err)
+        setErrors((prev) => ({ ...prev, nombre: 'Error al crear el recurso. Intenta de nuevo.' }))
+      }
     }
-    setIsSheetOpen(false)
-    setFormNombre('')
-    setFormDescripcion('')
-    setFormTipo('')
-    setIsEditMode(false)
-    setSelectedRecursoId(null)
   }
 
-  const columns = useMemo<ColumnDef<Recurso>[]>(
+  const columns = useMemo<ColumnDef<RecursoUI>[]>(
     () => [
       {
         id: 'expand',
@@ -230,7 +259,8 @@ export default function RecursosPage() {
         },
         size: 24,
         meta: {
-          expandedContent: (row: Recurso) => (
+          skeleton: <Skeleton className="h-6 w-6 rounded-md" />,
+          expandedContent: (row: RecursoUI) => (
             <div
               className="px-6 py-4 border-l-4"
               style={{ backgroundColor: '#4C6C5B14', borderLeftColor: '#4C6C5B' }}
@@ -257,10 +287,10 @@ export default function RecursosPage() {
         cell: ({ row }) => {
           const isZona = row.original.tipo === 'zona'
           return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-3">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: isZona ? '#A3917020' : '#595D7520' }}
+                style={{ backgroundColor: isZona ? '#F1E8D6' : '#E3E4EA' }}
               >
                 {isZona ? (
                   <MapPin className="w-4 h-4" style={{ color: '#A39170' }} />
@@ -280,6 +310,17 @@ export default function RecursosPage() {
         enableSorting: true,
         enableHiding: false,
         size: 220,
+        meta: {
+          skeleton: (
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="w-8 h-8 rounded-lg" />
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ),
+        },
       },
       {
         accessorKey: 'descripcion',
@@ -292,6 +333,9 @@ export default function RecursosPage() {
         ),
         enableSorting: false,
         size: 480,
+        meta: {
+          skeleton: <Skeleton className="h-4 w-64" />,
+        },
       },
       {
         accessorKey: 'tipo',
@@ -307,21 +351,35 @@ export default function RecursosPage() {
         ),
         enableSorting: true,
         size: 120,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-16" />,
+        },
       },
       {
         accessorKey: 'estado',
         id: 'estado',
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
-        cell: ({ row }) => (
-          <Badge
-            variant={row.original.habilitado ? 'success' : 'destructive'}
-            appearance="outline"
-          >
-            {row.original.habilitado ? 'Disponible' : 'No disponible'}
-          </Badge>
-        ),
+        cell: ({ row }) => {
+          const estado = row.original.disponibilidadRecurso
+          const getBadgeVariant = () => {
+            if (estado === 'DISPONIBLE') return 'success'
+            if (estado === 'EN_MANTENIMIENTO') return 'warning'
+            return 'destructive'
+          }
+          return (
+            <Badge
+              variant={getBadgeVariant()}
+              appearance="outline"
+            >
+              {row.original.estado}
+            </Badge>
+          )
+        },
         enableSorting: true,
         size: 140,
+        meta: {
+          skeleton: <Skeleton className="h-6 w-24" />,
+        },
       },
       {
         id: 'actions',
@@ -343,7 +401,6 @@ export default function RecursosPage() {
                     setFormDescripcion(row.original.descripcion)
                     setFormTipo(row.original.tipo)
                     setErrors({})
-                    setShowAllErrors(false)
                     setIsSheetOpen(true)
                   }}
                 >
@@ -367,19 +424,39 @@ export default function RecursosPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {row.original.habilitado ? '¿Deshabilitar recurso?' : '¿Habilitar recurso?'}
+                        {row.original.habilitado ? `¿Deshabilitar recurso &quot;${row.original.nombre}&quot;?` : `¿Habilitar recurso &quot;${row.original.nombre}&quot;?`}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         {row.original.habilitado
-                          ? 'El recurso quedará no disponible para reservas o uso hasta que lo habilites nuevamente.'
-                          : 'El recurso quedará disponible para su uso.'}
+                          ? `El recurso &quot;${row.original.nombre}&quot; quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
+                          : `El recurso &quot;${row.original.nombre}&quot; quedará disponible para su uso.`}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          setRecursos((prev) => prev.map((r) => r.id === row.original.id ? { ...r, habilitado: !r.habilitado } : r))
+                        onClick={async () => {
+                          try {
+                            const id = parseInt(row.original.id)
+                            const nuevoEstado = !row.original.habilitado
+                            if (nuevoEstado) {
+                              await habilitarRecurso(id)
+                            } else {
+                              await deshabilitarRecurso(id)
+                            }
+                            setRecursos(prev =>
+                              prev.map(r =>
+                                r.id === row.original.id ? { 
+                                  ...r, 
+                                  habilitado: nuevoEstado, 
+                                  estado: nuevoEstado ? 'Disponible' : 'No disponible',
+                                  disponibilidadRecurso: nuevoEstado ? 'DISPONIBLE' : 'NO_DISPONIBLE'
+                                } : r
+                              )
+                            )
+                          } catch (err) {
+                            console.error('No se pudo actualizar el estado del recurso, por favor intenta nuevamente.', err)
+                          }
                         }}
                         className={row.original.habilitado ? 'bg-red-600 hover:bg-red-700' : 'text-white hover:opacity-90'}
                         style={row.original.habilitado ? undefined : { backgroundColor: '#4C6C5B' }}
@@ -389,23 +466,87 @@ export default function RecursosPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                {row.original.disponibilidadRecurso !== 'EN_MANTENIMIENTO' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        className="text-amber-700 focus:bg-yellow-50 focus:text-amber-700 hover:bg-yellow-50 hover:text-amber-700"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <Wrench className="mr-2 h-4 w-4" />
+                        En Mantenimiento
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          ¿Poner recurso &quot;{row.original.nombre}&quot; en mantenimiento?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          El recurso &quot;{row.original.nombre}&quot; quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            try {
+                              const id = parseInt(row.original.id)
+                              const existing = recursosResponse.find(r => r.id === id)
+                              if (existing) {
+                                const payload = mapFormToRequest(
+                                  { 
+                                    nombre: existing.nombre, 
+                                    descripcion: existing.descripcion, 
+                                    tipo: existing.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto' 
+                                  }, 
+                                  'EN_MANTENIMIENTO'
+                                )
+                                const updated = await recursoService.putRecurso(id, payload)
+                                setRecursosResponse((prev) => prev.map((resp) => resp.id === id ? updated : resp))
+                                setRecursos((prev) =>
+                                  prev.map(r =>
+                                    r.id === row.original.id ? {
+                                      ...r,
+                                      disponibilidadRecurso: 'EN_MANTENIMIENTO',
+                                      estado: 'En Mantenimiento',
+                                      habilitado: false
+                                    } : r
+                                  )
+                                )
+                              }
+                            } catch (err) {
+                              console.error('No se pudo poner el recurso en mantenimiento, por favor intenta nuevamente.', err)
+                            }
+                          }}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        >
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         ),
         size: 80,
         enableSorting: false,
+        meta: {
+          skeleton: <Skeleton className="h-8 w-8 rounded-md" />,
+        },
       },
     ],
-    [setRecursos]
+    [setRecursos, habilitarRecurso, deshabilitarRecurso, recursosResponse]
   )
 
   const table = useReactTable({
     columns,
     data: filteredData,
     pageCount: Math.ceil((filteredData?.length || 0) / pagination.pageSize),
-    getRowId: (row: Recurso) => row.id,
-    getRowCanExpand: (row) => Boolean(row.original.descripcion),
+  getRowId: (row: RecursoUI) => row.id,
+  getRowCanExpand: (row) => Boolean(row.original.descripcion),
     state: {
       pagination,
       sorting,
@@ -464,14 +605,264 @@ export default function RecursosPage() {
           </div>
 
           {/* Filtros y controles */}
-          <Tabs value={filterType} onValueChange={(v) => setFilterType(v as 'todas' | 'zonas' | 'objetos')} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="todas">Todos</TabsTrigger>
-                <TabsTrigger value="zonas">Zonas</TabsTrigger>
-                <TabsTrigger value="objetos">Objetos</TabsTrigger>
-              </TabsList>
-              <div className="flex items-center gap-3">
+          <AnimatedTabs
+            value={filterType}
+            onValueChange={(v) => setFilterType(v as 'todas' | 'zonas' | 'objetos')}
+            tabs={[
+              {
+                value: 'todas',
+                label: 'Todos',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+              {
+                value: 'zonas',
+                label: 'Zonas',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+              {
+                value: 'objetos',
+                label: 'Objetos',
+                content: !loading && filteredData.length === 0 ? (
+                  <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <Package className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-base font-semibold text-gray-700">
+                          {searchTerm || estadoFilter !== 'todas' ? 'No se encontraron resultados' : 'No hay recursos registrados'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {searchTerm
+                            ? `No hay recursos que coincidan con "${searchTerm}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}` : ''}`
+                            : estadoFilter !== 'todas'
+                              ? `No hay recursos con estado ${estadoFilter === 'disponible' ? 'disponible' : estadoFilter === 'en-mantenimiento' ? 'en mantenimiento' : 'no disponible'}${filterType !== 'todas' ? ` de tipo ${filterType === 'zonas' ? 'zona' : 'objeto'}` : ''}`
+                              : filterType === 'zonas'
+                                ? 'No hay zonas comunes registradas'
+                                : filterType === 'objetos'
+                                  ? 'No hay objetos registrados'
+                                  : 'No hay registros de recursos disponibles en este momento'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredData?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ),
+              },
+            ]}
+            rightContent={
+              <>
+                <Popover open={estadoComboboxOpen} onOpenChange={setEstadoComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      mode="input"
+                      placeholder={estadoFilter === 'todas'}
+                      className="w-[180px] h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
+                    >
+                      {estadoFilter !== 'todas' ? (
+                        <span className="flex items-center gap-2.5">
+                          <span className={cn(
+                            'ms-0.5 size-1.5 rounded-full',
+                            estadoFilter === 'disponible' ? 'bg-green-500' :
+                            estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
+                            'bg-red-500'
+                          )}></span>
+                          <span className="truncate">
+                            {estadoFilter === 'disponible' ? 'Disponible' :
+                             estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
+                             'No disponible'}
+                          </span>
+                        </span>
+                      ) : (
+                        <span>Filtrar por estado</span>
+                      )}
+                      <ButtonArrow />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[180px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar estado..." />
+                      <CommandList>
+                        <CommandEmpty>No se encontró estado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="todas"
+                            onSelect={() => {
+                              setEstadoFilter('todas')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-gray-400"></span>
+                              <span className="truncate">Todas</span>
+                            </span>
+                            {estadoFilter === 'todas' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="disponible"
+                            onSelect={() => {
+                              setEstadoFilter('disponible')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-green-500"></span>
+                              <span className="truncate">Disponible</span>
+                            </span>
+                            {estadoFilter === 'disponible' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="no-disponible"
+                            onSelect={() => {
+                              setEstadoFilter('no-disponible')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
+                              <span className="truncate">No disponible</span>
+                            </span>
+                            {estadoFilter === 'no-disponible' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="en-mantenimiento"
+                            onSelect={() => {
+                              setEstadoFilter('en-mantenimiento')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-yellow-500"></span>
+                              <span className="truncate">En Mantenimiento</span>
+                            </span>
+                            {estadoFilter === 'en-mantenimiento' && <CommandCheck />}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <div className="relative w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-gray-400" />
@@ -493,36 +884,13 @@ export default function RecursosPage() {
                     </Button>
                   )}
                 </div>
-                <Button className="gap-2" onClick={() => { setIsEditMode(false); setSelectedRecursoId(null); setFormNombre(''); setFormDescripcion(''); setFormTipo(''); setErrors({}); setShowAllErrors(false); setIsSheetOpen(true) }}>
+                <Button className="gap-2" onClick={() => { setIsEditMode(false); setSelectedRecursoId(null); setFormNombre(''); setFormDescripcion(''); setFormTipo(''); setErrors({}); setIsSheetOpen(true) }}>
                   <Plus className="w-4 h-4" />
                   Nuevo recurso
                 </Button>
-              </div>
-            </div>
-
-            <TabsContent value={filterType}>
-              <DataGrid
-                table={table}
-                recordCount={filteredData?.length || 0}
-                tableLayout={{ headerBackground: false, rowBorder: true, rowRounded: false }}
-              >
-            <div className="w-full space-y-2.5">
-              <DataGridContainer border={false}>
-                <ScrollArea>
-                  <DataGridTable />
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </DataGridContainer>
-              <DataGridPagination
-                rowsPerPageLabel="Filas por página"
-                info="{from} - {to} de {count}"
-                previousPageLabel="Ir a la página anterior"
-                nextPageLabel="Ir a la página siguiente"
-              />
-            </div>
-              </DataGrid>
-            </TabsContent>
-          </Tabs>
+              </>
+            }
+          />
         </div>
       </div>
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -590,7 +958,7 @@ export default function RecursosPage() {
                     <SelectContent>
                       <SelectItem value="zona">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#A3917020' }}>
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#F1E8D6' }}>
                             <MapPin className="w-3.5 h-3.5" style={{ color: '#A39170' }} />
                           </span>
                           <span>Zona</span>
@@ -598,7 +966,7 @@ export default function RecursosPage() {
                       </SelectItem>
                       <SelectItem value="objeto">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#595D7520' }}>
+                          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: '#E3E4EA' }}>
                             <Package className="w-3.5 h-3.5" style={{ color: '#595D75' }} />
                           </span>
                           <span>Objeto</span>
