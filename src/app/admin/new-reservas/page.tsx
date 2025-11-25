@@ -16,8 +16,10 @@ import { DayRowCard } from './components/day-row-card'
 import { MiniCalendar } from './components/mini-calendar'
 import { ProximasReservas } from './components/proximas-reservas'
 import { ReservaDetailSheet } from './components/reserva-detail-sheet'
+import { EditReservaSheet } from './components/edit-reserva-sheet'
 import { ConfirmDialog } from './components/confirm-dialog'
 import { useReservas } from '@/hooks/useReserva'
+import { editarReserva } from '@/hooks/useReserva'
 import { adaptReservasToCalendar } from '@/lib/adapters/reservas.adapter'
 import { 
   startOfMonth, 
@@ -49,6 +51,10 @@ export default function NewReservasPage() {
   // Estado para el sheet de detalles
   const [selectedReserva, setSelectedReserva] = useState<IEventExtended | null>(null)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
+  
+  // Estado para el sheet de edición
+  const [editSheetOpen, setEditSheetOpen] = useState(false)
+  const [reservaEditando, setReservaEditando] = useState<IEventExtended | null>(null)
 
   // Estados para diálogos de confirmación
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
@@ -168,8 +174,44 @@ export default function NewReservasPage() {
 
   // Funciones de acción - abren diálogos de confirmación
   const handleEdit = (reserva: IEventExtended) => {
-    console.log('Editar reserva:', reserva)
-    // TODO: Implementar lógica de edición
+    setReservaEditando(reserva)
+    setEditSheetOpen(true)
+    setDetailSheetOpen(false)
+  }
+
+  // Función para guardar los cambios de la reserva
+  const handleSaveEdit = async (
+    reserva: IEventExtended,
+    data: {
+      fecha: Date
+      horaInicial: string
+      horaFinal: string
+      numeroInvitados: number
+    }
+  ) => {
+    try {
+      // Convertir los datos al formato esperado por la API
+      const [horaInicioH, horaInicioM] = data.horaInicial.split(':').map(Number)
+      const [horaFinH, horaFinM] = data.horaFinal.split(':').map(Number)
+
+      await editarReserva(reserva.id, {
+        fechaSolicitud: data.fecha,
+        horaInicio: { hour: horaInicioH, minute: horaInicioM },
+        endDate: data.fecha,
+        horaFin: { hour: horaFinH, minute: horaFinM },
+        numeroInvitados: data.numeroInvitados,
+      })
+
+      // Recargar las reservas
+      recargar()
+      
+      // Cerrar el sheet
+      setEditSheetOpen(false)
+      setReservaEditando(null)
+    } catch (error) {
+      console.error('Error al guardar cambios:', error)
+      // TODO: Mostrar mensaje de error al usuario
+    }
   }
 
   const handleDelete = (reserva: IEventExtended) => {
@@ -407,6 +449,20 @@ export default function NewReservasPage() {
         onDelete={handleDelete}
         onAprobar={handleAprobar}
         onRechazar={handleRechazar}
+      />
+
+      {/* Sheet de edición de reserva */}
+      <EditReservaSheet
+        reserva={reservaEditando}
+        open={editSheetOpen}
+        onOpenChange={(open) => {
+          setEditSheetOpen(open)
+          if (!open) {
+            setReservaEditando(null)
+          }
+        }}
+        onSave={handleSaveEdit}
+        todasLasReservas={reservasAdaptadas}
       />
 
       {/* Diálogo de confirmación */}
