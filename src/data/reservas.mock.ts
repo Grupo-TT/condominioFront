@@ -148,6 +148,11 @@ const generateReservasMock = (): IEventExtended[] => {
       color: 'gray', // El color se asignará dinámicamente según el tipoRecurso
       description: descripciones[espacio.nombre] || "Reserva de espacio común.",
       user: propietario,
+      recursoComun: {
+        nombre: espacio.nombre,
+        descripcion: descripciones[espacio.nombre] || "Reserva de espacio común.",
+        tipoRecursoComun: espacio.tipo === 'Zona' ? 'ZONA' : 'OBJETO',
+      },
       tipoRecurso: espacio.tipo,
       numeroInvitados: ((currentId * 7) % 10) + 1,
       casaNumero: CASAS_MAP[propietario.name] || 'N/A',

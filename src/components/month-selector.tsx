@@ -99,7 +99,7 @@ export function MonthSelector({
             <Button
               key={month.toISOString()}
               data-selected={isSelected}
-              variant={isSelected ? "default" : "ghost"}
+              variant={isSelected ? "primary" : "ghost"}
               size="sm"
               className={cn(
                 "px-6 py-1 h-7 rounded-full capitalize font-medium text-sm transition-all",

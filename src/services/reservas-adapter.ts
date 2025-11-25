@@ -121,6 +121,11 @@ export function transformReservaFromAPI(reservaAPI: ReservaFromAPI): IEventExten
     color: 'gray', // Se asignará después con addColorToReservas()
     description: reservaAPI.recursoComun.descripcion,
     user: mapSolicitanteToUser(reservaAPI.solicitante, reservaAPI.casa),
+    recursoComun: {
+      nombre: reservaAPI.recursoComun.nombre,
+      descripcion: reservaAPI.recursoComun.descripcion,
+      tipoRecursoComun: reservaAPI.recursoComun.tipoRecursoComun.nombre === 'ZONA' ? 'ZONA' : 'OBJETO',
+    },
     tipoRecurso,
     numeroInvitados: reservaAPI.numeroInvitados,
     casaNumero: reservaAPI.casa.numeroCasa.toString(),

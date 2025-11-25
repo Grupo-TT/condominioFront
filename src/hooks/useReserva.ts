@@ -3,6 +3,23 @@ import { Reserva } from "@/types/reserva.types";
 import { reservasService } from "@/lib/services/reservas.service";
 import { TReservaEditFormData } from "@/calendar/schemas";
 
+// Helper para extraer mensaje de error de forma type-safe
+function getErrorMessage(error: unknown, defaultMessage: string): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: { message?: string } } }).response;
+    if (response && typeof response === 'object' && 'data' in response) {
+      const data = (response as { data?: { message?: string } }).data;
+      if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+        return data.message;
+      }
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return defaultMessage;
+}
+
 export function useReservas() {
   const [reservasAprobadas, setReservasAprobadas] = useState<Reserva[]>([]);
   const [reservasRechazadas, setReservasRechazadas] = useState<Reserva[]>([]);
@@ -30,7 +47,7 @@ export function useReservas() {
         setReservasAprobadas(aprobadasResult.value);
       } else {
         console.error("Error al obtener reservas aprobadas:", aprobadasResult.reason);
-        const errorMsg = (aprobadasResult.reason as any)?.response?.data?.message || "Error al obtener reservas aprobadas";
+        const errorMsg = getErrorMessage(aprobadasResult.reason, "Error al obtener reservas aprobadas");
         errors.push(errorMsg);
         setReservasAprobadas([]);
       }
@@ -40,7 +57,7 @@ export function useReservas() {
         setReservasRechazadas(rechazadasResult.value);
       } else {
         console.error("Error al obtener reservas rechazadas:", rechazadasResult.reason);
-        const errorMsg = (rechazadasResult.reason as any)?.response?.data?.message || "Error al obtener reservas rechazadas";
+        const errorMsg = getErrorMessage(rechazadasResult.reason, "Error al obtener reservas rechazadas");
         errors.push(errorMsg);
         setReservasRechazadas([]);
       }
@@ -50,7 +67,7 @@ export function useReservas() {
         setReservasPendientes(pendientesResult.value);
       } else {
         console.error("Error al obtener reservas pendientes:", pendientesResult.reason);
-        const errorMsg = (pendientesResult.reason as any)?.response?.data?.message || "Error al obtener reservas pendientes";
+        const errorMsg = getErrorMessage(pendientesResult.reason, "Error al obtener reservas pendientes");
         errors.push(errorMsg);
         setReservasPendientes([]);
       }
@@ -65,8 +82,7 @@ export function useReservas() {
         // No establecer error para que la UI pueda mostrar las reservas que sí se cargaron
       }
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMessage = (err as any)?.response?.data?.message || (err as Error)?.message || "Error al cargar las reservas";
+      const errorMessage = getErrorMessage(err, "Error al cargar las reservas");
       setError(errorMessage);
       console.error("No se pudo cargar el cronograma de reservas:", err);
     } finally {
@@ -86,8 +102,8 @@ export function useReservas() {
     try {
       await reservasService.approveReserva(id);
       await cargarReservas();
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Error al aprobar la reserva";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Error al aprobar la reserva");
       setError(errorMessage);
       console.error("Error al aprobar:", err);
     }
@@ -96,8 +112,8 @@ export function useReservas() {
     try {
       await reservasService.rejectReserva(id);
       await cargarReservas();
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Error al rechazar la reserva");
       setError(errorMessage);
       console.error("Error al rechazar:", err);
     }
@@ -106,8 +122,8 @@ export function useReservas() {
     try {
       await reservasService.deleteReserva(id);
       await cargarReservas();
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Error al eliminar la reserva";
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Error al eliminar la reserva");
       setError(errorMessage);
       console.error("Error al eliminar:", err);
     }
@@ -146,8 +162,8 @@ export async function editarReserva(id: number, data: TReservaEditFormData): Pro
     };
 
     await reservasService.updateReserva(id, payload);
-  } catch (err: any) {
-    const errorMessage = err?.response?.data?.message || "Error al editar la reserva";
+  } catch (err: unknown) {
+    const errorMessage = getErrorMessage(err, "Error al editar la reserva");
     console.error("Error al editar:", err);
     throw new Error(errorMessage);
   }

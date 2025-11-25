@@ -38,7 +38,7 @@ interface EditReservaSheetProps {
     horaInicial: string
     horaFinal: string
     numeroInvitados: number
-  }) => void
+  }) => Promise<void> | void
   todasLasReservas?: IEventExtended[]
 }
 

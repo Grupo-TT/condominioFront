@@ -33,12 +33,7 @@ interface ReservasListProps {
   reservas: IEventExtended[]
 }
 
-// Los tipos y constantes de estado se manejan directamente en el componente
-
-interface ReservasListHandlerProps extends ReservasListProps {
-}
-
-export function ReservasList({ reservas }: ReservasListHandlerProps) {
+export function ReservasList({ reservas }: ReservasListProps) {
   const [activeTab, setActiveTab] = useState('pendiente')
   const { aprobarReserva, rechazarReserva, eliminarReserva } = useReservas()
 

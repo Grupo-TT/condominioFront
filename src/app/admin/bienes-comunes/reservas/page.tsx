@@ -247,17 +247,20 @@ export default function ReservasPage() {
         todasLasReservas={reservasFiltradas}
       />
 
-      {getConfirmDialogContent().title && (
-        <ConfirmDialog
-          open={confirmDialogOpen}
-          onOpenChange={setConfirmDialogOpen}
-          title={getConfirmDialogContent().title}
-          description={getConfirmDialogContent().description}
-          confirmText={getConfirmDialogContent().confirmText}
-          variant={getConfirmDialogContent().variant}
-          onConfirm={executeConfirmedAction}
-        />
-      )}
+      {(() => {
+        const dialogContent = getConfirmDialogContent()
+        return dialogContent.title ? (
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            onOpenChange={setConfirmDialogOpen}
+            title={dialogContent.title}
+            description={dialogContent.description}
+            confirmText={dialogContent.confirmText}
+            variant={dialogContent.variant}
+            onConfirm={executeConfirmedAction}
+          />
+        ) : null
+      })()}
     </ReservasLayout>
   )
 }
