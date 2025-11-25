@@ -29,7 +29,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import type { TipoRecursoFilter, EstadoFilter } from '../page'
+import type { TipoRecursoFilter, EstadoFilter } from '@/hooks/useReservasFilters'
 
 interface MonthSelectorProps {
   selectedMonth: Date

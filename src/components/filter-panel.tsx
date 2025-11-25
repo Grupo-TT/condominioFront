@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { Building2, Package, CheckCircle2, Clock, XCircle, Layers } from 'lucide-react'
-import type { TipoRecursoFilter, EstadoFilter } from '../page'
+import type { TipoRecursoFilter, EstadoFilter } from '@/hooks/useReservasFilters'
 
 interface FilterPanelProps {
   tipoRecursoFilter: TipoRecursoFilter

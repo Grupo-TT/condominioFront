@@ -5,4 +5,8 @@ export { MiniCalendar } from './mini-calendar'
 export { ProximasReservas } from './proximas-reservas'
 export { FilterPanel } from './filter-panel'
 export { ReservaDetailSheet } from './reserva-detail-sheet'
+export { EditReservaSheet } from './edit-reserva-sheet'
+export { ReservasLayout } from './reservas-layout'
+export { LoadingState } from './loading-state'
+export { ErrorState } from './error-state'
 
