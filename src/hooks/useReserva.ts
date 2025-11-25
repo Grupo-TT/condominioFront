@@ -20,7 +20,6 @@ export function useReservas() {
       const rechazadas = await reservasService.getReservasRechazadas()
       const pendientes = await reservasService.getReservasPendientes()
 
-      console.log(aprobadas)
 
       setReservasAprobadas(aprobadas);
       setReservasRechazadas(rechazadas);
@@ -46,9 +45,7 @@ export function useReservas() {
   const aprobarReserva = async (id: number) => {
     try {
       await reservasService.approveReserva(id);
-      // recargar después de aprobar
       await cargarReservas();
-      window.location.reload()
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || "Error al aprobar la reserva";
       setError(errorMessage);
@@ -59,21 +56,20 @@ export function useReservas() {
     try {
       await reservasService.rejectReserva(id);
       await cargarReservas();
-      window.location.reload()
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva"; setError(errorMessage);
+      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva";
+      setError(errorMessage);
       console.error("Error al rechazar:", err);
     }
   };
   const eliminarReserva = async (id: number) => {
     try {
       await reservasService.deleteReserva(id);
-      console.log()
       await cargarReservas();
-      window.location.reload()
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || "Error al rechazar la reserva";
-      setError(errorMessage); console.error("Error al rechazar:", err);
+      const errorMessage = err?.response?.data?.message || "Error al eliminar la reserva";
+      setError(errorMessage);
+      console.error("Error al eliminar:", err);
     }
   };
   return {
@@ -108,11 +104,8 @@ export async function editarReserva(id: number, data: TReservaEditFormData): Pro
       horaFin: toLocalTimeString(data.horaFin),
       numeroInvitados: data.numeroInvitados ?? 0,
     };
-    console.log("service",payload)
 
     await reservasService.updateReserva(id, payload);
-    //recargar pagina
-    window.location.reload()
   } catch (err: any) {
     const errorMessage = err?.response?.data?.message || "Error al editar la reserva";
     console.error("Error al editar:", err);

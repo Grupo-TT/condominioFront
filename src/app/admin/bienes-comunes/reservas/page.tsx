@@ -19,8 +19,6 @@ import { adaptReservasToCalendar, extractUsersFromReservas, addColorToReservas }
 import type { TCalendarView } from '@/calendar/types'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { httpUrl } from 'zod'
-import { HttpStatusCode } from 'axios'
 
 export default function ReservasPage() {
   const [currentView, setCurrentView] = useState<TCalendarView>('month')
@@ -33,21 +31,23 @@ export default function ReservasPage() {
 
   // Adaptar reservas al formato del calendario
   const reservasAprobadasAdaptadas = useMemo(() => {
-  return adaptReservasToCalendar(reservasAprobadas)
-}, [reservasAprobadas])
+    return adaptReservasToCalendar(reservasAprobadas);
+  }, [reservasAprobadas]);
 
-const reservasTodasAdaptadas = useMemo(() => {
-  return adaptReservasToCalendar(todasLasReservas)
-}, [todasLasReservas])
+  const reservasTodasAdaptadas = useMemo(() => {
+    return adaptReservasToCalendar(todasLasReservas);
+  }, [todasLasReservas]);
+
   // Aplicar colores dinámicamente según el tipo de recurso
-const reservasAprobadasConColor = useMemo(
-  () => addColorToReservas(reservasAprobadasAdaptadas),
-  [reservasAprobadasAdaptadas]
-)
-const reservasTodasConColor = useMemo(
-  () => addColorToReservas(reservasTodasAdaptadas),
-  [reservasTodasAdaptadas]
-)
+  const reservasAprobadasConColor = useMemo(
+    () => addColorToReservas(reservasAprobadasAdaptadas),
+    [reservasAprobadasAdaptadas]
+  );
+
+  const reservasTodasConColor = useMemo(
+    () => addColorToReservas(reservasTodasAdaptadas),
+    [reservasTodasAdaptadas]
+  );
   // Extraer usuarios únicos de las reservas
   const usuarios = useMemo(() => extractUsersFromReservas(todasLasReservas), [todasLasReservas])
 
@@ -183,7 +183,8 @@ const reservasTodasConColor = useMemo(
           </div>
 
           {/* Layout de dos columnas: Calendario + Lista de Reservas */}
-          <CalendarProvider users={usuarios} events={reservasAprobadasConColor}>
+          {/* Mostrar todas las reservas en el calendario, no solo las aprobadas */}
+          <CalendarProvider users={usuarios} events={reservasTodasConColor}>
             <div className="flex flex-col xl:flex-row gap-6 overflow-hidden min-h-0" style={{ height: 'calc(100vh - 210px)', maxHeight: '875px' }}>
               {/* Calendario de Reservas */}
               <div className="flex-1 min-w-0 max-w-full xl:max-w-[calc(100%-444px)]">

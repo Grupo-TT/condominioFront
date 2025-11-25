@@ -4,6 +4,7 @@ export interface Reserva {
     fechaSolicitud: string;
     horaInicio: string;
     horaFin: string;
+    numeroInvitados?: number;
     solicitante: {
       nombreCompleto: string;
     }

@@ -15,7 +15,7 @@ export const reservasService = {
 
     async getReservasAprobadas(): Promise<Reserva[]> {
         try {
-            const response = await apiClient.get("/solicitud-recurso/reservas?estado=APROBADA")
+            const response = await apiClient.get("/solicitud-recurso/reservas?estado=APROBADA");
             return response.data.data || [];
         } catch (error) {
             console.error("Error al obtener reservas aprobadas:", error);

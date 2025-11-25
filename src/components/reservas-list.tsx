@@ -100,9 +100,15 @@ export function ReservasList({ reservas }: ReservasListHandlerProps) {
           </TabsTrigger>
           <TabsTrigger value="aprobada" className="relative">
             Aprobadas
+            <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 text-xs">
+              {counts.aprobadas}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="rechazada" className="relative">
             Rechazadas
+            <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 text-xs">
+              {counts.rechazadas}
+            </Badge>
           </TabsTrigger>
         </TabsList>
 
@@ -204,9 +210,7 @@ export function ReservasList({ reservas }: ReservasListHandlerProps) {
                             variant="outline"
                             className="h-8 text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
                             onClick={() => {
-                              console.log('Aprobar reserva:', reserva.id)
-                              aprobarReserva(reserva.id)
-                              //recarga la lista solament
+                              aprobarReserva(reserva.id);
                             }}
                           >
                             <CheckCircle className="w-4 h-4 mr-1.5" />
@@ -217,9 +221,7 @@ export function ReservasList({ reservas }: ReservasListHandlerProps) {
                             variant="outline"
                             className="h-8 text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700"
                             onClick={() => {
-                              
-                              console.log('Rechazar reserva:', reserva.id)
-                              rechazarReserva(reserva.id)
+                              rechazarReserva(reserva.id);
                             }}
                           >
                             <XCircle className="w-4 h-4 mr-1.5" />
@@ -269,9 +271,7 @@ export function ReservasList({ reservas }: ReservasListHandlerProps) {
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => {
-                                    console.log('Eliminar reserva:', reserva.id)
-                                    // Aquí se implementará la lógica para eliminar la reserva
-                                    eliminarReserva(reserva.id)
+                                    eliminarReserva(reserva.id);
                                   }}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
