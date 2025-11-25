@@ -14,6 +14,10 @@ interface DayRowCardProps {
   isSelected?: boolean
   onClick?: () => void
   onViewDetails?: (reserva: IEventExtended) => void
+  onEdit?: (reserva: IEventExtended) => void
+  onDelete?: (reserva: IEventExtended) => void
+  onAprobar?: (reserva: IEventExtended) => void
+  onRechazar?: (reserva: IEventExtended) => void
 }
 
 export function DayRowCard({ 
@@ -23,7 +27,11 @@ export function DayRowCard({
   isWeekend = false,
   isSelected = false,
   onClick,
-  onViewDetails
+  onViewDetails,
+  onEdit,
+  onDelete,
+  onAprobar,
+  onRechazar
 }: DayRowCardProps) {
   const hasReservas = reservas.length > 0
   const dayName = format(day, 'EEEE', { locale: es })
@@ -99,6 +107,10 @@ export function DayRowCard({
             key={reserva.id} 
             reserva={reserva}
             onViewDetails={onViewDetails}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onAprobar={onAprobar}
+            onRechazar={onRechazar}
           />
         ))}
       </div>

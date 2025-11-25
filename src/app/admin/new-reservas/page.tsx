@@ -16,7 +16,9 @@ import { DayRowCard } from './components/day-row-card'
 import { MiniCalendar } from './components/mini-calendar'
 import { ProximasReservas } from './components/proximas-reservas'
 import { ReservaDetailSheet } from './components/reserva-detail-sheet'
-import { NEW_RESERVAS_MOCK } from '@/data/new-reservas.mock'
+import { ConfirmDialog } from './components/confirm-dialog'
+import { useReservas } from '@/hooks/useReserva'
+import { adaptReservasToCalendar } from '@/lib/adapters/reservas.adapter'
 import { 
   startOfMonth, 
   endOfMonth, 
@@ -27,14 +29,15 @@ import {
   isSameDay
 } from 'date-fns'
 import type { EstadoReserva, IEventExtended } from '@/types/reservas-calendar.types'
+import { Loader2 } from 'lucide-react'
 
 export type TipoRecursoFilter = 'Zona' | 'Objeto' | 'todos'
 export type EstadoFilter = EstadoReserva | 'todos'
 
 export default function NewReservasPage() {
-  // Iniciar en noviembre 2025 para que coincida con los mocks
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2025, 10, 1))
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date(2025, 10, 1))
+  // Iniciar en el mes actual
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date())
   
   // Referencia al contenedor de scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -47,8 +50,35 @@ export default function NewReservasPage() {
   const [selectedReserva, setSelectedReserva] = useState<IEventExtended | null>(null)
   const [detailSheetOpen, setDetailSheetOpen] = useState(false)
 
-  // Usar datos mock directamente
-  const reservasBase = NEW_RESERVAS_MOCK
+  // Estados para diálogos de confirmación
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'aprobar' | 'rechazar' | 'eliminar'
+    reserva: IEventExtended | null
+  } | null>(null)
+
+  // Obtener reservas de la API
+  const { 
+    reservasAprobadas, 
+    reservasRechazadas, 
+    reservasPendientes, 
+    loading, 
+    error,
+    aprobarReserva,
+    rechazarReserva,
+    eliminarReserva,
+    recargar
+  } = useReservas()
+
+  // Combinar todas las reservas
+  const todasLasReservas = useMemo(() => {
+    return [...reservasAprobadas, ...reservasRechazadas, ...reservasPendientes]
+  }, [reservasAprobadas, reservasRechazadas, reservasPendientes])
+
+  // Adaptar reservas al formato del calendario
+  const reservasBase = useMemo(() => {
+    return adaptReservasToCalendar(todasLasReservas)
+  }, [todasLasReservas])
 
   // Aplicar filtros
   const reservasAdaptadas = useMemo(() => {
@@ -136,25 +166,111 @@ export default function NewReservasPage() {
     setDetailSheetOpen(true)
   }
 
-  // Funciones de acción (placeholders)
+  // Funciones de acción - abren diálogos de confirmación
   const handleEdit = (reserva: IEventExtended) => {
     console.log('Editar reserva:', reserva)
-    // Aquí iría la lógica para editar
+    // TODO: Implementar lógica de edición
   }
 
   const handleDelete = (reserva: IEventExtended) => {
-    console.log('Eliminar reserva:', reserva)
-    // Aquí iría la lógica para eliminar
+    setConfirmAction({ type: 'eliminar', reserva })
+    setConfirmDialogOpen(true)
   }
 
   const handleAprobar = (reserva: IEventExtended) => {
-    console.log('Aprobar reserva:', reserva)
-    // Aquí iría la lógica para aprobar
+    setConfirmAction({ type: 'aprobar', reserva })
+    setConfirmDialogOpen(true)
   }
 
   const handleRechazar = (reserva: IEventExtended) => {
-    console.log('Rechazar reserva:', reserva)
-    // Aquí iría la lógica para rechazar
+    setConfirmAction({ type: 'rechazar', reserva })
+    setConfirmDialogOpen(true)
+  }
+
+  // Función que ejecuta la acción confirmada
+  const executeConfirmedAction = async () => {
+    if (!confirmAction || !confirmAction.reserva) return
+
+    try {
+      switch (confirmAction.type) {
+        case 'aprobar':
+          await aprobarReserva(confirmAction.reserva.id)
+          break
+        case 'rechazar':
+          await rechazarReserva(confirmAction.reserva.id)
+          break
+        case 'eliminar':
+          await eliminarReserva(confirmAction.reserva.id)
+          break
+      }
+      recargar()
+    } catch (error) {
+      console.error(`Error al ${confirmAction.type} reserva:`, error)
+    }
+  }
+
+  // Obtener texto del diálogo según la acción
+  const getConfirmDialogContent = () => {
+    if (!confirmAction || !confirmAction.reserva) {
+      return { title: '', description: '', confirmText: '', variant: 'default' as const }
+    }
+
+    const reserva = confirmAction.reserva
+    const nombreRecurso = reserva.title
+
+    switch (confirmAction.type) {
+      case 'aprobar':
+        return {
+          title: '¿Aprobar reserva?',
+          description: `¿Estás seguro de que deseas aprobar la reserva de "${nombreRecurso}"?`,
+          confirmText: 'Aprobar',
+          variant: 'default' as const,
+        }
+      case 'rechazar':
+        return {
+          title: '¿Rechazar reserva?',
+          description: `¿Estás seguro de que deseas rechazar la reserva de "${nombreRecurso}"? Esta acción no se puede deshacer.`,
+          confirmText: 'Rechazar',
+          variant: 'destructive' as const,
+        }
+      case 'eliminar':
+        return {
+          title: '¿Eliminar reserva?',
+          description: `¿Estás seguro de que deseas eliminar la reserva de "${nombreRecurso}"? Esta acción no se puede deshacer.`,
+          confirmText: 'Eliminar',
+          variant: 'destructive' as const,
+        }
+    }
+  }
+
+  // Mostrar loading
+  if (loading) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <p className="text-sm text-gray-500">Cargando reservas...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Mostrar error solo si todas las peticiones fallaron
+  // Si solo algunas fallaron, mostrar la vista con los datos disponibles
+  if (error && todasLasReservas.length === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md px-6">
+          <p className="text-sm text-red-500 text-center">Error: {error}</p>
+          <button
+            onClick={recargar}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -242,6 +358,10 @@ export default function NewReservasPage() {
                         isSelected={isSelected}
                         onClick={() => handleDateSelect(day)}
                         onViewDetails={handleViewDetails}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onAprobar={handleAprobar}
+                        onRechazar={handleRechazar}
                       />
                     </div>
                   )
@@ -288,6 +408,19 @@ export default function NewReservasPage() {
         onAprobar={handleAprobar}
         onRechazar={handleRechazar}
       />
+
+      {/* Diálogo de confirmación */}
+      {confirmAction && (
+        <ConfirmDialog
+          open={confirmDialogOpen}
+          onOpenChange={setConfirmDialogOpen}
+          title={getConfirmDialogContent().title}
+          description={getConfirmDialogContent().description}
+          confirmText={getConfirmDialogContent().confirmText}
+          variant={getConfirmDialogContent().variant}
+          onConfirm={executeConfirmedAction}
+        />
+      )}
     </div>
   )
 }

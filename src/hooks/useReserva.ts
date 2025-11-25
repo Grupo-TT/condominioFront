@@ -14,16 +14,56 @@ export function useReservas() {
   const cargarReservas = async () => {
     setLoading(true);
     setError(null);
+    const errors: string[] = [];
+
     try {
+      // Cargar cada tipo de reserva de forma independiente
+      // Si una falla, las otras pueden continuar
+      const [aprobadasResult, rechazadasResult, pendientesResult] = await Promise.allSettled([
+        reservasService.getReservasAprobadas(),
+        reservasService.getReservasRechazadas(),
+        reservasService.getReservasPendientes()
+      ]);
 
-      const aprobadas = await reservasService.getReservasAprobadas()
-      const rechazadas = await reservasService.getReservasRechazadas()
-      const pendientes = await reservasService.getReservasPendientes()
+      // Procesar resultados aprobadas
+      if (aprobadasResult.status === 'fulfilled') {
+        setReservasAprobadas(aprobadasResult.value);
+      } else {
+        console.error("Error al obtener reservas aprobadas:", aprobadasResult.reason);
+        const errorMsg = (aprobadasResult.reason as any)?.response?.data?.message || "Error al obtener reservas aprobadas";
+        errors.push(errorMsg);
+        setReservasAprobadas([]);
+      }
 
+      // Procesar resultados rechazadas
+      if (rechazadasResult.status === 'fulfilled') {
+        setReservasRechazadas(rechazadasResult.value);
+      } else {
+        console.error("Error al obtener reservas rechazadas:", rechazadasResult.reason);
+        const errorMsg = (rechazadasResult.reason as any)?.response?.data?.message || "Error al obtener reservas rechazadas";
+        errors.push(errorMsg);
+        setReservasRechazadas([]);
+      }
 
-      setReservasAprobadas(aprobadas);
-      setReservasRechazadas(rechazadas);
-      setReservasPendientes(pendientes);
+      // Procesar resultados pendientes
+      if (pendientesResult.status === 'fulfilled') {
+        setReservasPendientes(pendientesResult.value);
+      } else {
+        console.error("Error al obtener reservas pendientes:", pendientesResult.reason);
+        const errorMsg = (pendientesResult.reason as any)?.response?.data?.message || "Error al obtener reservas pendientes";
+        errors.push(errorMsg);
+        setReservasPendientes([]);
+      }
+
+      // Si todas las peticiones fallaron, establecer un error general
+      if (errors.length === 3) {
+        setError("No se pudieron cargar las reservas. Por favor, intente nuevamente.");
+      } else if (errors.length > 0) {
+        // Si solo algunas fallaron, no establecer error pero loguear
+        // Esto permite que la aplicación funcione con los datos disponibles
+        console.warn("Algunas reservas no se pudieron cargar debido a datos inconsistentes:", errors);
+        // No establecer error para que la UI pueda mostrar las reservas que sí se cargaron
+      }
     } catch (err: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errorMessage = (err as any)?.response?.data?.message || (err as Error)?.message || "Error al cargar las reservas";
