@@ -58,8 +58,8 @@ class AuthService {
           const userData = {
             email: response.data.user.email,
             nombre: response.data.user.nombre,
-            role: response.data.user.roles[0], // Tomar el primer rol
-            idCasa: response.data.user.idCasa,
+            role: response.data.user.roles[0],
+            idCasa: response.data.user.idCasa || null,
             idPersona: response.data.user.idPersona,
           };
           
