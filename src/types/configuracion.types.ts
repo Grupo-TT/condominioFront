@@ -8,3 +8,9 @@ export type PersonalInfoFormData = {
   numeroDocumento: number;
   correo: string;
 };
+
+export type PasswordFormData = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};

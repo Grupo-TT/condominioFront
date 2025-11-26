@@ -56,8 +56,8 @@ import {
   Edit02Icon,
 } from "@hugeicons/core-free-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { updatePersona, usePerfil } from "@/hooks/use-configuracion";
-import { PersonalInfoFormData } from "@/types/configuracion.types";
+import { updatePassword, updatePersona, usePerfil } from "@/hooks/use-configuracion";
+import { PasswordFormData, PersonalInfoFormData } from "@/types/configuracion.types";
 import { toast } from "sonner";
 
 // Esquemas de validación
@@ -74,8 +74,8 @@ const personalInfoSchema = z.object({
 
 const passwordSchema = z
   .object({
-    contraseñaActual: z.string().min(1, "La contraseña actual es requerida"),
-    nuevaContraseña: z
+    currentPassword: z.string().min(1, "La contraseña actual es requerida"),
+    newPassword: z
       .string()
       .min(8, "La nueva contraseña debe tener al menos 8 caracteres")
       .regex(/[A-Z]/, "Debe incluir al menos una letra mayúscula")
@@ -84,16 +84,14 @@ const passwordSchema = z
         /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
         "Debe incluir al menos un carácter especial"
       ),
-    confirmarContraseña: z
+    confirmPassword: z
       .string()
       .min(1, "Debe confirmar la nueva contraseña"),
   })
-  .refine((data) => data.nuevaContraseña === data.confirmarContraseña, {
+  .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
-    path: ["confirmarContraseña"],
+    path: ["confirmPassword"],
   });
-
-type PasswordFormData = z.infer<typeof passwordSchema>;
 
 const tipoDocumentoOptions: SelectOption[] = [
   { value: "CEDULA_DE_CIUDADANIA", label: "Cédula de Ciudadanía" },
@@ -158,9 +156,9 @@ export default function ConfiguracionPage() {
     resolver: zodResolver(passwordSchema),
     mode: "onChange",
     defaultValues: {
-      contraseñaActual: "",
-      nuevaContraseña: "",
-      confirmarContraseña: "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -176,8 +174,14 @@ export default function ConfiguracionPage() {
     setShowPersonalInfoErrors(false);
   };
 
-  const handlePasswordSubmit = (data: PasswordFormData) => {
-    // Aquí se integrará con la API
+  const handlePasswordSubmit = async (data: PasswordFormData) => {
+try {
+      await updatePassword(data);
+      toast.success("Contraseña actualizada correctamente");
+      setIsPasswordSheetOpen(false);
+    } catch (error) {
+      toast.error("No se pudo actualizar la contraseña");
+    }
     console.log("Datos de contraseña:", data);
     setIsPasswordSheetOpen(false);
     setShowPasswordErrors(false);
@@ -406,14 +410,7 @@ export default function ConfiguracionPage() {
                               </div>
                               <p className="text-sm text-gray-500">
                                 Actualiza tu contraseña para mantener tu cuenta
-                                segura.{" "}
-                                <span
-                                  className="font-semibold"
-                                  style={{ color: "#4C6C5A" }}
-                                >
-                                  Última modificación:{" "}
-                                  {perfil?.ultimaModificacionContraseña}
-                                </span>
+                                segura.
                               </p>
                             </div>
                             <ArrowRight
@@ -758,12 +755,12 @@ export default function ConfiguracionPage() {
                     {/* Sección de contraseña actual */}
                     <div className="space-y-2">
                       <Controller
-                        name="contraseñaActual"
+                        name="currentPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <FormInput
                             {...field}
-                            name="contraseñaActual"
+                            name="currentPassword"
                             label="Contraseña Actual"
                             required={true}
                             placeholder="Ingresa tu contraseña actual"
@@ -788,12 +785,12 @@ export default function ConfiguracionPage() {
                     {/* Sección de nueva contraseña */}
                     <div className="space-y-2">
                       <Controller
-                        name="nuevaContraseña"
+                        name="newPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <PasswordStrengthInput
                             {...field}
-                            name="nuevaContraseña"
+                            name="newPassword"
                             label="Nueva Contraseña"
                             required={true}
                             placeholder="Ingresa tu nueva contraseña"
@@ -814,12 +811,12 @@ export default function ConfiguracionPage() {
                     {/* Sección de confirmar contraseña */}
                     <div className="space-y-2 pt-2">
                       <Controller
-                        name="confirmarContraseña"
+                        name="confirmPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <FormInput
                             {...field}
-                            name="confirmarContraseña"
+                            name="confirmPassword"
                             label="Confirmar Nueva Contraseña"
                             required={true}
                             placeholder="Confirma tu nueva contraseña"

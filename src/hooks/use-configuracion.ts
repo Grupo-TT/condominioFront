@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
   import apiClient from "@/lib/config/axios.config";
-import { PersonalInfoFormData } from '@/types/configuracion.types';
+import { PasswordFormData, PersonalInfoFormData } from '@/types/configuracion.types';
 
 export const usePerfil = () => {
   const [perfil, setPerfil] = useState<any>(null);
@@ -16,13 +16,21 @@ export const usePerfil = () => {
 };
 
 export const updatePersona = async (data: PersonalInfoFormData) => {
-  console.log("🚀 ~ updatePersona ~ data:", data)
   try {
     const response = await apiClient.put("/persona/update", data)
-    console.log("Información personal actualizada:", response.data)
     return response.data
   } catch (error) {
     console.error("Error al actualizar la información personal:", error)
+    throw error
+  }
+}
+
+export const updatePassword = async (data: PasswordFormData) => {
+  try {
+    const response = await apiClient.put("/user/update-password", data)
+    return response.data
+  } catch (error) {
+    console.error("Error al actualizar la contraseña:", error)
     throw error
   }
 }
