@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Users, MapPin, Package, Home, MoreVertical, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react'
@@ -25,53 +25,40 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { EditEventDialog } from '@/calendar/components/dialogs/edit-event-dialog'
-import type { IEventExtended } from '@/data/reservas.mock'
+import type { IEventExtended } from '@/types/reservas-calendar.types'
+import { useReservas } from '@/hooks/useReserva'
+
 
 interface ReservasListProps {
   reservas: IEventExtended[]
 }
 
-type ReservaEstado = 'pendiente' | 'aprobada' | 'rechazada'
-
-// Mock de estados para demostración
-const getRandomEstado = (id: number): ReservaEstado => {
-  const estados: ReservaEstado[] = ['pendiente', 'aprobada', 'rechazada']
-  return estados[id % 3]
-}
-
 export function ReservasList({ reservas }: ReservasListProps) {
   const [activeTab, setActiveTab] = useState('pendiente')
+  const { aprobarReserva, rechazarReserva, eliminarReserva } = useReservas()
 
-  // Agregar estados a las reservas
-  const reservasConEstado = useMemo(() => {
-    return reservas.map(reserva => ({
-      ...reserva,
-      estado: getRandomEstado(reserva.id),
-    }))
-  }, [reservas])
-
-  // Filtrar y ordenar reservas
+  // Filtrar y ordenar reservas por estado
   const reservasFiltradas = useMemo(() => {
-    const filtered = reservasConEstado.filter(r => r.estado === activeTab)
+    const filtered = reservas.filter(r => r.estado === activeTab)
 
     // Ordenar por fecha
     return filtered.sort((a, b) => {
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     })
-  }, [reservasConEstado, activeTab])
+  }, [reservas, activeTab])
 
   // Contar por estado
   const counts = useMemo(() => {
     return {
-      pendientes: reservasConEstado.filter(r => r.estado === 'pendiente').length,
-      aprobadas: reservasConEstado.filter(r => r.estado === 'aprobada').length,
-      rechazadas: reservasConEstado.filter(r => r.estado === 'rechazada').length,
+      pendientes: reservas.filter(r => r.estado === 'pendiente').length,
+      aprobadas: reservas.filter(r => r.estado === 'aprobada').length,
+      rechazadas: reservas.filter(r => r.estado === 'rechazada').length,
     }
-  }, [reservasConEstado])
+  }, [reservas])
 
-  const extractEspacioName = (title: string): string => {
-    return title.replace('Reserva - ', '')
-  }
+  // const extractEspacioName = (title: string): string => {
+  //   return title.replace('Reserva - ', '')
+  // }
 
   // Colores y estilos según tipo de recurso (igual que en la vista de recursos)
   const getStylesByTipo = (tipo: 'Zona' | 'Objeto' | undefined) => {
@@ -108,20 +95,28 @@ export function ReservasList({ reservas }: ReservasListProps) {
           </TabsTrigger>
           <TabsTrigger value="aprobada" className="relative">
             Aprobadas
+            <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 text-xs">
+              {counts.aprobadas}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="rechazada" className="relative">
             Rechazadas
+            <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1 text-xs">
+              {counts.rechazadas}
+            </Badge>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-0">
           <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
             {reservasFiltradas.map((reserva) => {
-              const espacioNombre = extractEspacioName(reserva.title)
+              // const espacioNombre = extractEspacioName(reserva.title)
+              const espacioNombre = reserva.title
               const startDate = parseISO(reserva.startDate)
               const endDate = parseISO(reserva.endDate)
               const styles = getStylesByTipo(reserva.tipoRecurso)
               const RecursoIcon = styles.Icon
+              // Las reservas siempre tienen horario específico
 
               return (
                 <div
@@ -210,7 +205,7 @@ export function ReservasList({ reservas }: ReservasListProps) {
                             variant="outline"
                             className="h-8 text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
                             onClick={() => {
-                              console.log('Aprobar reserva:', reserva.id)
+                              aprobarReserva(reserva.id);
                             }}
                           >
                             <CheckCircle className="w-4 h-4 mr-1.5" />
@@ -221,7 +216,7 @@ export function ReservasList({ reservas }: ReservasListProps) {
                             variant="outline"
                             className="h-8 text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700"
                             onClick={() => {
-                              console.log('Rechazar reserva:', reserva.id)
+                              rechazarReserva(reserva.id);
                             }}
                           >
                             <XCircle className="w-4 h-4 mr-1.5" />
@@ -271,8 +266,7 @@ export function ReservasList({ reservas }: ReservasListProps) {
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => {
-                                    console.log('Eliminar reserva:', reserva.id)
-                                    // Aquí se implementará la lógica para eliminar la reserva
+                                    eliminarReserva(reserva.id);
                                   }}
                                   className="bg-red-600 hover:bg-red-700"
                                 >

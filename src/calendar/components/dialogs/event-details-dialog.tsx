@@ -9,7 +9,7 @@ import { EditEventDialog } from "@/calendar/components/dialogs/edit-event-dialog
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 import type { IEvent } from "@/calendar/interfaces";
-import type { IEventExtended } from "@/data/reservas.mock";
+import type { IEventExtended } from "@/types/reservas-calendar.types";
 
 interface IProps {
   event: IEvent;
@@ -17,6 +17,7 @@ interface IProps {
 }
 
 export function EventDetailsDialog({ event, children }: IProps) {
+  console.log("🧭 Evento recibido:", event);
   const startDate = parseISO(event.startDate);
   const endDate = parseISO(event.endDate);
   const eventExtended = event as IEventExtended;

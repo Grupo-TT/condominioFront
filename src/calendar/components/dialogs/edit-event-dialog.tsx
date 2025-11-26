@@ -18,8 +18,10 @@ import { Dialog, DialogHeader, DialogClose, DialogContent, DialogTrigger, Dialog
 import { reservaEditSchema } from "@/calendar/schemas";
 
 import type { IEvent } from "@/calendar/interfaces";
-import type { IEventExtended } from "@/data/reservas.mock";
+import type { IEventExtended } from "@/types/reservas-calendar.types";
+import type { TimeValue } from "react-aria-components";
 import type { TReservaEditFormData } from "@/calendar/schemas";
+import { editarReserva } from "@/hooks/useReserva";
 
 interface IProps {
   children: React.ReactNode;
@@ -36,28 +38,31 @@ export function EditEventDialog({ children, event }: IProps) {
   const form = useForm<TReservaEditFormData>({
     resolver: zodResolver(reservaEditSchema),
     defaultValues: {
-      startDate: parseISO(event.startDate),
-      startTime: { hour: parseISO(event.startDate).getHours(), minute: parseISO(event.startDate).getMinutes() },
+      fechaSolicitud: parseISO(event.startDate),
+      horaInicio: { hour: parseISO(event.startDate).getHours(), minute: parseISO(event.startDate).getMinutes() },
       endDate: parseISO(event.endDate),
-      endTime: { hour: parseISO(event.endDate).getHours(), minute: parseISO(event.endDate).getMinutes() },
+      horaFin: { hour: parseISO(event.endDate).getHours(), minute: parseISO(event.endDate).getMinutes() },
       numeroInvitados: eventExtended.numeroInvitados || 1,
     },
   });
 
   const onSubmit = (values: TReservaEditFormData) => {
-    const startDateTime = new Date(values.startDate);
-    startDateTime.setHours(values.startTime.hour, values.startTime.minute);
+    const fechaSolicitudTime = new Date(values.fechaSolicitud);
+    fechaSolicitudTime.setHours(values.horaInicio.hour, values.horaInicio.minute);
 
     const endDateTime = new Date(values.endDate);
-    endDateTime.setHours(values.endTime.hour, values.endTime.minute);
+    endDateTime.setHours(values.horaFin.hour, values.horaFin.minute);
 
     updateEvent({
       ...event,
-      startDate: startDateTime.toISOString(),
+      fechaSolicitud: fechaSolicitudTime.toISOString(),
       endDate: endDateTime.toISOString(),
       numeroInvitados: values.numeroInvitados,
     } as IEventExtended);
 
+    console.log("Fomulario:" ,values)
+    editarReserva(event.id ,values)
+    console.log("Reserva actualizada con exito", event.description)
     onClose();
   };
 
@@ -108,14 +113,14 @@ export function EditEventDialog({ children, event }: IProps) {
             <div className="flex items-start gap-2">
               <FormField
                 control={form.control}
-                name="startDate"
+                name="fechaSolicitud"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel htmlFor="startDate">Fecha de Inicio</FormLabel>
+                    <FormLabel htmlFor="fechaSolicitud">Fecha de Inicio</FormLabel>
 
                     <FormControl>
                       <SingleDayPicker
-                        id="startDate"
+                        id="fechaSolicitud"
                         value={field.value}
                         onSelect={date => field.onChange(date as Date)}
                         placeholder="Seleccionar fecha"
@@ -130,7 +135,7 @@ export function EditEventDialog({ children, event }: IProps) {
 
               <FormField
                 control={form.control}
-                name="startTime"
+                name="horaInicio"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
                     <FormLabel>Hora de Inicio</FormLabel>
@@ -167,7 +172,7 @@ export function EditEventDialog({ children, event }: IProps) {
 
               <FormField
                 control={form.control}
-                name="endTime"
+                name="horaFin"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
                     <FormLabel>Hora de Fin</FormLabel>

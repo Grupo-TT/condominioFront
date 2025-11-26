@@ -1,4 +1,4 @@
-import type { IEventExtended, TipoRecurso } from '@/data/reservas.mock'
+import type { IEventExtended, TipoRecurso } from '@/types/reservas-calendar.types'
 import type { IUser } from '@/calendar/interfaces'
 
 /**
@@ -100,7 +100,7 @@ function mapSolicitanteToUser(
   return {
     id: `user-${casa.id}`, // Usamos el ID de la casa como identificador único
     name: solicitante.nombreCompleto,
-    email: solicitante.correo,
+    correo: solicitante.correo,
     picturePath: null, // La API no proporciona foto, podría agregarse después
   }
 }
@@ -117,10 +117,15 @@ export function transformReservaFromAPI(reservaAPI: ReservaFromAPI): IEventExten
     id: reservaAPI.id,
     startDate,
     endDate,
-    title: `Reserva - ${reservaAPI.recursoComun.nombre}`,
+    title: reservaAPI.recursoComun.nombre,
     color: 'gray', // Se asignará después con addColorToReservas()
     description: reservaAPI.recursoComun.descripcion,
     user: mapSolicitanteToUser(reservaAPI.solicitante, reservaAPI.casa),
+    recursoComun: {
+      nombre: reservaAPI.recursoComun.nombre,
+      descripcion: reservaAPI.recursoComun.descripcion,
+      tipoRecursoComun: reservaAPI.recursoComun.tipoRecursoComun.nombre === 'ZONA' ? 'ZONA' : 'OBJETO',
+    },
     tipoRecurso,
     numeroInvitados: reservaAPI.numeroInvitados,
     casaNumero: reservaAPI.casa.numeroCasa.toString(),

@@ -1,10 +1,12 @@
 import type { TEventColor } from "@/calendar/types";
+import { RecursoComun, Reserva } from "@/types/reserva.types";
 
 export interface IUser {
   id: string;
   name: string;
   email?: string;
   picturePath: string | null;
+  correo?: string;
 }
 
 export interface IEvent {
@@ -15,6 +17,7 @@ export interface IEvent {
   color: TEventColor;
   description: string;
   user: IUser;
+  recursoComun: RecursoComun;
 }
 
 export interface ICalendarCell {
