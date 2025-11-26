@@ -56,8 +56,15 @@ import {
   Edit02Icon,
 } from "@hugeicons/core-free-icons";
 import { useAuth } from "@/contexts/AuthContext";
-import { updatePassword, updatePersona, usePerfil } from "@/hooks/use-configuracion";
-import { PasswordFormData, PersonalInfoFormData } from "@/types/configuracion.types";
+import {
+  updatePassword,
+  updatePersona,
+  usePerfil,
+} from "@/hooks/use-configuracion";
+import {
+  PasswordFormData,
+  PersonalInfoFormData,
+} from "@/types/configuracion.types";
 import { toast } from "sonner";
 
 // Esquemas de validación
@@ -84,9 +91,7 @@ const passwordSchema = z
         /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
         "Debe incluir al menos un carácter especial"
       ),
-    confirmPassword: z
-      .string()
-      .min(1, "Debe confirmar la nueva contraseña"),
+    confirmPassword: z.string().min(1, "Debe confirmar la nueva contraseña"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Las contraseñas no coinciden",
@@ -175,7 +180,7 @@ export default function ConfiguracionPage() {
   };
 
   const handlePasswordSubmit = async (data: PasswordFormData) => {
-try {
+    try {
       await updatePassword(data);
       toast.success("Contraseña actualizada correctamente");
       setIsPasswordSheetOpen(false);
@@ -212,7 +217,9 @@ try {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                <BreadcrumbLink href="/dashboard">
+                Dashboard
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -368,8 +375,10 @@ try {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-semibold text-gray-900 mb-1">
-                                {getTipoDocumentoLabel(perfil?.tipoDocumento)} -{" "}
-                                {perfil?.numeroDocumento}
+                                {getTipoDocumentoLabel(
+                                  perfil?.tipoDocumento
+                                  )}{" "}
+                                  - {perfil?.numeroDocumento}
                               </p>
                               <p className="text-sm text-gray-500">Documento</p>
                             </div>
