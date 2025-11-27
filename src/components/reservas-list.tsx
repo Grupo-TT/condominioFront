@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Users, MapPin, Package, Home, MoreVertical, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react'

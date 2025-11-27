@@ -14,11 +14,13 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider>
-      <AdminSidebar />
-      <SidebarInset className="overflow-hidden">
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <CasaProvider>
+      <SidebarProvider>
+        <AdminSidebar />
+        <SidebarInset className="overflow-hidden">
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </CasaProvider>
   )
 }

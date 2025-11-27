@@ -79,10 +79,6 @@ export function MonthSelector({
     return eachMonthOfInterval({ start, end })
   }, [selectedMonth])
 
-  // Obtener labels actuales
-  const currentTipoLabel = tipoRecursoOptions.find(o => o.value === tipoRecursoFilter)?.label || 'Tipo'
-  const currentEstadoLabel = estadoOptions.find(o => o.value === estadoFilter)?.label || 'Estado'
-
   // Scroll automático al mes seleccionado
   useEffect(() => {
     // Usar un pequeño delay para asegurar que el DOM esté completamente renderizado

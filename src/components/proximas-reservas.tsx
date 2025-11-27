@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreHorizontal, Check, X, MapPin, Package, Users, ArrowRight, Clock } from 'lucide-react'
+import { MoreHorizontal, Check, X, MapPin, Package, Users, ArrowRight } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, FullScreenIcon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
@@ -17,7 +17,6 @@ import {
 
 interface ProximasReservasProps {
   reservas: IEventExtended[]
-  selectedDate: Date
   onAprobar?: (reserva: IEventExtended) => void
   onRechazar?: (reserva: IEventExtended) => void
   onViewDetails?: (reserva: IEventExtended) => void
@@ -37,7 +36,7 @@ const colorSchemes = {
   },
 }
 
-export function ProximasReservas({ reservas, selectedDate, onAprobar, onRechazar, onViewDetails }: ProximasReservasProps) {
+export function ProximasReservas({ reservas, onAprobar, onRechazar, onViewDetails }: ProximasReservasProps) {
   // Filtrar solo reservas pendientes y ordenar por fecha
   const reservasPendientes = useMemo(() => {
     return reservas

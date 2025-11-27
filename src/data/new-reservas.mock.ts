@@ -1,9 +1,7 @@
-import type { IEventExtended, EstadoReserva } from '@/types/reservas-calendar.types'
+import type { IEventExtended } from '@/types/reservas-calendar.types'
 import type { RecursoComun } from '@/types/reserva.types'
 
 // Mocks para la nueva vista de reservas con más variedad y estados
-
-const ESTADOS: EstadoReserva[] = ['aprobada', 'pendiente', 'rechazada']
 
 // Helper para crear recursoComun
 const createRecursoComun = (nombre: string, tipoRecurso?: 'Zona' | 'Objeto'): RecursoComun => ({

@@ -6,7 +6,6 @@ import {
   endOfMonth, 
   eachDayOfInterval, 
   format, 
-  isWeekend,
   isSameMonth,
   isSameDay
 } from 'date-fns'
@@ -171,7 +170,6 @@ export default function ReservasPage() {
               {daysInMonth.map((day, index) => {
                 const dateKey = format(day, 'yyyy-MM-dd')
                 const dayReservas = reservasPorDia[dateKey] || []
-                const isWeekendDay = isWeekend(day)
                 const isSelected = isSameDay(day, selectedDate)
 
                 return (
@@ -180,7 +178,6 @@ export default function ReservasPage() {
                       day={day}
                       dayNumber={index + 1}
                       reservas={dayReservas}
-                      isWeekend={isWeekendDay}
                       isSelected={isSelected}
                       onClick={() => handleDateSelect(day)}
                       onViewDetails={handleViewDetails}
@@ -206,7 +203,6 @@ export default function ReservasPage() {
               onDateSelect={handleDateSelect}
               onMonthChange={setSelectedMonth}
               daysWithEvents={daysWithEvents}
-              reservasCount={reservasDelMes}
             />
           </div>
 
@@ -214,7 +210,6 @@ export default function ReservasPage() {
           <div className="flex-1 min-h-0 overflow-y-auto">
             <ProximasReservas 
               reservas={reservasFiltradas}
-              selectedDate={selectedDate}
               onAprobar={handleAprobar}
               onRechazar={handleRechazar}
               onViewDetails={handleViewDetails}

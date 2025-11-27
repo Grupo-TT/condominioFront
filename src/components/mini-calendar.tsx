@@ -30,7 +30,6 @@ interface MiniCalendarProps {
   onDateSelect: (date: Date) => void
   onMonthChange: (month: Date) => void
   daysWithEvents?: string[] // Ahora son strings en formato 'yyyy-MM-dd'
-  reservasCount?: number
 }
 
 const WEEKDAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do']
@@ -51,8 +50,7 @@ export function MiniCalendar({
   selectedMonth,
   onDateSelect,
   onMonthChange,
-  daysWithEvents = [],
-  reservasCount = 0
+  daysWithEvents = []
 }: MiniCalendarProps) {
   const currentYear = selectedMonth.getFullYear()
   const years = useMemo(() => generateYears(new Date().getFullYear()), [])

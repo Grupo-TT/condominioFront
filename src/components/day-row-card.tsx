@@ -1,8 +1,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
 import { IEventExtended } from '@/types/reservas-calendar.types'
 import { ReservaCard } from './reserva-card'
 
@@ -10,7 +8,6 @@ interface DayRowCardProps {
   day: Date
   dayNumber: number
   reservas: IEventExtended[]
-  isWeekend?: boolean
   isSelected?: boolean
   onClick?: () => void
   onViewDetails?: (reserva: IEventExtended) => void
@@ -21,10 +18,8 @@ interface DayRowCardProps {
 }
 
 export function DayRowCard({ 
-  day, 
   dayNumber, 
   reservas, 
-  isWeekend = false,
   isSelected = false,
   onClick,
   onViewDetails,
@@ -34,8 +29,6 @@ export function DayRowCard({
   onRechazar
 }: DayRowCardProps) {
   const hasReservas = reservas.length > 0
-  const dayName = format(day, 'EEEE', { locale: es })
-  const isWeekendDay = dayName === 'sábado' || dayName === 'domingo'
 
   // Si no hay reservas, mostrar versión compacta
   if (!hasReservas) {
