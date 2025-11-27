@@ -20,7 +20,7 @@ export function useMiembros(casaNumero: string | number) {
 
         const miembrosData = await miembrosService.getMembers()        
         setMiembros(
-          (miembrosData || []).map(m => ({
+          (miembrosData || []).map((m:MiembroHogar) => ({
             nombre: m.nombre,
             tipoDocumento: m.tipoDocumento,
             numeroDocumento: String(m.numeroDocumento ?? ''),
@@ -34,7 +34,7 @@ export function useMiembros(casaNumero: string | number) {
 
         // Mapear miembros
         setMiembros(
-          (miembrosData || []).map(m => ({
+          (miembrosData || []).map((m:MiembroHogar) => ({
             nombre: m.nombre,
             tipoDocumento: m.tipoDocumento,
             numeroDocumento: String(m.numeroDocumento ?? ''),

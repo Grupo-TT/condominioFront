@@ -89,9 +89,7 @@ export const casaService = {
 export const miembrosService = {
   async getMembers() {
     try {
-      const res = await apiClient.get<MiembrosApiResponse>(
-        `/miembros/all-casa-members`
-      );
+      const res = await apiClient.get(`/miembros/all-casa-members`);
       return res.data || [];
     } catch (error) {
       console.error("Error al obtener los miembros:", error);
