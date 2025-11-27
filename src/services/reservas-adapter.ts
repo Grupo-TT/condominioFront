@@ -1,5 +1,5 @@
 import type { IEventExtended, TipoRecurso } from '@/types/reservas-calendar.types'
-import type { IUser } from '@/calendar/interfaces'
+import type { IUser } from '@/types/calendar.types'
 
 /**
  * Estructura de respuesta de la API

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Reserva } from "@/types/reserva.types";
 import { reservasService } from "@/lib/services/reservas.service";
-import { TReservaEditFormData } from "@/calendar/schemas";
+import { TReservaEditFormData } from "@/schemas/reserva.schema";
 
 // Helper para extraer mensaje de error de forma type-safe
 function getErrorMessage(error: unknown, defaultMessage: string): string {

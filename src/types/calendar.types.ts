@@ -1,5 +1,6 @@
-import type { TEventColor } from "@/calendar/types";
-import { RecursoComun, Reserva } from "@/types/reserva.types";
+import type { RecursoComun } from './reserva.types'
+
+export type TEventColor = "blue" | "green" | "red" | "yellow" | "purple" | "orange" | "gray";
 
 export interface IUser {
   id: string;
@@ -25,3 +26,4 @@ export interface ICalendarCell {
   currentMonth: boolean;
   date: Date;
 }
+

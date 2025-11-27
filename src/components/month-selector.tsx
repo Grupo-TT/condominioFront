@@ -15,7 +15,7 @@ import {
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +67,10 @@ export function MonthSelector({
   onClearFilters,
   reservasCount = 0
 }: MonthSelectorProps) {
+  // Referencias para scroll automático
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const selectedMonthRef = useRef<HTMLButtonElement>(null)
+
   // Generar meses del año actual
   const months = useMemo(() => {
     const year = selectedMonth.getFullYear()
@@ -79,8 +83,47 @@ export function MonthSelector({
   const currentTipoLabel = tipoRecursoOptions.find(o => o.value === tipoRecursoFilter)?.label || 'Tipo'
   const currentEstadoLabel = estadoOptions.find(o => o.value === estadoFilter)?.label || 'Estado'
 
+  // Scroll automático al mes seleccionado
+  useEffect(() => {
+    // Usar un pequeño delay para asegurar que el DOM esté completamente renderizado
+    const timeoutId = setTimeout(() => {
+      if (selectedMonthRef.current && scrollContainerRef.current) {
+        const container = scrollContainerRef.current
+        const selectedButton = selectedMonthRef.current
+        
+        // Calcular la posición para centrar el botón seleccionado
+        const containerRect = container.getBoundingClientRect()
+        const buttonRect = selectedButton.getBoundingClientRect()
+        const scrollLeft = container.scrollLeft
+        const scrollWidth = container.scrollWidth
+        const containerWidth = containerRect.width
+        
+        // Solo hacer scroll si el contenido es más ancho que el contenedor
+        if (scrollWidth > containerWidth) {
+          // Calcular la posición del botón relativa al contenedor
+          const buttonLeft = buttonRect.left - containerRect.left + scrollLeft
+          const buttonWidth = buttonRect.width
+          
+          // Centrar el botón en el contenedor
+          const targetScroll = buttonLeft - (containerWidth / 2) + (buttonWidth / 2)
+          
+          // Asegurar que el scroll esté dentro de los límites
+          const maxScroll = scrollWidth - containerWidth
+          const clampedScroll = Math.max(0, Math.min(targetScroll, maxScroll))
+          
+          container.scrollTo({
+            left: clampedScroll,
+            behavior: 'smooth'
+          })
+        }
+      }
+    }, 100)
+
+    return () => clearTimeout(timeoutId)
+  }, [selectedMonth, months])
+
   return (
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+    <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 min-w-0">
       {/* Botón anterior */}
       <button
         className="flex items-center justify-center h-8 w-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors shrink-0"
@@ -89,35 +132,41 @@ export function MonthSelector({
         <ChevronLeft className="h-4 w-4" />
       </button>
 
-      {/* Meses distribuidos en todo el ancho */}
-      <div className="flex-1 flex items-center justify-between">
-        {months.map((month) => {
-          const isSelected = isSameMonth(month, selectedMonth)
-          const monthName = format(month, 'MMM', { locale: es })
-          
-          return (
-            <Button
-              key={month.toISOString()}
-              data-selected={isSelected}
-              variant={isSelected ? "primary" : "ghost"}
-              size="sm"
-              className={cn(
-                "px-6 py-1 h-7 rounded-full capitalize font-medium text-sm transition-all",
-                isSelected 
-                  ? "bg-gray-900 text-white shadow-sm" 
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-              )}
-              onClick={() => onMonthChange(month)}
-            >
-              {monthName}
-              {isSelected && reservasCount > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-white text-gray-900">
-                  {reservasCount}
-                </span>
-              )}
-            </Button>
-          )
-        })}
+      {/* Meses distribuidos en todo el ancho - con scroll horizontal si es necesario */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 flex items-center min-w-0 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="flex items-center justify-between gap-1 w-full min-w-max">
+          {months.map((month) => {
+            const isSelected = isSameMonth(month, selectedMonth)
+            const monthName = format(month, 'MMM', { locale: es })
+            
+            return (
+              <Button
+                key={month.toISOString()}
+                ref={isSelected ? selectedMonthRef : null}
+                data-selected={isSelected}
+                variant={isSelected ? "primary" : "ghost"}
+                size="sm"
+                className={cn(
+                  "px-6 py-1 h-7 rounded-full capitalize font-medium text-sm transition-all shrink-0",
+                  isSelected 
+                    ? "bg-gray-900 text-white shadow-sm" 
+                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                )}
+                onClick={() => onMonthChange(month)}
+              >
+                {monthName}
+                {isSelected && reservasCount > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-white text-gray-900">
+                    {reservasCount}
+                  </span>
+                )}
+              </Button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Botón siguiente */}
@@ -129,9 +178,9 @@ export function MonthSelector({
       </button>
 
       {/* Separador */}
-      <div className="w-px h-6 bg-gray-200 mx-1" />
+      <div className="w-px h-6 bg-gray-200 mx-1 shrink-0" />
 
-      {/* Botón de filtrar - Dropdown */}
+      {/* Botón de filtrar - Dropdown - siempre separado del calendario */}
       <div className="shrink-0 relative">
         {activeFiltersCount > 0 && (
           <Tooltip>

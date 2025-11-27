@@ -1,4 +1,4 @@
-import type { IEvent, IUser } from "@/calendar/interfaces";
+import type { IEvent, IUser } from "@/types/calendar.types";
 
 // Solo usamos 2 colores: orange (dorado) para Zonas y purple (morado) para Objetos
 

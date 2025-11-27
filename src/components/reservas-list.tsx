@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { EditEventDialog } from '@/calendar/components/dialogs/edit-event-dialog'
 import type { IEventExtended } from '@/types/reservas-calendar.types'
 import { useReservas } from '@/hooks/useReserva'
 
@@ -238,12 +237,10 @@ export function ReservasList({ reservas }: ReservasListProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <EditEventDialog event={reserva}>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Modificar
-                            </DropdownMenuItem>
-                          </EditEventDialog>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Modificar
+                          </DropdownMenuItem>
                           
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
