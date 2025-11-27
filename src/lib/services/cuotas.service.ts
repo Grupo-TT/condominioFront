@@ -21,3 +21,13 @@ export const registrarPago = async (payload: PagoPayload) => {
     throw error;
   }
 };
+
+export const enviarPazYSalvo = async (idCasa: number) => {
+  try {
+    await apiClient.get(`/obligacion/paz-y-salvo/${idCasa}`);
+    return true;
+  } catch (error: any) {
+    console.error("Error al llamar al endpoint paz y salvo:", error.response?.data || error.message);
+    throw error;
+  }
+};

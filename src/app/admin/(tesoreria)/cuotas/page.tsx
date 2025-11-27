@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { useMemo, useState, useCallback, useEffect } from 'react'
-import { Separator } from '@/components/ui/separator'
+import * as React from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,14 +10,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
-import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
-import { DataGridPagination } from '@/components/ui/data-grid-pagination'
-import { DataGridTable } from '@/components/ui/data-grid-table'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
+import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
+import { DataGridPagination } from "@/components/ui/data-grid-pagination";
+import { DataGridTable } from "@/components/ui/data-grid-table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   ColumnDef,
   ExpandedState,
@@ -28,18 +28,27 @@ import {
   PaginationState,
   SortingState,
   useReactTable,
-} from '@tanstack/react-table'
-import { SquareMinus, SquarePlus, Search, X, Settings } from 'lucide-react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { MoneyReceiveFlow01Icon, Home01Icon } from '@hugeicons/core-free-icons'
-import { CuotaCasa, Obligacion } from '@/types/cuotas.types'
-import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation'
-import { FormFieldWithTooltip } from '@/components/forms'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AnimatedTabs } from '@/components/animated-tabs'
-import { ConfiguracionCuotasDialog } from '@/components/configuracion-cuotas-dialog'
+} from "@tanstack/react-table";
+import { SquareMinus, SquarePlus, Search, X, Settings } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  MoneyReceiveFlow01Icon,
+  Home01Icon,
+  FileDollarIcon,
+} from "@hugeicons/core-free-icons";
+import { CuotaCasa, Obligacion } from "@/types/cuotas.types";
+import { pagoSchema, PagoFormData } from "@/lib/validations/cuotas.validation";
+import { FormFieldWithTooltip } from "@/components/forms";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AnimatedTabs } from "@/components/animated-tabs";
+import { ConfiguracionCuotasDialog } from "@/components/configuracion-cuotas-dialog";
 import {
   Sheet,
   SheetClose,
@@ -48,86 +57,95 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { useCuotas } from '@/hooks/useCuotas'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ObligacionCombobox } from '@/components/obligacion-combobox'
-import { toast } from 'sonner'
-import axios from 'axios'
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useCuotas } from "@/hooks/useCuotas";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ObligacionCombobox } from "@/components/obligacion-combobox";
+import { toast } from "sonner";
+import axios from "axios";
+import { enviarPazYSalvo } from "@/lib/services/cuotas.service";
 
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
   obligaciones,
   casa,
-  onObligacionClick
+  onObligacionClick,
 }: {
-  obligaciones: Obligacion[]
-  casa: CuotaCasa
-  onObligacionClick: (casa: CuotaCasa, obligacion: Obligacion) => void
+  obligaciones: Obligacion[];
+  casa: CuotaCasa;
+  onObligacionClick: (casa: CuotaCasa, obligacion: Obligacion) => void;
 }) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 5,
-  })
+  });
 
   const columns = useMemo<ColumnDef<Obligacion>[]>(
     () => [
       {
-        accessorKey: 'titulo',
-        header: ({ column }) => <DataGridColumnHeader title="Obligación" column={column} />,
+        accessorKey: "titulo",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Obligación" column={column} />
+        ),
         cell: (info) => {
-          const row = info.row.original
-          return row.titulo || row.motivo || ''
+          const row = info.row.original;
+          return row.titulo || row.motivo || "";
         },
         enableSorting: true,
         size: 300,
       },
       {
-        accessorKey: 'valorTotal',
-        header: ({ column }) => <DataGridColumnHeader title="Valor Total" column={column} />,
+        accessorKey: "valorTotal",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Valor Total" column={column} />
+        ),
         cell: (info) => {
-          const value = info.getValue() as number
-          return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-          }).format(value)
+          const value = info.getValue() as number;
+          return new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+          }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        accessorKey: 'valorPendiente',
-        header: ({ column }) => <DataGridColumnHeader title="Saldo Pendiente" column={column} />,
+        accessorKey: "valorPendiente",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Saldo Pendiente" column={column} />
+        ),
         cell: (info) => {
-          const value = info.getValue() as number
-          return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-          }).format(value)
+          const value = info.getValue() as number;
+          return new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+          }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        accessorKey: 'montoPagado',
-        header: ({ column }) => <DataGridColumnHeader title="Abonado" column={column} />,
+        accessorKey: "montoPagado",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Abonado" column={column} />
+        ),
         cell: (info) => {
-          const value = info.getValue() as number
-          return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-          }).format(value)
+          const value = info.getValue() as number;
+          return new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+          }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        id: 'actions',
-        header: '',
+        id: "actions",
+        header: "",
         cell: ({ row }) => (
           <Button
             size="sm"
@@ -136,8 +154,19 @@ function ObligacionesSubTable({
             onClick={() => onObligacionClick(casa, row.original)}
           >
             <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={MoneyReceiveFlow01Icon} size={20} style={{ width: '20px', height: '20px', paddingBottom: '2px', color: '#4C6C5B' }} />
-              <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>Registrar</span>
+              <HugeiconsIcon
+                icon={MoneyReceiveFlow01Icon}
+                size={20}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  paddingBottom: "2px",
+                  color: "#4C6C5B",
+                }}
+              />
+              <span style={{ paddingTop: "1px", paddingBottom: "0px" }}>
+                Registrar
+              </span>
             </div>
           </Button>
         ),
@@ -146,7 +175,7 @@ function ObligacionesSubTable({
       },
     ],
     [casa, onObligacionClick]
-  )
+  );
 
   const table = useReactTable({
     data: obligaciones,
@@ -162,14 +191,14 @@ function ObligacionesSubTable({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getRowId: (row: Obligacion) => String(row.id),
-  })
+  });
 
   return (
     <div
       className="bg-muted/30 p-4 [&_thead]:bg-gray-100 [&_thead_th]:text-gray-700 [&_thead_th]:font-medium [&_table]:rounded-lg [&_table]:overflow-hidden"
       style={{
-        animation: 'slideDown 0.2s ease-out',
-        transformOrigin: 'top'
+        animation: "slideDown 0.2s ease-out",
+        transformOrigin: "top",
       }}
     >
       <style jsx>{`
@@ -213,104 +242,118 @@ function ObligacionesSubTable({
         </DataGrid>
       </div>
     </div>
-  )
+  );
 }
 
 export default function CuotasPage() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
-  })
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [expandedRows, setExpandedRows] = useState<ExpandedState>({})
-  const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const [selectedCasa, setSelectedCasa] = useState<CuotaCasa | null>(null)
-  const [selectedObligacion, setSelectedObligacion] = useState<Obligacion | null>(null)
-  const [showAllErrors, setShowAllErrors] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'todas' | 'al-dia' | 'pendientes'>('todas')
-  const { casas, loading, error, fetchCasas, handleRegistrarPago } = useCuotas()
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedCasa, setSelectedCasa] = useState<CuotaCasa | null>(null);
+  const [selectedObligacion, setSelectedObligacion] =
+    useState<Obligacion | null>(null);
+  const [showAllErrors, setShowAllErrors] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<
+    "todas" | "al-dia" | "pendientes"
+  >("todas");
+  const { casas, loading, error, fetchCasas, handleRegistrarPago } =
+    useCuotas();
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
-    setSearchTerm('')
-  }
+    setSearchTerm("");
+  };
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
-    if (!searchTerm && filterType === 'todas') {
-      return casas
+    if (!searchTerm && filterType === "todas") {
+      return casas;
     }
 
-    const searchLower = searchTerm.toLowerCase()
+    const searchLower = searchTerm.toLowerCase();
 
-    return casas.filter(casa => {
+    return casas.filter((casa) => {
       // Filtrar por tipo
-      if (filterType === 'al-dia' && casa.saldoPendiente > 0) {
-        return false
+      if (filterType === "al-dia" && casa.saldoPendiente > 0) {
+        return false;
       }
-      if (filterType === 'pendientes' && casa.saldoPendiente === 0) {
-        return false
+      if (filterType === "pendientes" && casa.saldoPendiente === 0) {
+        return false;
       }
 
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          casa.propietario?.nombreCompleto?.toLowerCase().includes(searchLower) ||
+          casa.propietario?.nombreCompleto
+            ?.toLowerCase()
+            .includes(searchLower) ||
           casa.numeroCasa.toString().toLowerCase().includes(searchLower) ||
           casa.saldoPendiente.toString().includes(searchLower)
-        )
+        );
       }
 
-      return true
-    })
-  }, [casas, searchTerm, filterType])
+      return true;
+    });
+  }, [casas, searchTerm, filterType]);
 
   // Verificar si hay resultados
-  const hasResults = filteredCasas.length > 0
+  const hasResults = filteredCasas.length > 0;
   // Formulario con validaciones
   const form = useForm<PagoFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(pagoSchema) as any,
     mode: "onChange",
     defaultValues: {
-      obligacionId: '',
+      obligacionId: "",
       monto: 0,
-    }
-  })
+    },
+  });
 
   // Función para abrir el sheet desde una casa
-  const handleCasaClick = useCallback((casa: CuotaCasa) => {
-    setSelectedCasa(casa)
-    setSelectedObligacion(null) // No preseleccionar obligación
-    form.reset({
-      obligacionId: '',
-      monto: 0,
-    })
-    setShowAllErrors(false)
-    setIsSheetOpen(true)
-  }, [form])
+  const handleCasaClick = useCallback(
+    (casa: CuotaCasa) => {
+      setSelectedCasa(casa);
+      setSelectedObligacion(null); // No preseleccionar obligación
+      form.reset({
+        obligacionId: "",
+        monto: 0,
+      });
+      setShowAllErrors(false);
+      setIsSheetOpen(true);
+    },
+    [form]
+  );
 
   // Función para abrir el sheet desde una obligación específica
-  const handleObligacionClick = useCallback((casa: CuotaCasa, obligacion: Obligacion) => {
-    setSelectedCasa(casa)
-    setSelectedObligacion(obligacion) // Preseleccionar la obligación
-    form.reset({
-      obligacionId: String(obligacion.id), // Asegurar que sea string
-      monto: obligacion.valorPendiente,
-    })
-    setShowAllErrors(false)
-    setIsSheetOpen(true)
-  }, [form])
+  const handleObligacionClick = useCallback(
+    (casa: CuotaCasa, obligacion: Obligacion) => {
+      setSelectedCasa(casa);
+      setSelectedObligacion(obligacion); // Preseleccionar la obligación
+      form.reset({
+        obligacionId: String(obligacion.id), // Asegurar que sea string
+        monto: obligacion.valorPendiente,
+      });
+      setShowAllErrors(false);
+      setIsSheetOpen(true);
+    },
+    [form]
+  );
 
   const handleFormSubmit = async (data: PagoFormData) => {
     // Validación adicional: verificar que el monto no supere el saldo pendiente
-    const obligacion = selectedCasa?.obligacionesPendientes.find(o => String(o.id) === String(data.obligacionId))
+    const obligacion = selectedCasa?.obligacionesPendientes.find(
+      (o) => String(o.id) === String(data.obligacionId)
+    );
     if (obligacion && data.monto > obligacion.valorPendiente) {
-      form.setError('monto', {
-        type: 'manual',
-        message: 'El valor ingresado supera la deuda actual.'
-      })
-      return
+      form.setError("monto", {
+        type: "manual",
+        message: "El valor ingresado supera la deuda actual.",
+      });
+      return;
     }
 
     if (!selectedCasa) {
@@ -321,43 +364,45 @@ export default function CuotasPage() {
       soporte: selectedCasa.numeroCasa.toString(),
       idObligacion: Number(data.obligacionId),
       montoAPagar: data.monto,
-    }
+    };
 
     try {
       await handleRegistrarPago(payload);
-      
+
       // Mostrar toast de éxito
-      toast.success('Pago registrado exitosamente', {
+      toast.success("Pago registrado exitosamente", {
         duration: 5000,
       });
-      
+
       setIsSheetOpen(false);
       form.reset();
       setSelectedObligacion(null);
     } catch (error: unknown) {
       // Extraer mensaje de error usando axios.isAxiosError
       const errorMessage = axios.isAxiosError(error)
-        ? (error.response?.data as { message?: string })?.message || error.message || 'Error al registrar el pago. Por favor, inténtalo de nuevo.'
+        ? (error.response?.data as { message?: string })?.message ||
+          error.message ||
+          "Error al registrar el pago. Por favor, inténtalo de nuevo."
         : error instanceof Error
-          ? error.message
-          : 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
-      
+        ? error.message
+        : "Error al registrar el pago. Por favor, inténtalo de nuevo.";
+
       // Mostrar toast de error
       toast.error(errorMessage, {
         duration: 5000,
       });
     }
-  }
+  };
 
   // Función para cancelar
   const handleCancelar = () => {
-    setIsSheetOpen(false)
-    setSelectedCasa(null)
-    setSelectedObligacion(null)
-    form.reset()
-    console.log("Registro de pago cancelado.")
-    setShowAllErrors(false)
-  }
+    setIsSheetOpen(false);
+    setSelectedCasa(null);
+    setSelectedObligacion(null);
+    form.reset();
+    console.log("Registro de pago cancelado.");
+    setShowAllErrors(false);
+  };
 
   useEffect(() => {
     fetchCasas();
@@ -375,30 +420,47 @@ export default function CuotasPage() {
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
       {
-        id: 'expand',
+        id: "expand",
         header: () => null,
         cell: ({ row }) => {
           return row.getCanExpand() ? (
-            <Button onClick={row.getToggleExpandedHandler()} mode="icon" size="sm" variant="ghost">
+            <Button
+              onClick={row.getToggleExpandedHandler()}
+              mode="icon"
+              size="sm"
+              variant="ghost"
+            >
               {row.getIsExpanded() ? <SquareMinus /> : <SquarePlus />}
             </Button>
-          ) : null
+          ) : null;
         },
         size: 25,
         enableResizing: false,
         meta: {
-          expandedContent: (row: CuotaCasa) => <ObligacionesSubTable obligaciones={row.obligacionesPendientes} casa={row} onObligacionClick={handleObligacionClick} />,
+          expandedContent: (row: CuotaCasa) => (
+            <ObligacionesSubTable
+              obligaciones={row.obligacionesPendientes}
+              casa={row}
+              onObligacionClick={handleObligacionClick}
+            />
+          ),
           skeleton: <Skeleton className="h-6 w-6" />,
         },
       },
       {
-        accessorKey: 'numeroCasa',
-        id: 'numeroCasa',
-        header: ({ column }) => <DataGridColumnHeader title="Número de Casa" column={column} />,
+        accessorKey: "numeroCasa",
+        id: "numeroCasa",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Número de Casa" column={column} />
+        ),
         cell: ({ row }) => (
           <div>
-            <div className="font-semibold text-gray-900">Casa No. {row.original.numeroCasa}</div>
-            <div className="text-sm text-gray-500">{row.original.propietario?.nombreCompleto ?? "Sin propietario"}</div>
+            <div className="font-semibold text-gray-900">
+              Casa No. {row.original.numeroCasa}
+            </div>
+            <div className="text-sm text-gray-500">
+              {row.original.propietario?.nombreCompleto ?? "Sin propietario"}
+            </div>
           </div>
         ),
         size: 250,
@@ -414,19 +476,25 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: 'saldoPendiente',
-        id: 'saldoPendiente',
-        header: ({ column }) => <DataGridColumnHeader title="Saldo Pendiente" column={column} />,
+        accessorKey: "saldoPendiente",
+        id: "saldoPendiente",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Saldo Pendiente" column={column} />
+        ),
         cell: ({ row }) => {
-          const saldo = row.original.saldoPendiente
+          const saldo = row.original.saldoPendiente;
           return (
-            <div className={`font-semibold ${saldo > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
+            <div
+              className={`font-semibold ${
+                saldo > 0 ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
               }).format(saldo)}
             </div>
-          )
+          );
         },
         size: 150,
         enableSorting: true,
@@ -435,20 +503,28 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: 'obligacionesPendientes',  
-        id: 'obligacionesPendientes',
-        header: ({ column }) => <DataGridColumnHeader title="Pagos Pendientes" column={column} />,
+        accessorKey: "obligacionesPendientes",
+        id: "obligacionesPendientes",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Pagos Pendientes" column={column} />
+        ),
         cell: ({ row }) => {
-          const cantidad = row.original.obligacionesPendientes.length
+          const cantidad = row.original.obligacionesPendientes.length;
           return (
             <Badge
-              variant={cantidad === 0 ? 'success' : cantidad <= 2 ? 'warning' : 'destructive'}
+              variant={
+                cantidad === 0
+                  ? "success"
+                  : cantidad <= 2
+                  ? "warning"
+                  : "destructive"
+              }
               appearance="outline"
               size="md"
             >
-              {cantidad} {cantidad === 1 ? 'pago' : 'pagos'}
+              {cantidad} {cantidad === 1 ? "pago" : "pagos"}
             </Badge>
-          )
+          );
         },
         size: 140,
         enableSorting: true,
@@ -457,20 +533,22 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: 'ultimoPago',
-        id: 'ultimoPago',
-        header: ({ column }) => <DataGridColumnHeader title="Último Pago" column={column} />,
+        accessorKey: "ultimoPago",
+        id: "ultimoPago",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Último Pago" column={column} />
+        ),
         cell: ({ row }) => {
-          const fecha = new Date(row.original.ultimoPago)
+          const fecha = new Date(row.original.ultimoPago);
           return (
             <div className="text-sm text-gray-600">
-              {fecha.toLocaleDateString('es-CO', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
+              {fecha.toLocaleDateString("es-CO", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
               })}
             </div>
-          )
+          );
         },
         size: 130,
         enableSorting: true,
@@ -479,20 +557,63 @@ export default function CuotasPage() {
         },
       },
       {
-        id: 'actions',
-        header: '',
+        id: "actions",
+        header: "",
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="primary"
-            className="gap-2 items-center justify-center"
-            onClick={() => handleCasaClick(row.original)}
-          >
+          <>
             <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={MoneyReceiveFlow01Icon} size={20} style={{ width: '20px', height: '20px', paddingBottom: '2px' }} />
-              <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>Registrar</span>
+              <Button
+                size="sm"
+                variant="primary"
+                className="gap-2 items-center justify-center"
+                onClick={() => handleCasaClick(row.original)}
+              >
+                <div className="flex items-center gap-2">
+                  <HugeiconsIcon
+                    icon={MoneyReceiveFlow01Icon}
+                    size={20}
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      paddingBottom: "2px",
+                    }}
+                  />
+                  <span style={{ paddingTop: "2px", paddingBottom: "0px" }}>
+                    Registrar
+                  </span>
+                </div>
+              </Button>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    className="gap-2 items-center justify-center ml-2"
+                    onClick={async () => {
+                      try {
+                        await enviarPazYSalvo(row.original.numeroCasa);
+                        toast.success("Paz y salvo enviado exitosamente");
+                      } catch (err) {
+                        toast.error("Error al enviar el paz y salvo");
+                      }
+                    }}
+                  >
+                    <HugeiconsIcon
+                      icon={FileDollarIcon}
+                      size={20}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        paddingBottom: "2px",
+                      }}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Enviar Paz y salvo</TooltipContent>
+              </Tooltip>
             </div>
-          </Button>
+          </>
         ),
         size: 120,
         enableSorting: false,
@@ -502,20 +623,24 @@ export default function CuotasPage() {
       },
     ],
     [handleCasaClick, handleObligacionClick]
-  )
+  );
 
   const table = useReactTable({
     columns,
     data: filteredCasas,
     pageCount: Math.ceil((filteredCasas?.length || 0) / pagination.pageSize),
     getRowId: (row: CuotaCasa) => row.numeroCasa.toString(),
-    getRowCanExpand: (row) => Boolean(row.original.obligacionesPendientes && row.original.obligacionesPendientes.length > 0),
+    getRowCanExpand: (row) =>
+      Boolean(
+        row.original.obligacionesPendientes &&
+          row.original.obligacionesPendientes.length > 0
+      ),
     state: {
       pagination,
       sorting,
       expanded: expandedRows,
     },
-    columnResizeMode: 'onChange',
+    columnResizeMode: "onChange",
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onExpandedChange: setExpandedRows,
@@ -523,7 +648,7 @@ export default function CuotasPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-  })
+  });
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -554,9 +679,12 @@ export default function CuotasPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Cuotas</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Gestión de Cuotas
+              </h1>
               <p className="text-gray-500 mt-1">
-                Administra los pagos de administración y otras obligaciones financieras.
+                Administra los pagos de administración y otras obligaciones
+                financieras.
               </p>
             </div>
           </div>
@@ -564,172 +692,180 @@ export default function CuotasPage() {
           {/* Filtros y controles */}
           <AnimatedTabs
             value={filterType}
-            onValueChange={(value) => setFilterType(value as 'todas' | 'al-dia' | 'pendientes')}
+            onValueChange={(value) =>
+              setFilterType(value as "todas" | "al-dia" | "pendientes")
+            }
             tabs={[
               {
-                value: 'todas',
-                label: 'Todas',
-                content: !loading && !hasResults ? (
-                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <HugeiconsIcon
-                        icon={MoneyReceiveFlow01Icon}
-                        size={24}
-                        className="text-gray-400"
-                      />
+                value: "todas",
+                label: "Todas",
+                content:
+                  !loading && !hasResults ? (
+                    <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          <HugeiconsIcon
+                            icon={MoneyReceiveFlow01Icon}
+                            size={24}
+                            className="text-gray-400"
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-base font-semibold text-gray-700">
+                            {searchTerm
+                              ? "No se encontraron resultados"
+                              : "No hay cuotas registradas"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {searchTerm
+                              ? `No hay casas que coincidan con "${searchTerm}"`
+                              : "No hay registros de cuotas disponibles en este momento"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-base font-semibold text-gray-700">
-                        {searchTerm ? 'No se encontraron resultados' : 'No hay cuotas registradas'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {searchTerm
-                          ? `No hay casas que coincidan con "${searchTerm}"`
-                          : 'No hay registros de cuotas disponibles en este momento'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <DataGrid
-                  table={table}
-                  recordCount={loading ? 10 : filteredCasas?.length || 0}
-                  isLoading={loading}
-                  loadingMode="skeleton"
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              )
+                  ) : (
+                    <DataGrid
+                      table={table}
+                      recordCount={loading ? 10 : filteredCasas?.length || 0}
+                      isLoading={loading}
+                      loadingMode="skeleton"
+                      tableLayout={{
+                        headerBackground: false,
+                        rowBorder: true,
+                        rowRounded: false,
+                      }}
+                    >
+                      <div className="w-full space-y-2.5">
+                        <DataGridContainer border={false}>
+                          <ScrollArea>
+                            <DataGridTable />
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </DataGridContainer>
+                        <DataGridPagination
+                          rowsPerPageLabel="Filas por página"
+                          info="{from} - {to} de {count}"
+                          previousPageLabel="Ir a la página anterior"
+                          nextPageLabel="Ir a la página siguiente"
+                        />
+                      </div>
+                    </DataGrid>
+                  ),
               },
               {
-                value: 'al-dia',
-                label: 'Al Día',
-                content: !loading && !hasResults ? (
-                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <HugeiconsIcon
-                        icon={MoneyReceiveFlow01Icon}
-                        size={24}
-                        className="text-gray-400"
-                      />
+                value: "al-dia",
+                label: "Al Día",
+                content:
+                  !loading && !hasResults ? (
+                    <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          <HugeiconsIcon
+                            icon={MoneyReceiveFlow01Icon}
+                            size={24}
+                            className="text-gray-400"
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-base font-semibold text-gray-700">
+                            {searchTerm
+                              ? "No se encontraron resultados"
+                              : "No hay casas al día"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {searchTerm
+                              ? `No hay casas al día que coincidan con "${searchTerm}"`
+                              : "No hay casas con todas sus cuotas al día registradas"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-base font-semibold text-gray-700">
-                        {searchTerm ? 'No se encontraron resultados' : 'No hay casas al día'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {searchTerm
-                          ? `No hay casas al día que coincidan con "${searchTerm}"`
-                          : 'No hay casas con todas sus cuotas al día registradas'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <DataGrid
-                  table={table}
-                  recordCount={loading ? 10 : filteredCasas?.length || 0}
-                  isLoading={loading}
-                  loadingMode="skeleton"
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              )
+                  ) : (
+                    <DataGrid
+                      table={table}
+                      recordCount={loading ? 10 : filteredCasas?.length || 0}
+                      isLoading={loading}
+                      loadingMode="skeleton"
+                      tableLayout={{
+                        headerBackground: false,
+                        rowBorder: true,
+                        rowRounded: false,
+                      }}
+                    >
+                      <div className="w-full space-y-2.5">
+                        <DataGridContainer border={false}>
+                          <ScrollArea>
+                            <DataGridTable />
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </DataGridContainer>
+                        <DataGridPagination
+                          rowsPerPageLabel="Filas por página"
+                          info="{from} - {to} de {count}"
+                          previousPageLabel="Ir a la página anterior"
+                          nextPageLabel="Ir a la página siguiente"
+                        />
+                      </div>
+                    </DataGrid>
+                  ),
               },
               {
-                value: 'pendientes',
-                label: 'Pendientes',
-                content: !loading && !hasResults ? (
-                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <HugeiconsIcon
-                        icon={MoneyReceiveFlow01Icon}
-                        size={24}
-                        className="text-gray-400"
-                      />
+                value: "pendientes",
+                label: "Pendientes",
+                content:
+                  !loading && !hasResults ? (
+                    <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          <HugeiconsIcon
+                            icon={MoneyReceiveFlow01Icon}
+                            size={24}
+                            className="text-gray-400"
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-base font-semibold text-gray-700">
+                            {searchTerm
+                              ? "No se encontraron resultados"
+                              : "No hay pagos pendientes"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {searchTerm
+                              ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
+                              : "No hay casas con pagos pendientes registradas"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-base font-semibold text-gray-700">
-                        {searchTerm ? 'No se encontraron resultados' : 'No hay pagos pendientes'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {searchTerm
-                          ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
-                          : 'No hay casas con pagos pendientes registradas'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <DataGrid
-                  table={table}
-                  recordCount={loading ? 10 : filteredCasas?.length || 0}
-                  isLoading={loading}
-                  loadingMode="skeleton"
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
-                  </div>
-                </DataGrid>
-              )
+                  ) : (
+                    <DataGrid
+                      table={table}
+                      recordCount={loading ? 10 : filteredCasas?.length || 0}
+                      isLoading={loading}
+                      loadingMode="skeleton"
+                      tableLayout={{
+                        headerBackground: false,
+                        rowBorder: true,
+                        rowRounded: false,
+                      }}
+                    >
+                      <div className="w-full space-y-2.5">
+                        <DataGridContainer border={false}>
+                          <ScrollArea>
+                            <DataGridTable />
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </DataGridContainer>
+                        <DataGridPagination
+                          rowsPerPageLabel="Filas por página"
+                          info="{from} - {to} de {count}"
+                          previousPageLabel="Ir a la página anterior"
+                          nextPageLabel="Ir a la página siguiente"
+                        />
+                      </div>
+                    </DataGrid>
+                  ),
               },
             ]}
             rightContent={
@@ -744,7 +880,7 @@ export default function CuotasPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                   />
-                  {searchTerm !== '' && (
+                  {searchTerm !== "" && (
                     <Button
                       onClick={handleClearSearch}
                       variant="ghost"
@@ -759,8 +895,8 @@ export default function CuotasPage() {
                   <Tooltip>
                     <ConfiguracionCuotasDialog>
                       <TooltipTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="icon"
                           className="h-10 w-10"
                         >
@@ -768,7 +904,12 @@ export default function CuotasPage() {
                         </Button>
                       </TooltipTrigger>
                     </ConfiguracionCuotasDialog>
-                    <TooltipContent side="top" align="end" alignOffset={-20} sideOffset={5}>
+                    <TooltipContent
+                      side="top"
+                      align="end"
+                      alignOffset={-20}
+                      sideOffset={5}
+                    >
                       <p>Configurar valores constantes</p>
                     </TooltipContent>
                   </Tooltip>
@@ -784,11 +925,13 @@ export default function CuotasPage() {
         <SheetContent
           side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: '500px', maxWidth: 'none' }}
+          style={{ width: "500px", maxWidth: "none" }}
         >
           <TooltipProvider>
             <SheetHeader className="border-b pb-4">
-              <SheetTitle className="text-xl font-semibold">Registrar Pago</SheetTitle>
+              <SheetTitle className="text-xl font-semibold">
+                Registrar Pago
+              </SheetTitle>
               <SheetDescription className="text-gray-600">
                 Registra un nuevo pago para la casa seleccionada.
               </SheetDescription>
@@ -808,7 +951,9 @@ export default function CuotasPage() {
                 <div className="space-y-6 px-4">
                   {/* Información de la casa */}
                   <div className="space-y-2">
-                    <span className="text-sm font-medium text-gray-700 block">Casa seleccionada</span>
+                    <span className="text-sm font-medium text-gray-700 block">
+                      Casa seleccionada
+                    </span>
                     <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
                       {/* Background pattern */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
@@ -819,11 +964,19 @@ export default function CuotasPage() {
                       <div className="relative z-10">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                            <HugeiconsIcon icon={Home01Icon} className="w-6 h-6 text-white" />
+                            <HugeiconsIcon
+                              icon={Home01Icon}
+                              className="w-6 h-6 text-white"
+                            />
                           </div>
                           <div className="space-y-1">
-                            <h3 className="text-xl font-bold text-gray-900">Casa No. {selectedCasa?.numeroCasa}</h3>
-                            <p className="text-sm text-gray-600 font-medium">{selectedCasa?.propietario?.nombreCompleto ?? "Sin Propietario"}</p>
+                            <h3 className="text-xl font-bold text-gray-900">
+                              Casa No. {selectedCasa?.numeroCasa}
+                            </h3>
+                            <p className="text-sm text-gray-600 font-medium">
+                              {selectedCasa?.propietario?.nombreCompleto ??
+                                "Sin Propietario"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -832,7 +985,10 @@ export default function CuotasPage() {
 
                   {/* Selector de obligación */}
                   <div className="space-y-2">
-                    <Label htmlFor="obligacion" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="obligacion"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Obligación a pagar
                     </Label>
                     <Controller
@@ -840,12 +996,14 @@ export default function CuotasPage() {
                       control={form.control}
                       render={({ field }) => (
                         <ObligacionCombobox
-                          obligaciones={selectedCasa?.obligacionesPendientes || []}
+                          obligaciones={
+                            selectedCasa?.obligacionesPendientes || []
+                          }
                           value={field.value}
                           onChange={field.onChange}
                           onObligacionSelect={(obligacion) => {
-                            setSelectedObligacion(obligacion)
-                            form.setValue('monto', obligacion.valorPendiente)
+                            setSelectedObligacion(obligacion);
+                            form.setValue("monto", obligacion.valorPendiente);
                           }}
                         />
                       )}
@@ -858,14 +1016,21 @@ export default function CuotasPage() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <div className="space-y-2">
-                        <Label htmlFor="monto" className="text-sm font-medium text-gray-700">
+                        <Label
+                          htmlFor="monto"
+                          className="text-sm font-medium text-gray-700"
+                        >
                           Monto a pagar
                           <span className="text-red-500 ml-1">*</span>
                         </Label>
                         <FormFieldWithTooltip
                           label=""
                           invalid={fieldState.invalid}
-                          error={showAllErrors ? fieldState.error?.message : undefined}
+                          error={
+                            showAllErrors
+                              ? fieldState.error?.message
+                              : undefined
+                          }
                           className="-mt-3"
                         >
                           <div className="relative">
@@ -877,13 +1042,16 @@ export default function CuotasPage() {
                               name="monto"
                               type="number"
                               placeholder="0"
-                              value={field.value?.toString() || ''}
+                              value={field.value?.toString() || ""}
                               onChange={(e) => {
-                                const value = e.target.value
-                                field.onChange(value ? parseFloat(value) : 0)
+                                const value = e.target.value;
+                                field.onChange(value ? parseFloat(value) : 0);
                               }}
-                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${fieldState.invalid ? 'border-red-500 focus:border-red-500' : ''
-                                }`}
+                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${
+                                fieldState.invalid
+                                  ? "border-red-500 focus:border-red-500"
+                                  : ""
+                              }`}
                             />
                           </div>
                         </FormFieldWithTooltip>
@@ -893,9 +1061,10 @@ export default function CuotasPage() {
 
                   {selectedObligacion && (
                     <div className="text-sm text-gray-500">
-                      Saldo pendiente: {new Intl.NumberFormat('es-CO', {
-                        style: 'currency',
-                        currency: 'COP',
+                      Saldo pendiente:{" "}
+                      {new Intl.NumberFormat("es-CO", {
+                        style: "currency",
+                        currency: "COP",
                       }).format(selectedObligacion.valorPendiente)}
                     </div>
                   )}
@@ -915,7 +1084,7 @@ export default function CuotasPage() {
                 </Button>
               </SheetClose>
               <Button
-                form='pago-form'
+                form="pago-form"
                 type="submit"
                 onClick={() => {
                   setShowAllErrors(true);
@@ -929,5 +1098,5 @@ export default function CuotasPage() {
         </SheetContent>
       </Sheet>
     </>
-  )
+  );
 }
