@@ -1,88 +1,261 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Separator } from '@/components/ui/separator'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { CalendarProvider } from '@/calendar/contexts/calendar-context'
-import { ClientContainer } from '@/calendar/components/client-container'
-import { ReservasList } from '@/components/reservas-list'
-import { PROPIETARIOS_MOCK, RESERVAS_MOCK } from '@/data/reservas.mock'
-import { addColorToReservas } from '@/utils/reservas-utils'
-import type { TCalendarView } from '@/calendar/types'
+import { useState, useMemo, useRef } from 'react'
+import { 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  format, 
+  isSameMonth,
+  isSameDay
+} from 'date-fns'
+import { useReservas } from '@/hooks/useReserva'
+import { adaptReservasToCalendar } from '@/lib/adapters/reservas.adapter'
+import { useReservasFilters } from '@/hooks/useReservasFilters'
+import { useReservasActions, type UseReservasActionsReturn } from '@/hooks/useReservasActions'
+import { groupReservasByDay, getDaysWithEvents, countReservasDelMes } from '@/lib/utils/reservas.utils'
+import { ReservasLayout } from '@/components/reservas-layout'
+import { LoadingState } from '@/components/loading-state'
+import { ErrorState } from '@/components/error-state'
+import { MonthSelector } from '@/components/month-selector'
+import { DayRowCard } from '@/components/day-row-card'
+import { MiniCalendar } from '@/components/mini-calendar'
+import { ProximasReservas } from '@/components/proximas-reservas'
+import { ReservaDetailSheet } from '@/components/reserva-detail-sheet'
+import { EditReservaSheet } from '@/components/edit-reserva-sheet'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 export default function ReservasPage() {
-  const [currentView, setCurrentView] = useState<TCalendarView>('month')
+  // ==================== Estados de UI ====================
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date())
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  // Aplicar colores dinámicamente según el tipo de recurso
-  const reservasConColor = useMemo(() => addColorToReservas(RESERVAS_MOCK), [])
+  // ==================== Datos de Reservas ====================
+  const { 
+    reservasAprobadas, 
+    reservasRechazadas, 
+    reservasPendientes, 
+    loading, 
+    error,
+    aprobarReserva,
+    rechazarReserva,
+    eliminarReserva,
+    recargar
+  } = useReservas()
 
+  // Combinar y adaptar todas las reservas
+  const todasLasReservas = useMemo(() => {
+    return [...reservasAprobadas, ...reservasRechazadas, ...reservasPendientes]
+  }, [reservasAprobadas, reservasRechazadas, reservasPendientes])
+
+  const reservasBase = useMemo(() => {
+    return adaptReservasToCalendar(todasLasReservas)
+  }, [todasLasReservas])
+
+  // ==================== Filtros ====================
+  const {
+    tipoRecursoFilter,
+    estadoFilter,
+    reservasFiltradas,
+    activeFiltersCount,
+    setTipoRecursoFilter,
+    setEstadoFilter,
+    clearFilters,
+  } = useReservasFilters(reservasBase)
+
+  // ==================== Acciones ====================
+  const acciones: UseReservasActionsReturn = useReservasActions({
+    aprobarReserva,
+    rechazarReserva,
+    eliminarReserva,
+    recargar,
+  })
+
+  const {
+    selectedReserva,
+    detailSheetOpen,
+    setDetailSheetOpen,
+    editSheetOpen,
+    setEditSheetOpen,
+    reservaEditando,
+    setReservaEditando,
+    confirmDialogOpen,
+    setConfirmDialogOpen,
+    handleViewDetails,
+    handleEdit,
+    handleSaveEdit,
+    handleDelete,
+    handleAprobar,
+    handleRechazar,
+    executeConfirmedAction,
+    getConfirmDialogContent,
+  } = acciones
+
+  // ==================== Cálculos de Fechas ====================
+  const daysInMonth = useMemo(() => {
+    const start = startOfMonth(selectedMonth)
+    const end = endOfMonth(selectedMonth)
+    return eachDayOfInterval({ start, end })
+  }, [selectedMonth])
+
+  const reservasPorDia = useMemo(() => {
+    return groupReservasByDay(reservasFiltradas)
+  }, [reservasFiltradas])
+
+  const daysWithEvents = useMemo(() => {
+    return getDaysWithEvents(reservasPorDia)
+  }, [reservasPorDia])
+
+  const reservasDelMes = useMemo(() => {
+    return countReservasDelMes(reservasFiltradas, selectedMonth)
+  }, [reservasFiltradas, selectedMonth])
+
+  // ==================== Handlers ====================
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date)
+    
+    // Si el día no está en el mes actual, cambiar el mes
+    if (!isSameMonth(date, selectedMonth)) {
+      setSelectedMonth(date)
+    }
+    
+    // Hacer scroll al día seleccionado
+    const dateKey = format(date, 'yyyy-MM-dd')
+    setTimeout(() => {
+      const element = document.getElementById(`day-${dateKey}`)
+      if (element && scrollContainerRef.current) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+
+  // ==================== Estados de Carga y Error ====================
+  if (loading) {
+    return <LoadingState />
+  }
+
+  if (error && todasLasReservas.length === 0) {
+    return <ErrorState error={error} onRetry={recargar} />
+  }
+
+  // ==================== Render ====================
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/admin/dashboard">
-                  Dashboard Admin
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/admin/bienes-comunes">
-                  Bienes Comunes
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Reservas</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Contenido con padding */}
-        <div className="flex flex-1 flex-col gap-6 p-6 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Reservas</h1>
-              <p className="text-gray-500 mt-1">
-                Gestiona las reservas de espacios comunes y recursos del condominio.
-              </p>
-            </div>
+    <ReservasLayout>
+      {/* Layout de dos columnas */}
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+        {/* Columna izquierda - Lista de días */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 border-r border-gray-100">
+          {/* Selector de meses con filtros */}
+          <div className="shrink-0">
+            <MonthSelector 
+              selectedMonth={selectedMonth} 
+              onMonthChange={setSelectedMonth}
+              tipoRecursoFilter={tipoRecursoFilter}
+              estadoFilter={estadoFilter}
+              onTipoRecursoChange={setTipoRecursoFilter}
+              onEstadoChange={setEstadoFilter}
+              activeFiltersCount={activeFiltersCount}
+              onClearFilters={clearFilters}
+              reservasCount={reservasDelMes}
+            />
           </div>
 
-          {/* Layout de dos columnas: Calendario + Lista de Reservas */}
-          <CalendarProvider users={PROPIETARIOS_MOCK} events={reservasConColor}>
-            <div className="flex flex-col xl:flex-row gap-6 overflow-hidden min-h-0" style={{ height: 'calc(100vh - 210px)', maxHeight: '875px' }}>
-              {/* Calendario de Reservas */}
-              <div className="flex-1 min-w-0 max-w-full xl:max-w-[calc(100%-444px)]">
-                <ClientContainer view={currentView} onViewChange={setCurrentView} />
-              </div>
+          {/* Lista de días con scroll */}
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 min-h-0 overflow-y-auto px-4 py-4"
+          >
+            <div className="space-y-2">
+              {daysInMonth.map((day, index) => {
+                const dateKey = format(day, 'yyyy-MM-dd')
+                const dayReservas = reservasPorDia[dateKey] || []
+                const isSelected = isSameDay(day, selectedDate)
 
-              {/* Lista de Reservas */}
-              <div className="border rounded-xl p-4 bg-white overflow-hidden flex flex-col xl:w-[420px] xl:flex-shrink-0">
-                <ReservasList reservas={reservasConColor} />
-              </div>
+                return (
+                  <div key={dateKey} id={`day-${dateKey}`}>
+                    <DayRowCard
+                      day={day}
+                      dayNumber={index + 1}
+                      reservas={dayReservas}
+                      isSelected={isSelected}
+                      onClick={() => handleDateSelect(day)}
+                      onViewDetails={handleViewDetails}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onAprobar={handleAprobar}
+                      onRechazar={handleRechazar}
+                    />
+                  </div>
+                )
+              })}
             </div>
-          </CalendarProvider>
+          </div>
+        </div>
+
+        {/* Columna derecha - Sidebar */}
+        <div className="w-full lg:w-[380px] shrink-0 bg-white flex flex-col min-h-0">
+          {/* Mini Calendario */}
+          <div className="shrink-0">
+            <MiniCalendar
+              selectedDate={selectedDate}
+              selectedMonth={selectedMonth}
+              onDateSelect={handleDateSelect}
+              onMonthChange={setSelectedMonth}
+              daysWithEvents={daysWithEvents}
+            />
+          </div>
+
+          {/* Próximas reservas */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <ProximasReservas 
+              reservas={reservasFiltradas}
+              onAprobar={handleAprobar}
+              onRechazar={handleRechazar}
+              onViewDetails={handleViewDetails}
+            />
+          </div>
         </div>
       </div>
-    </>
+
+      {/* Sheets y Diálogos */}
+      <ReservaDetailSheet
+        reserva={selectedReserva}
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onAprobar={handleAprobar}
+        onRechazar={handleRechazar}
+      />
+
+      <EditReservaSheet
+        reserva={reservaEditando}
+        open={editSheetOpen}
+        onOpenChange={(open: boolean) => {
+          setEditSheetOpen(open)
+          if (!open) {
+            setReservaEditando(null)
+          }
+        }}
+        onSave={handleSaveEdit}
+        todasLasReservas={reservasFiltradas}
+      />
+
+      {(() => {
+        const dialogContent = getConfirmDialogContent()
+        return dialogContent.title ? (
+          <ConfirmDialog
+            open={confirmDialogOpen}
+            onOpenChange={setConfirmDialogOpen}
+            title={dialogContent.title}
+            description={dialogContent.description}
+            confirmText={dialogContent.confirmText}
+            variant={dialogContent.variant}
+            onConfirm={executeConfirmedAction}
+          />
+        ) : null
+      })()}
+    </ReservasLayout>
   )
 }
