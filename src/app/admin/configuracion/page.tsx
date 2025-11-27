@@ -112,7 +112,7 @@ export default function ConfiguracionPage() {
   const [showPersonalInfoErrors, setShowPersonalInfoErrors] = useState(false);
   const [showPasswordErrors, setShowPasswordErrors] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { perfil, loading } = usePerfil();
+  const { perfil, loading, refetch } = usePerfil();
 
   const nav = [
     {
@@ -148,10 +148,10 @@ export default function ConfiguracionPage() {
         segundoNombre: perfil?.segundoNombre || "",
         primerApellido: perfil?.primerApellido || "",
         segundoApellido: perfil?.segundoApellido || "",
-        telefono: perfil?.telefono || "",
+        telefono: typeof perfil?.telefono === 'number' ? perfil.telefono : Number(perfil?.telefono) || 0,
         correo: perfil?.email || "",
         tipoDocumento: perfil?.tipoDocumento || "",
-        numeroDocumento: perfil?.numeroDocumento || "",
+        numeroDocumento: typeof perfil?.numeroDocumento === 'number' ? perfil.numeroDocumento : Number(perfil?.numeroDocumento) || 0,
       });
     }
   }, [perfil, personalInfoForm]);
@@ -172,11 +172,15 @@ export default function ConfiguracionPage() {
       await updatePersona(data);
       toast.success("Información actualizada correctamente");
       setIsPersonalInfoSheetOpen(false);
+      setShowPersonalInfoErrors(false);
+      // Refrescar el perfil para mostrar los cambios actualizados
+      await refetch();
     } catch (error) {
-      toast.error("No se pudo actualizar la información");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "No se pudo actualizar la información";
+      toast.error(errorMessage);
     }
-    setIsPersonalInfoSheetOpen(false);
-    setShowPersonalInfoErrors(false);
   };
 
   const handlePasswordSubmit = async (data: PasswordFormData) => {
@@ -184,13 +188,14 @@ export default function ConfiguracionPage() {
       await updatePassword(data);
       toast.success("Contraseña actualizada correctamente");
       setIsPasswordSheetOpen(false);
+      setShowPasswordErrors(false);
+      passwordForm.reset();
     } catch (error) {
-      toast.error("No se pudo actualizar la contraseña");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "No se pudo actualizar la contraseña";
+      toast.error(errorMessage);
     }
-    console.log("Datos de contraseña:", data);
-    setIsPasswordSheetOpen(false);
-    setShowPasswordErrors(false);
-    passwordForm.reset();
   };
 
   const getTipoDocumentoLabel = (value: string) => {
@@ -630,7 +635,7 @@ export default function ConfiguracionPage() {
                         render={({ field, fieldState }) => (
                           <FormInput
                             {...field}
-                            name="email"
+                            name="correo"
                             label="Correo Electrónico"
                             required={true}
                             placeholder="Ej: juan.perez@email.com"
