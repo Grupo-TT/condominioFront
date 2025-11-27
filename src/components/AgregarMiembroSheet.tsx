@@ -1,20 +1,24 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Check } from 'lucide-react'
-import { Separator } from '@/components/ui/separator'
-import { Label } from '@/components/ui/label'
+import { useState, useEffect } from "react";
+import { Check } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { FormInput } from '@/components/forms/FormInput'
-import { Button, ButtonArrow } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+} from "@/components/ui/sheet";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { FormInput } from "@/components/forms/FormInput";
+import { Button, ButtonArrow } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -22,169 +26,173 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command'
+} from "@/components/ui/command";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { User03Icon } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
-import { MiembroHogar } from '@/types/casa.types'
+} from "@/components/ui/select";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { User03Icon } from "@hugeicons/core-free-icons";
+import { cn } from "@/lib/utils";
+import { CreateMiembroHogar, UpdateMiembroHogar } from "@/types/casa.types";
+import { miembrosService } from "@/lib/services/casa.service";
 
 interface AgregarMiembroSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  miembroParaEditar?: MiembroHogar | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  miembroParaEditar?: UpdateMiembroHogar | null;
+  idCasa: number;
 }
 
 const parentescos = [
-  { value: 'ESPOSA', label: 'Esposa' },
-  { value: 'ESPOSO', label: 'Esposo' },
-  { value: 'HIJO', label: 'Hijo' },
-  { value: 'HIJA', label: 'Hija' },
-  { value: 'PADRE', label: 'Padre' },
-  { value: 'MADRE', label: 'Madre' },
-  { value: 'HERMANO', label: 'Hermano' },
-  { value: 'HERMANA', label: 'Hermana' },
-  { value: 'ABUELO', label: 'Abuelo' },
-  { value: 'ABUELA', label: 'Abuela' },
-  { value: 'TIO', label: 'Tío' },
-  { value: 'TIA', label: 'Tía' },
-  { value: 'SOBRINO', label: 'Sobrino' },
-  { value: 'SOBRINA', label: 'Sobrina' },
-  { value: 'NIETO', label: 'Nieto' },
-  { value: 'NIETA', label: 'Nieta' },
-]
+  { value: "Esposa", label: "Esposa" },
+  { value: "Esposo", label: "Esposo" },
+  { value: "Hijo", label: "Hijo" },
+  { value: "Hija", label: "Hija" },
+  { value: "Padre", label: "Padre" },
+  { value: "Madre", label: "Madre" },
+  { value: "Hermano", label: "Hermano" },
+  { value: "Hermana", label: "Hermana" },
+  { value: "Abuelo", label: "Abuelo" },
+  { value: "Abuela", label: "Abuela" },
+  { value: "Tio", label: "Tío" },
+  { value: "Tia", label: "Tía" },
+  { value: "Sobrino", label: "Sobrino" },
+  { value: "Sobrina", label: "Sobrina" },
+  { value: "Nieto", label: "Nieto" },
+  { value: "Nieta", label: "Nieta" },
+];
 
-export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: AgregarMiembroSheetProps) {
-  const [formNombre, setFormNombre] = useState('')
-  const [formParentesco, setFormParentesco] = useState('')
-  const [formTelefono, setFormTelefono] = useState('')
-  const [formCorreo, setFormCorreo] = useState('')
-  const [formTipoDocumento, setFormTipoDocumento] = useState('')
-  const [formDocumento, setFormDocumento] = useState('')
-  const [parentescoComboboxOpen, setParentescoComboboxOpen] = useState(false)
-  const [parentescoSearchTerm, setParentescoSearchTerm] = useState('')
-  const [showFormErrors, setShowFormErrors] = useState(false)
+export function AgregarMiembroSheet({
+  open,
+  onOpenChange,
+  miembroParaEditar,
+  idCasa,
+}: AgregarMiembroSheetProps) {
+  const [formNombre, setFormNombre] = useState("");
+  const [formParentesco, setFormParentesco] = useState("");
+  const [formTelefono, setFormTelefono] = useState("");
+  const [formTipoDocumento, setFormTipoDocumento] = useState("");
+  const [formDocumento, setFormDocumento] = useState("");
+  const [parentescoComboboxOpen, setParentescoComboboxOpen] = useState(false);
+  const [parentescoSearchTerm, setParentescoSearchTerm] = useState("");
+  const [showFormErrors, setShowFormErrors] = useState(false);
 
   // Cargar datos del miembro cuando se abre en modo edición
   useEffect(() => {
     if (open && miembroParaEditar) {
-      setFormNombre(miembroParaEditar.nombreCompleto)
-      setFormParentesco(miembroParaEditar.parentesco)
-      setFormTelefono(miembroParaEditar.telefono || '')
-      setFormTipoDocumento(miembroParaEditar.tipoDocumento)
-      setFormDocumento(miembroParaEditar.numeroDocumento)
+      setFormNombre(miembroParaEditar.nombre);
+      setFormParentesco(miembroParaEditar.parentesco);
+      setFormTelefono(miembroParaEditar.telefono?.toString() || "");
+      setFormTipoDocumento(miembroParaEditar.tipoDocumento);
+      setFormDocumento(miembroParaEditar.numeroDocumento.toString() || "");
     } else if (open && !miembroParaEditar) {
       // Limpiar formulario cuando se abre en modo agregar
-      setFormNombre('')
-      setFormParentesco('')
-      setFormTelefono('')
-      setFormCorreo('')
-      setFormTipoDocumento('')
-      setFormDocumento('')
-      setParentescoSearchTerm('')
-      setErrors({})
-      setShowFormErrors(false)
+      setFormNombre("");
+      setFormParentesco("");
+      setFormTelefono("");
+      setFormTipoDocumento("");
+      setFormDocumento("");
+      setParentescoSearchTerm("");
+      setErrors({});
+      setShowFormErrors(false);
     }
-  }, [open, miembroParaEditar])
-  
+  }, [open, miembroParaEditar]);
+
   const [errors, setErrors] = useState<{
-    nombre?: string
-    parentesco?: string
-    telefono?: string
-    correo?: string
-    tipoDocumento?: string
-    documento?: string
-  }>({})
+    nombre?: string;
+    parentesco?: string;
+    telefono?: string;
+    tipoDocumento?: string;
+    documento?: string;
+  }>({});
 
   const validateForm = () => {
-    const newErrors: typeof errors = {}
-    
+    const newErrors: typeof errors = {};
+
     if (!formNombre.trim()) {
-      newErrors.nombre = 'El nombre es obligatorio'
+      newErrors.nombre = "El nombre es obligatorio";
     }
-    
+
     if (!formParentesco) {
-      newErrors.parentesco = 'El parentesco es obligatorio'
+      newErrors.parentesco = "El parentesco es obligatorio";
     }
-    
-    if (formTelefono && !/^[0-9]{10}$/.test(formTelefono.replace(/\s/g, ''))) {
-      newErrors.telefono = 'El teléfono debe tener 10 dígitos'
+
+    if (formTelefono && !/^[0-9]{10}$/.test(formTelefono.replace(/\s/g, ""))) {
+      newErrors.telefono = "El teléfono debe tener 10 dígitos";
     }
-    
-    if (formCorreo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formCorreo)) {
-      newErrors.correo = 'El correo electrónico no es válido'
-    }
-    
+
     if (!formTipoDocumento) {
-      newErrors.tipoDocumento = 'El tipo de documento es obligatorio'
+      newErrors.tipoDocumento = "El tipo de documento es obligatorio";
     }
-    
+
     if (!formDocumento.trim()) {
-      newErrors.documento = 'El número de documento es obligatorio'
-    } else if (!/^[0-9]{6,12}$/.test(formDocumento.replace(/\s/g, ''))) {
-      newErrors.documento = 'El documento debe tener entre 6 y 12 dígitos'
+      newErrors.documento = "El número de documento es obligatorio";
+    } else if (!/^[0-9]{6,12}$/.test(formDocumento.replace(/\s/g, ""))) {
+      newErrors.documento = "El documento debe tener entre 6 y 12 dígitos";
     }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleClose = (open: boolean) => {
-    onOpenChange(open)
+    onOpenChange(open);
     if (!open) {
       // Limpiar formulario al cerrar
-      setFormNombre('')
-      setFormParentesco('')
-      setFormTelefono('')
-      setFormCorreo('')
-      setFormTipoDocumento('')
-      setFormDocumento('')
-      setParentescoSearchTerm('')
-      setErrors({})
-      setShowFormErrors(false)
+      setFormNombre("");
+      setFormParentesco("");
+      setFormTelefono("");
+      setFormTipoDocumento("");
+      setFormDocumento("");
+      setParentescoSearchTerm("");
+      setErrors({});
+      setShowFormErrors(false);
     }
-  }
+  };
 
   // Filtrar parentescos por término de búsqueda
-  const parentescosFiltrados = parentescos.filter(parentesco =>
+  const parentescosFiltrados = parentescos.filter((parentesco) =>
     parentesco.label.toLowerCase().includes(parentescoSearchTerm.toLowerCase())
-  )
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setShowFormErrors(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowFormErrors(true);
     if (validateForm()) {
-      // Aquí iría la lógica para agregar o editar el miembro
-      if (miembroParaEditar) {
-        console.log('Editar miembro:', {
-          id: miembroParaEditar.id,
-          nombre: formNombre,
-          parentesco: formParentesco,
-          telefono: formTelefono,
-          correo: formCorreo,
-          tipoDocumento: formTipoDocumento,
-          documento: formDocumento
-        })
-      } else {
-        console.log('Agregar miembro:', {
-          nombre: formNombre,
-          parentesco: formParentesco,
-          telefono: formTelefono,
-          correo: formCorreo,
-          tipoDocumento: formTipoDocumento,
-          documento: formDocumento
-        })
+      try {
+        if (miembroParaEditar) {
+          const updatePayload: UpdateMiembroHogar = {
+            id: miembroParaEditar.id,
+            idCasa: miembroParaEditar.idCasa, // ya existe
+            nombre: formNombre,
+            numeroDocumento: Number(formDocumento),
+            telefono: formTelefono ? Number(formTelefono) : undefined,
+            tipoDocumento: formTipoDocumento,
+            parentesco: formParentesco,
+          };
+          await miembrosService.updateMember(updatePayload.id, updatePayload);
+        } else {
+          const createPayload: CreateMiembroHogar = {
+            idCasa,
+            nombre: formNombre,
+            numeroDocumento: Number(formDocumento),
+            telefono: formTelefono ? Number(formTelefono) : undefined,
+            tipoDocumento: formTipoDocumento,
+            parentesco: formParentesco,
+          };
+          await miembrosService.createMember(createPayload);
+        }
+        handleClose(false);
+      } catch (error) {
+        console.error("Error al guardar el miembro del hogar:", error);
       }
-      handleClose(false)
     }
-  }
+  };
 
   return (
     <Sheet open={open} onOpenChange={handleClose}>
@@ -192,24 +200,30 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
         <SheetContent
           side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
-          style={{ 
-            width: '600px', 
-            maxWidth: 'none'
+          style={{
+            width: "600px",
+            maxWidth: "none",
           }}
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <HugeiconsIcon icon={User03Icon} size={28} style={{ color: '#4C6C5A' }} />
+                <HugeiconsIcon
+                  icon={User03Icon}
+                  size={28}
+                  style={{ color: "#4C6C5A" }}
+                />
               </div>
               <div className="flex-1">
                 <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
-                  {miembroParaEditar ? 'Modificar Miembro del Hogar' : 'Agregar Miembro del Hogar'}
+                  {miembroParaEditar
+                    ? "Modificar Miembro del Hogar"
+                    : "Agregar Miembro del Hogar"}
                 </SheetTitle>
                 <SheetDescription className="text-sm text-gray-500">
-                  {miembroParaEditar 
-                    ? 'Modifica la información del miembro del hogar.'
-                    : 'Completa la información del nuevo miembro del hogar.'}
+                  {miembroParaEditar
+                    ? "Modifica la información del miembro del hogar."
+                    : "Completa la información del nuevo miembro del hogar."}
                 </SheetDescription>
               </div>
             </div>
@@ -223,18 +237,23 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                 className="space-y-6 px-6 pt-6"
               >
                 <div className="space-y-6">
-                  <h3 className="text-sm font-medium text-gray-500">Información Personal</h3>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Información Personal
+                  </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <FormInput
                       name="nombre"
                       label="Nombre Completo"
                       value={formNombre}
                       onChange={(value) => {
-                        setFormNombre(value)
+                        setFormNombre(value);
                         if (showFormErrors && !value.trim()) {
-                          setErrors(prev => ({ ...prev, nombre: 'El nombre es obligatorio' }))
+                          setErrors((prev) => ({
+                            ...prev,
+                            nombre: "El nombre es obligatorio",
+                          }));
                         } else {
-                          setErrors(prev => ({ ...prev, nombre: undefined }))
+                          setErrors((prev) => ({ ...prev, nombre: undefined }));
                         }
                       }}
                       placeholder="Ej: María González"
@@ -245,10 +264,17 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                     />
 
                     <div className="space-y-2">
-                      <Label htmlFor="parentesco" className="text-sm font-medium">
+                      <Label
+                        htmlFor="parentesco"
+                        className="text-sm font-medium"
+                      >
                         Parentesco <span className="text-red-500">*</span>
                       </Label>
-                      <Popover open={parentescoComboboxOpen} onOpenChange={setParentescoComboboxOpen} modal={false}>
+                      <Popover
+                        open={parentescoComboboxOpen}
+                        onOpenChange={setParentescoComboboxOpen}
+                        modal={false}
+                      >
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -258,15 +284,21 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                             aria-expanded={parentescoComboboxOpen}
                             className={cn(
                               "w-full justify-between h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md",
-                              showFormErrors && errors.parentesco && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                              showFormErrors &&
+                                errors.parentesco &&
+                                "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                             )}
                           >
                             {formParentesco ? (
                               <span className="font-medium">
-                                {parentescos.find(p => p.value === formParentesco)?.label || formParentesco}
+                                {parentescos.find(
+                                  (p) => p.value === formParentesco
+                                )?.label || formParentesco}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">Seleccionar parentesco</span>
+                              <span className="text-muted-foreground">
+                                Seleccionar parentesco
+                              </span>
                             )}
                             <ButtonArrow />
                           </Button>
@@ -276,37 +308,48 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                           onWheel={(e) => e.stopPropagation()}
                         >
                           <Command shouldFilter={false}>
-                            <CommandInput 
-                              placeholder="Buscar parentesco..." 
+                            <CommandInput
+                              placeholder="Buscar parentesco..."
                               value={parentescoSearchTerm}
                               onValueChange={setParentescoSearchTerm}
                             />
                             <CommandList>
                               <ScrollArea viewportClassName="max-h-[300px]">
-                                <CommandEmpty>No se encontró parentesco.</CommandEmpty>
+                                <CommandEmpty>
+                                  No se encontró parentesco.
+                                </CommandEmpty>
                                 <CommandGroup>
                                   {parentescosFiltrados.map((parentesco) => {
-                                    const isSelected = formParentesco === parentesco.value
+                                    const isSelected =
+                                      formParentesco === parentesco.value;
                                     return (
                                       <CommandItem
                                         key={parentesco.value}
                                         value={parentesco.value}
                                         onSelect={() => {
-                                          const newValue = parentesco.value === formParentesco ? '' : parentesco.value
-                                          setFormParentesco(newValue)
-                                          setParentescoComboboxOpen(false)
+                                          const newValue =
+                                            parentesco.value === formParentesco
+                                              ? ""
+                                              : parentesco.value;
+                                          setFormParentesco(newValue);
+                                          setParentescoComboboxOpen(false);
                                           if (showFormErrors) {
-                                            setErrors(prev => ({ ...prev, parentesco: undefined }))
+                                            setErrors((prev) => ({
+                                              ...prev,
+                                              parentesco: undefined,
+                                            }));
                                           }
                                         }}
                                         className="flex items-center py-3"
                                       >
-                                        <span className="font-medium">{parentesco.label}</span>
+                                        <span className="font-medium">
+                                          {parentesco.label}
+                                        </span>
                                         {isSelected && (
                                           <Check className="ml-auto h-4 w-4" />
                                         )}
                                       </CommandItem>
-                                    )
+                                    );
                                   })}
                                 </CommandGroup>
                                 <ScrollBar />
@@ -322,18 +365,30 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                 <Separator className="my-6" />
 
                 <div className="space-y-6">
-                  <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Información de Contacto
+                  </h3>
                   <div className="grid grid-cols-1 gap-6">
                     <FormInput
                       name="telefono"
                       label="Teléfono"
                       value={formTelefono}
                       onChange={(value) => {
-                        setFormTelefono(value)
-                        if (showFormErrors && value && !/^[0-9]{10}$/.test(value.replace(/\s/g, ''))) {
-                          setErrors(prev => ({ ...prev, telefono: 'El teléfono debe tener 10 dígitos' }))
+                        setFormTelefono(value);
+                        if (
+                          showFormErrors &&
+                          value &&
+                          !/^[0-9]{10}$/.test(value.replace(/\s/g, ""))
+                        ) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            telefono: "El teléfono debe tener 10 dígitos",
+                          }));
                         } else {
-                          setErrors(prev => ({ ...prev, telefono: undefined }))
+                          setErrors((prev) => ({
+                            ...prev,
+                            telefono: undefined,
+                          }));
                         }
                       }}
                       placeholder="Ej: 3001234567"
@@ -342,60 +397,58 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                       error={errors.telefono}
                       showError={showFormErrors}
                     />
-
-                    <FormInput
-                      name="correo"
-                      label="Correo Electrónico"
-                      value={formCorreo}
-                      onChange={(value) => {
-                        setFormCorreo(value)
-                        if (showFormErrors && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                          setErrors(prev => ({ ...prev, correo: 'El correo electrónico no es válido' }))
-                        } else {
-                          setErrors(prev => ({ ...prev, correo: undefined }))
-                        }
-                      }}
-                      placeholder="Ej: maria.gonzalez@email.com"
-                      type="email"
-                      invalid={!!errors.correo}
-                      error={errors.correo}
-                      showError={showFormErrors}
-                    />
                   </div>
                 </div>
 
                 <Separator className="my-6" />
 
                 <div className="space-y-6">
-                  <h3 className="text-sm font-medium text-gray-500">Documento de Identidad</h3>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Documento de Identidad
+                  </h3>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="tipoDocumento" className="text-sm font-medium">
-                        Tipo de Documento <span className="text-red-500">*</span>
+                      <Label
+                        htmlFor="tipoDocumento"
+                        className="text-sm font-medium"
+                      >
+                        Tipo de Documento{" "}
+                        <span className="text-red-500">*</span>
                       </Label>
-                      <Select 
-                        value={formTipoDocumento} 
+                      <Select
+                        value={formTipoDocumento}
                         onValueChange={(value) => {
-                          setFormTipoDocumento(value)
+                          setFormTipoDocumento(value);
                           if (showFormErrors) {
-                            setErrors(prev => ({ ...prev, tipoDocumento: undefined }))
+                            setErrors((prev) => ({
+                              ...prev,
+                              tipoDocumento: undefined,
+                            }));
                           }
                         }}
                         required
                       >
-                        <SelectTrigger 
+                        <SelectTrigger
                           id="tipoDocumento"
                           className={cn(
-                            showFormErrors && errors.tipoDocumento && "border-red-500 focus:border-red-500"
+                            showFormErrors &&
+                              errors.tipoDocumento &&
+                              "border-red-500 focus:border-red-500"
                           )}
                         >
                           <SelectValue placeholder="Seleccionar tipo" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-                          <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
-                          <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                          <SelectItem value="PA">Pasaporte</SelectItem>
+                          <SelectItem value="CEDULA_DE_CIUDADANIA">
+                            Cédula de Ciudadanía
+                          </SelectItem>
+                          <SelectItem value="TARJETA_DE_IDENTIDAD">
+                            Tarjeta de Identidad
+                          </SelectItem>
+                          <SelectItem value="CEDULA_DE_EXTRANJERIA">
+                            Cédula de Extranjería
+                          </SelectItem>
+                          <SelectItem value="PASAPORTE">Pasaporte</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -405,14 +458,27 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                       label="Número de Documento"
                       value={formDocumento}
                       onChange={(value) => {
-                        setFormDocumento(value)
+                        setFormDocumento(value);
                         if (showFormErrors) {
                           if (!value.trim()) {
-                            setErrors(prev => ({ ...prev, documento: 'El número de documento es obligatorio' }))
-                          } else if (!/^[0-9]{6,12}$/.test(value.replace(/\s/g, ''))) {
-                            setErrors(prev => ({ ...prev, documento: 'El documento debe tener entre 6 y 12 dígitos' }))
+                            setErrors((prev) => ({
+                              ...prev,
+                              documento:
+                                "El número de documento es obligatorio",
+                            }));
+                          } else if (
+                            !/^[0-9]{6,12}$/.test(value.replace(/\s/g, ""))
+                          ) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              documento:
+                                "El documento debe tener entre 6 y 12 dígitos",
+                            }));
                           } else {
-                            setErrors(prev => ({ ...prev, documento: undefined }))
+                            setErrors((prev) => ({
+                              ...prev,
+                              documento: undefined,
+                            }));
                           }
                         }
                       }}
@@ -441,13 +507,12 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
                 form="agregar-miembro-form"
                 className="flex-1 h-10 font-medium"
               >
-                {miembroParaEditar ? 'Guardar Cambios' : 'Agregar Miembro'}
+                {miembroParaEditar ? "Guardar Cambios" : "Agregar Miembro"}
               </Button>
             </SheetFooter>
           </div>
         </SheetContent>
       </TooltipProvider>
     </Sheet>
-  )
+  );
 }
-

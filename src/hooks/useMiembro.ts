@@ -18,9 +18,7 @@ export function useMiembros(casaNumero: string | number) {
       setLoading(true)
       setError(null)
 
-        const miembrosData = await miembrosService.getMembers()
-        console.log("🚀 ~ useMiembros ~ miembrosData:", miembrosData)
-        
+        const miembrosData = await miembrosService.getMembers()        
         setMiembros(
           (miembrosData || []).map(m => ({
             nombre: m.nombre,
