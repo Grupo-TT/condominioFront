@@ -1,3 +1,4 @@
+import { MiembroHogar } from '@/types/casa.types'
 import { apiClient } from '../config/axios.config'
 
 interface CasaFromAPI {
@@ -74,15 +75,20 @@ export const casaService = {
   }
 }
 
-interface MiembroCasa {
-  nombreCompleto: string
-  tipoMiembro: 'PROPIETARIO' | 'ARRENDATARIO' | 'FAMILIAR' | 'OTRO' | string
-  numeroDocumento: number | string
-  telefono: number | string
-  email?: string
+export const miembrosService = {
+  async getMembers() {
+    try {
+      const res = await apiClient.get<MiembrosApiResponse>(`/miembros/all-casa-members`)
+      console.log("🚀 ~ res:", res)
+      return res.data || []
+    } catch (error) {
+      console.error('Error al obtener los miembros:', error)
+      throw error
+    }
+  }
 }
 
 interface MiembrosApiResponse {
   message: string
-  data: MiembroCasa[]
+  data: MiembroHogar[]
 }

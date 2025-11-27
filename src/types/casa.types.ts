@@ -27,8 +27,17 @@ export interface Casa {
 export interface MiembroCasa {
   nombreCompleto: string
   tipoMiembro: string
-  numeroDocumento: number
-  telefono: number
-  email: string
+  numeroDocumento: string
+  telefono: string
 }
 
+export interface MiembroHogar {
+  idCasa: string
+  nombre: string
+  numeroDocumento: string
+  telefono?: string
+  tipoDocumento: string
+  parentesco: string
+  id: string
+  estado: boolean | string
+}

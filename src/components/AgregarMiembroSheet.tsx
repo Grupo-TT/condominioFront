@@ -34,8 +34,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { User03Icon } from '@hugeicons/core-free-icons'
 import { cn } from '@/lib/utils'
-
-import { type MiembroHogar } from '@/data/mi-casa.mock'
+import { MiembroHogar } from '@/types/casa.types'
 
 interface AgregarMiembroSheetProps {
   open: boolean
@@ -76,12 +75,11 @@ export function AgregarMiembroSheet({ open, onOpenChange, miembroParaEditar }: A
   // Cargar datos del miembro cuando se abre en modo edición
   useEffect(() => {
     if (open && miembroParaEditar) {
-      setFormNombre(miembroParaEditar.nombre)
+      setFormNombre(miembroParaEditar.nombreCompleto)
       setFormParentesco(miembroParaEditar.parentesco)
       setFormTelefono(miembroParaEditar.telefono || '')
-      setFormCorreo(miembroParaEditar.correo || '')
       setFormTipoDocumento(miembroParaEditar.tipoDocumento)
-      setFormDocumento(miembroParaEditar.documento)
+      setFormDocumento(miembroParaEditar.numeroDocumento)
     } else if (open && !miembroParaEditar) {
       // Limpiar formulario cuando se abre en modo agregar
       setFormNombre('')

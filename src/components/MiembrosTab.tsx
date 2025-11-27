@@ -50,9 +50,10 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
-import { miembrosHogarMock, type MiembroHogar } from '@/data/mi-casa.mock'
 import { AgregarMiembroSheet } from './AgregarMiembroSheet'
 import { AgregarMascotaSheet } from './AgregarMascotaSheet'
+import { useMiembros } from '@/hooks/useMiembro'
+import { MiembroHogar } from '@/types/casa.types'
 
 // Función para determinar el género según el tipo de miembro (parentesco)
 const getGenderFromTipoMiembro = (tipoMiembro: string): 'masculino' | 'femenino' | 'neutro' => {
@@ -76,7 +77,12 @@ const getGenderFromTipoMiembro = (tipoMiembro: string): 'masculino' | 'femenino'
 }
 
 export function MiembrosTab() {
-  const [pagination, setPagination] = useState<PaginationState>({
+const user = typeof window !== "undefined"
+  ? JSON.parse(localStorage.getItem("user") || "{}")
+  : {};
+
+const casaNumero = user.idCasa;
+const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   })
@@ -89,14 +95,16 @@ export function MiembrosTab() {
   const [isAgregarMascotaSheetOpen, setIsAgregarMascotaSheetOpen] = useState(false)
   const [miembroParaEditar, setMiembroParaEditar] = useState<MiembroHogar | null>(null)
   const [agregarMenuOpen, setAgregarMenuOpen] = useState(false)
+  const { miembros, loading, error } = useMiembros(casaNumero)
+
 
   // Filtrar miembros
   const miembrosFiltrados = useMemo(() => {
-    let filtrados = miembrosHogarMock
+    let filtrados = miembros
 
     // Filtrar por estado
     if (estadoFilter !== 'todos') {
-      filtrados = filtrados.filter(m => m.estado === estadoFilter)
+       filtrados = filtrados.filter(m => m.estado === estadoFilter)
     }
 
     // Filtrar por término de búsqueda
@@ -104,15 +112,13 @@ export function MiembrosTab() {
       const searchLower = searchTerm.toLowerCase()
       filtrados = filtrados.filter(m =>
         m.nombre.toLowerCase().includes(searchLower) ||
-        m.parentesco.toLowerCase().includes(searchLower) ||
-        m.correo?.toLowerCase().includes(searchLower) ||
         m.telefono?.toLowerCase().includes(searchLower) ||
-        m.documento?.toLowerCase().includes(searchLower)
+        m.numeroDocumento?.toLowerCase().includes(searchLower)
       )
     }
 
     return filtrados
-  }, [searchTerm, estadoFilter])
+  }, [searchTerm, estadoFilter, miembros])
 
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -174,27 +180,15 @@ export function MiembrosTab() {
       size: 150,
     },
     {
-      accessorKey: 'correo',
-      id: 'correo',
-      header: ({ column }) => <DataGridColumnHeader title="Correo" column={column} />,
-      cell: ({ row }) => (
-        <div className={row.original.correo ? "text-gray-900" : "text-gray-500 opacity-50"}>
-          {row.original.correo || 'No disponible'}
-        </div>
-      ),
-      enableSorting: true,
-      size: 200,
-    },
-    {
       accessorKey: 'documento',
       id: 'documento',
       header: ({ column }) => <DataGridColumnHeader title="Documento" column={column} />,
       cell: ({ row }) => (
         <div className="text-gray-900">
-          {row.original.tipoDocumento && row.original.documento 
-            ? `${row.original.tipoDocumento} - ${row.original.documento}`
-            : row.original.documento 
-            ? row.original.documento
+          {row.original.tipoDocumento && row.original.numeroDocumento 
+            ? `${row.original.tipoDocumento} - ${row.original.numeroDocumento}`
+            : row.original.numeroDocumento 
+            ? row.original.numeroDocumento
             : <span className="text-gray-500 opacity-50">No disponible</span>}
         </div>
       ),

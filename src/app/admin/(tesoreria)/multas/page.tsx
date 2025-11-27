@@ -99,7 +99,6 @@ export default function MultasPage() {
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editValor, setEditValor] = useState('')
   const [editTipoPago, setEditTipoPago] = useState<'DINERO' | 'LABOR_SOCIAL'>('DINERO')
-
   const { multasData, loading, error, refreshMultas, nuevaMulta, modificarMulta } = useMultas()
 
   const handleViewDetail = useCallback((multa: Multa) => {
