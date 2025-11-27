@@ -1,6 +1,6 @@
 import {
   CreateMiembroHogar,
-  MiembroHogar,
+  MiembroCasa,
   UpdateMiembroHogar,
 } from "@/types/casa.types";
 import { apiClient } from "../config/axios.config";
@@ -131,5 +131,5 @@ export const miembrosService = {
 
 interface MiembrosApiResponse {
   message: string;
-  data: MiembroHogar[];
+  data: MiembroCasa[];
 }

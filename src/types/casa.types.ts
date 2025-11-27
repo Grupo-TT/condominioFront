@@ -29,6 +29,7 @@ export interface MiembroCasa {
   tipoMiembro: string;
   numeroDocumento: string;
   telefono: string;
+  email?: string;
 }
 
 export interface MiembroHogar {
