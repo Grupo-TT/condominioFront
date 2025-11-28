@@ -106,8 +106,9 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
   return (
     <div className="flex gap-1 flex-wrap">
-      {tipos.map(({ tipo, cantidad }, idx) =>
-        Array.from({ length: cantidad }).map((_, i) => {
+      {tipos
+      .filter(({ cantidad }) => cantidad > 0)
+      .map(({ tipo }, idx) => {
           // Colores personalizados para cada tipo
           const bgColor =
             tipo === 'perro'
@@ -128,7 +129,7 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
           return (
             <div
-              key={`${idx}-${i}`}
+              key={`${idx}`}
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: bgColor }}
             >
@@ -136,7 +137,7 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
             </div>
           )
         })
-      )}
+      }
     </div>
   )
 }
@@ -319,7 +320,7 @@ export default function CasasPage() {
                   {nombrePropietario}
                 </button>
                 <div className="text-sm text-gray-500">
-                  <span className="font-medium">{rol}</span> · Casa No.{row.original.numeroCasa}
+                  <span className="font-medium">Casa No.{row.original.numeroCasa}</span>
                 </div>
               </div>
             </div>
