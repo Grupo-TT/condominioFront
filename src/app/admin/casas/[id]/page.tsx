@@ -69,7 +69,7 @@ export default function CasaDetailPage() {
   const miembrosFiltrados = useMemo(() => {
     return miembros.filter(miembro => {
       const tipo = miembro.tipoMiembro.toUpperCase()
-      return tipo !== 'PROPIETARIO' && tipo !== 'ARRENDATARIO'
+      return tipo !== 'PROPIETARIO'
     })
   }, [miembros])
 
@@ -235,33 +235,6 @@ export default function CasaDetailPage() {
                 <Edit className="w-4 h-4" />
                 Editar
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="text-red-600 hover:text-red-700 gap-2">
-                    <Trash2 className="w-4 h-4" />
-                    Remover
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Remover Propietario?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se removera permanentemente el propietario{' '}
-                        <strong>{casaSeleccionada?.propietario.nombreCompleto}</strong> de la casa{' '}
-                        <strong>{casaSeleccionada?.numeroCasa}</strong> y toda su información asociada.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
         </div>
@@ -316,14 +289,18 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500 flex-shrink-0"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.estadoFinancieroCasa}</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {casaSeleccionada?.estadoFinancieroCasa
+                    ?.toLowerCase()
+                    ?.replace(/\b\w/g, (c) => c.toUpperCase())}
+                </p>
                 </div>
               </div>
 
-              {/* ROL */}
+              {/* TIPO DE USO */}
               <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  ROL
+                  TIPO DE USO
                 </label>
                 <div className="flex items-center gap-2 min-w-0">
                   <HugeiconsIcon
@@ -332,7 +309,7 @@ export default function CasaDetailPage() {
                     className="text-gray-500 flex-shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
-                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendatario' : 'Propietario'}
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Propia'}
                   </p>
                 </div>
               </div>
@@ -433,7 +410,9 @@ export default function CasaDetailPage() {
                                     <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
                                     <div className="flex items-center gap-2 mt-1">
                                       <Badge variant="secondary" className="text-xs">
-                                        {miembro.tipoMiembro}
+                                        {miembro.tipoMiembro
+                                          ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
+                                          : ""}
                                       </Badge>
                                     </div>
                                   </div>
@@ -453,11 +432,12 @@ export default function CasaDetailPage() {
                                       <p className="text-sm text-gray-900">{miembro.telefono}</p>
                                     </div>
                                   </div>
-                                  <div>
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                    <p className="text-sm text-gray-900 truncate" title={miembro.email || 'Información no disponible'}>
-                                      {miembro.email || 'Información no disponible'}
-                                    </p>
+                                  <div> 
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span> 
+                                    <p className="text-sm text-gray-900 truncate" 
+                                    title={miembro.email || 'Información no disponible'}>
+                                    {miembro.email || 'Información no disponible'} 
+                                    </p> 
                                   </div>
                                 </div>
                               </div>
