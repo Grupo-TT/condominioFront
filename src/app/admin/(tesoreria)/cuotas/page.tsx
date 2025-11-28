@@ -586,31 +586,43 @@ export default function CuotasPage() {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    className="gap-2 items-center justify-center ml-2"
-                    onClick={async () => {
-                      try {
-                        await enviarPazYSalvo(row.original.numeroCasa);
-                        toast.success("Paz y salvo enviado exitosamente");
-                      } catch (err) {
-                        toast.error("Error al enviar el paz y salvo");
-                      }
-                    }}
-                  >
-                    <HugeiconsIcon
-                      icon={FileDollarIcon}
-                      size={20}
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        paddingBottom: "2px",
-                      }}
-                    />
-                  </Button>
+                  {(() => {
+                    const canSendPazYSalvo = row.original.saldoPendiente === 0;
+                    return (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`gap-2 items-center justify-center ml-2 ${
+                          !canSendPazYSalvo ? "opacity-50" : ""
+                        }`}
+                        disabled={!canSendPazYSalvo}
+                        onClick={async () => {
+                          try {
+                            await enviarPazYSalvo(row.original.numeroCasa);
+                            toast.success("Paz y salvo enviado exitosamente");
+                          } catch (err) {
+                            toast.error("Error al enviar el paz y salvo");
+                          }
+                        }}
+                      >
+                        <HugeiconsIcon
+                          icon={FileDollarIcon}
+                          size={20}
+                          style={{
+                            width: "20px",
+                            height: "20px",
+                            paddingBottom: "2px",
+                          }}
+                        />
+                      </Button>
+                    );
+                  })()}
                 </TooltipTrigger>
-                <TooltipContent side="top">Enviar Paz y salvo</TooltipContent>
+                <TooltipContent side="top">
+                  {row.original.saldoPendiente === 0
+                    ? "Enviar Paz y salvo"
+                    : "No se puede enviar el paz y salvo porque la casa aún tiene deudas"}
+                </TooltipContent>
               </Tooltip>
             </div>
           </>
