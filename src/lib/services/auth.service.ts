@@ -58,7 +58,9 @@ class AuthService {
           const userData = {
             email: response.data.user.email,
             nombre: response.data.user.nombre,
-            role: response.data.user.roles[0] // Tomar el primer rol
+            role: response.data.user.roles[0],
+            idCasa: response.data.user.idCasa || null,
+            idPersona: response.data.user.idPersona,
           };
           
           localStorage.setItem('user', JSON.stringify(userData));

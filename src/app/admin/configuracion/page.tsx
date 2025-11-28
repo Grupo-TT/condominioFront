@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useState, useRef } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
+import { useState, useRef, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,14 +15,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+} from "@/components/ui/breadcrumb";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetTitle,
-} from '@/components/ui/sheet'
+} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,128 +32,182 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { FormInput, FormSelect, PasswordStrengthInput, type SelectOption } from '@/components/forms'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Scrollspy } from '@/components/ui/scrollspy'
-import { ArrowRight } from 'lucide-react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { ResetPasswordIcon, SquareLockPasswordIcon, PassportIcon, UserListIcon, TelephoneIcon, MailAtSign01Icon, Profile02Icon, Door01Icon, Edit02Icon } from '@hugeicons/core-free-icons'
-import { useAuth } from '@/contexts/AuthContext'
+} from "@/components/ui/alert-dialog";
+import {
+  FormInput,
+  FormSelect,
+  PasswordStrengthInput,
+  type SelectOption,
+} from "@/components/forms";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Scrollspy } from "@/components/ui/scrollspy";
+import { ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ResetPasswordIcon,
+  SquareLockPasswordIcon,
+  PassportIcon,
+  UserListIcon,
+  TelephoneIcon,
+  MailAtSign01Icon,
+  Profile02Icon,
+  Door01Icon,
+  Edit02Icon,
+} from "@hugeicons/core-free-icons";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  updatePassword,
+  updatePersona,
+  usePerfil,
+} from "@/hooks/use-configuracion";
+import {
+  PasswordFormData,
+  PersonalInfoFormData,
+} from "@/types/configuracion.types";
+import { toast } from "sonner";
 
 // Esquemas de validación
 const personalInfoSchema = z.object({
-  primerNombre: z.string().min(1, 'El primer nombre es requerido'),
+  primerNombre: z.string().min(1, "El primer nombre es requerido"),
   segundoNombre: z.string().optional(),
-  primerApellido: z.string().min(1, 'El primer apellido es requerido'),
+  primerApellido: z.string().min(1, "El primer apellido es requerido"),
   segundoApellido: z.string().optional(),
-  telefono: z.string().min(1, 'El teléfono es requerido'),
-  correo: z.string().email('Correo electrónico inválido'),
-  tipoDocumento: z.string().min(1, 'El tipo de documento es requerido'),
-  numeroDocumento: z.string().min(1, 'El número de documento es requerido'),
-})
+  telefono: z.number().min(1, "El teléfono es requerido"),
+  correo: z.string().email("Correo electrónico inválido"),
+  tipoDocumento: z.string().min(1, "El tipo de documento es requerido"),
+  numeroDocumento: z.number().min(1, "El número de documento es requerido"),
+});
 
-const passwordSchema = z.object({
-  contraseñaActual: z.string().min(1, 'La contraseña actual es requerida'),
-  nuevaContraseña: z
-    .string()
-    .min(8, 'La nueva contraseña debe tener al menos 8 caracteres')
-    .regex(/[A-Z]/, 'Debe incluir al menos una letra mayúscula')
-    .regex(/[0-9]/, 'Debe incluir al menos un número')
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, 'Debe incluir al menos un carácter especial'),
-  confirmarContraseña: z.string().min(1, 'Debe confirmar la nueva contraseña'),
-}).refine((data) => data.nuevaContraseña === data.confirmarContraseña, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmarContraseña'],
-})
-
-type PersonalInfoFormData = z.infer<typeof personalInfoSchema>
-type PasswordFormData = z.infer<typeof passwordSchema>
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "La contraseña actual es requerida"),
+    newPassword: z
+      .string()
+      .min(8, "La nueva contraseña debe tener al menos 8 caracteres")
+      .regex(/[A-Z]/, "Debe incluir al menos una letra mayúscula")
+      .regex(/[0-9]/, "Debe incluir al menos un número")
+      .regex(
+        /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
+        "Debe incluir al menos un carácter especial"
+      ),
+    confirmPassword: z.string().min(1, "Debe confirmar la nueva contraseña"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
 const tipoDocumentoOptions: SelectOption[] = [
-  { value: 'CEDULA_DE_CIUDADANIA', label: 'Cédula de Ciudadanía' },
-  { value: 'CEDULA_DE_EXTRANJERIA', label: 'Cédula de Extranjería' },
-  { value: 'PASAPORTE', label: 'Pasaporte' },
-]
-
-// Datos mock (se reemplazarán con datos reales de la API)
-const mockAdminData = {
-  primerNombre: 'Juan',
-  segundoNombre: 'Carlos',
-  primerApellido: 'Pérez',
-  segundoApellido: 'García',
-  telefono: '3001234567',
-  correo: 'juan.perez@admin.com',
-  tipoDocumento: 'CEDULA_DE_CIUDADANIA',
-  numeroDocumento: '1234567890',
-  ultimaModificacionContraseña: '15 de marzo de 2024',
-}
+  { value: "CEDULA_DE_CIUDADANIA", label: "Cédula de Ciudadanía" },
+  { value: "CEDULA_DE_EXTRANJERIA", label: "Cédula de Extranjería" },
+  { value: "PASAPORTE", label: "Pasaporte" },
+];
 
 export default function ConfiguracionPage() {
-  const { logout } = useAuth()
-  const parentRef = useRef<HTMLDivElement | null>(null)
-  const [isPersonalInfoSheetOpen, setIsPersonalInfoSheetOpen] = useState(false)
-  const [isPasswordSheetOpen, setIsPasswordSheetOpen] = useState(false)
-  const [showPersonalInfoErrors, setShowPersonalInfoErrors] = useState(false)
-  const [showPasswordErrors, setShowPasswordErrors] = useState(false)
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const { logout } = useAuth();
+  const parentRef = useRef<HTMLDivElement | null>(null);
+  const [isPersonalInfoSheetOpen, setIsPersonalInfoSheetOpen] = useState(false);
+  const [isPasswordSheetOpen, setIsPasswordSheetOpen] = useState(false);
+  const [showPersonalInfoErrors, setShowPersonalInfoErrors] = useState(false);
+  const [showPasswordErrors, setShowPasswordErrors] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const { perfil, loading, refetch } = usePerfil();
 
   const nav = [
     {
-      id: 'informacion-personal',
-      label: 'Información Personal',
+      id: "informacion-personal",
+      label: "Información Personal",
     },
     {
-      id: 'seguridad',
-      label: 'Seguridad',
+      id: "seguridad",
+      label: "Seguridad",
     },
-  ]
+  ];
 
   // Formulario de información personal
   const personalInfoForm = useForm<PersonalInfoFormData>({
     resolver: zodResolver(personalInfoSchema),
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: {
-      primerNombre: mockAdminData.primerNombre,
-      segundoNombre: mockAdminData.segundoNombre,
-      primerApellido: mockAdminData.primerApellido,
-      segundoApellido: mockAdminData.segundoApellido,
-      telefono: mockAdminData.telefono,
-      correo: mockAdminData.correo,
-      tipoDocumento: mockAdminData.tipoDocumento,
-      numeroDocumento: mockAdminData.numeroDocumento,
+      primerNombre: "",
+      segundoNombre: "",
+      primerApellido: "",
+      segundoApellido: "",
+      telefono: 0,
+      correo: "",
+      tipoDocumento: "",
+      numeroDocumento: 0,
     },
-  })
+  });
+
+  useEffect(() => {
+    if (perfil) {
+      personalInfoForm.reset({
+        primerNombre: perfil?.primerNombre || "",
+        segundoNombre: perfil?.segundoNombre || "",
+        primerApellido: perfil?.primerApellido || "",
+        segundoApellido: perfil?.segundoApellido || "",
+        telefono: typeof perfil?.telefono === 'number' ? perfil.telefono : Number(perfil?.telefono) || 0,
+        correo: perfil?.email || "",
+        tipoDocumento: perfil?.tipoDocumento || "",
+        numeroDocumento: typeof perfil?.numeroDocumento === 'number' ? perfil.numeroDocumento : Number(perfil?.numeroDocumento) || 0,
+      });
+    }
+  }, [perfil, personalInfoForm]);
 
   // Formulario de contraseña
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: {
-      contraseñaActual: '',
-      nuevaContraseña: '',
-      confirmarContraseña: '',
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
-  })
+  });
 
-  const handlePersonalInfoSubmit = (data: PersonalInfoFormData) => {
-    // Aquí se integrará con la API
-    console.log('Datos de información personal:', data)
-    setIsPersonalInfoSheetOpen(false)
-    setShowPersonalInfoErrors(false)
-  }
+  const handlePersonalInfoSubmit = async (data: PersonalInfoFormData) => {
+    try {
+      await updatePersona(data);
+      toast.success("Información actualizada correctamente");
+      setIsPersonalInfoSheetOpen(false);
+      setShowPersonalInfoErrors(false);
+      // Refrescar el perfil para mostrar los cambios actualizados
+      await refetch();
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "No se pudo actualizar la información";
+      toast.error(errorMessage);
+    }
+  };
 
-  const handlePasswordSubmit = (data: PasswordFormData) => {
-    // Aquí se integrará con la API
-    console.log('Datos de contraseña:', data)
-    setIsPasswordSheetOpen(false)
-    setShowPasswordErrors(false)
-    passwordForm.reset()
-  }
+  const handlePasswordSubmit = async (data: PasswordFormData) => {
+    try {
+      await updatePassword(data);
+      toast.success("Contraseña actualizada correctamente");
+      setIsPasswordSheetOpen(false);
+      setShowPasswordErrors(false);
+      passwordForm.reset();
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "No se pudo actualizar la contraseña";
+      toast.error(errorMessage);
+    }
+  };
 
   const getTipoDocumentoLabel = (value: string) => {
-    return tipoDocumentoOptions.find(opt => opt.value === value)?.label || value
+    return (
+      tipoDocumentoOptions.find((opt) => opt.value === value)?.label || value
+    );
+  };
+
+  if (loading || !perfil) {
+    return (
+      <div className="flex items-center justify-center h-full">Cargando...</div>
+    );
   }
 
   return (
@@ -186,14 +240,20 @@ export default function ConfiguracionPage() {
           {/* Header */}
           <div className="flex items-center justify-between flex-shrink-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Configuración
+              </h1>
             </div>
           </div>
 
           <div className="flex grow gap-6 overflow-hidden min-h-0">
             {/* Navegación lateral */}
             <div className="flex flex-col w-[200px] flex-shrink-0">
-              <Scrollspy offset={50} targetRef={parentRef} className="flex flex-col gap-2.5">
+              <Scrollspy
+                offset={50}
+                targetRef={parentRef}
+                className="flex flex-col gap-2.5"
+              >
                 {nav.map((item) => (
                   <Button
                     key={item.id}
@@ -201,8 +261,8 @@ export default function ConfiguracionPage() {
                     data-scrollspy-anchor={item.id}
                     className="w-full justify-start h-10 px-3 text-sm font-normal cursor-pointer hover:bg-gray-50"
                     style={{
-                      backgroundColor: 'transparent',
-                      color: 'inherit',
+                      backgroundColor: "transparent",
+                      color: "inherit",
                     }}
                     data-active-style="true"
                     type="button"
@@ -222,7 +282,9 @@ export default function ConfiguracionPage() {
                   {/* Sección de Información Personal */}
                   <div id="informacion-personal" className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-xl font-bold text-gray-900">Información Personal</h2>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Información Personal
+                      </h2>
                       <p className="text-sm text-gray-500">
                         Gestiona tu información personal y de contacto.
                       </p>
@@ -236,7 +298,11 @@ export default function ConfiguracionPage() {
                             onClick={() => setIsPersonalInfoSheetOpen(true)}
                             className="gap-2 h-10"
                           >
-                            <HugeiconsIcon icon={Edit02Icon} size={18} className="text-gray-700" />
+                            <HugeiconsIcon
+                              icon={Edit02Icon}
+                              size={18}
+                              className="text-gray-700"
+                            />
                             Editar
                           </Button>
                         </div>
@@ -246,26 +312,40 @@ export default function ConfiguracionPage() {
                           {/* Nombre Completo */}
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-gray-100/90 flex items-center justify-center flex-shrink-0">
-                              <HugeiconsIcon icon={UserListIcon} size={20} className="text-gray-600" />
+                              <HugeiconsIcon
+                                icon={UserListIcon}
+                                size={20}
+                                className="text-gray-600"
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-semibold text-gray-900 mb-1">
-                                {mockAdminData.primerNombre}
-                                {mockAdminData.segundoNombre && ` ${mockAdminData.segundoNombre}`}
-                                {` ${mockAdminData.primerApellido}`}
-                                {mockAdminData.segundoApellido && ` ${mockAdminData.segundoApellido}`}
+                                {perfil?.primerNombre}
+                                {perfil?.segundoNombre &&
+                                  ` ${perfil?.segundoNombre}`}
+                                {` ${perfil?.primerApellido}`}
+                                {perfil?.segundoApellido &&
+                                  ` ${perfil?.segundoApellido}`}
                               </p>
-                              <p className="text-sm text-gray-500">Nombre Completo</p>
+                              <p className="text-sm text-gray-500">
+                                Nombre Completo
+                              </p>
                             </div>
                           </div>
 
                           {/* Teléfono */}
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-gray-100/90 flex items-center justify-center flex-shrink-0">
-                              <HugeiconsIcon icon={TelephoneIcon} size={20} className="text-gray-600" />
+                              <HugeiconsIcon
+                                icon={TelephoneIcon}
+                                size={20}
+                                className="text-gray-600"
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-base font-semibold text-gray-900 mb-1">{mockAdminData.telefono}</p>
+                              <p className="text-base font-semibold text-gray-900 mb-1">
+                                {perfil?.telefono}
+                              </p>
                               <p className="text-sm text-gray-500">Teléfono</p>
                             </div>
                           </div>
@@ -273,22 +353,37 @@ export default function ConfiguracionPage() {
                           {/* Correo Electrónico */}
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-gray-100/90 flex items-center justify-center flex-shrink-0">
-                              <HugeiconsIcon icon={MailAtSign01Icon} size={20} className="text-gray-600" />
+                              <HugeiconsIcon
+                                icon={MailAtSign01Icon}
+                                size={20}
+                                className="text-gray-600"
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-base font-semibold text-gray-900 mb-1">{mockAdminData.correo}</p>
-                              <p className="text-sm text-gray-500">Correo Electrónico</p>
+                              <p className="text-base font-semibold text-gray-900 mb-1">
+                                {perfil?.email}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Correo Electrónico
+                              </p>
                             </div>
                           </div>
 
                           {/* Documento */}
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-lg bg-gray-100/90 flex items-center justify-center flex-shrink-0">
-                              <HugeiconsIcon icon={Profile02Icon} size={20} className="text-gray-600" />
+                              <HugeiconsIcon
+                                icon={Profile02Icon}
+                                size={20}
+                                className="text-gray-600"
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-base font-semibold text-gray-900 mb-1">
-                                {getTipoDocumentoLabel(mockAdminData.tipoDocumento)} - {mockAdminData.numeroDocumento}
+                                {getTipoDocumentoLabel(
+                                  perfil?.tipoDocumento
+                                )}{" "}
+                                - {perfil?.numeroDocumento}
                               </p>
                               <p className="text-sm text-gray-500">Documento</p>
                             </div>
@@ -301,14 +396,16 @@ export default function ConfiguracionPage() {
                   {/* Sección de Seguridad */}
                   <div id="seguridad" className="space-y-6">
                     <div className="space-y-2">
-                      <h2 className="text-xl font-bold text-gray-900">Seguridad</h2>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Seguridad
+                      </h2>
                       <p className="text-sm text-gray-500">
                         Gestiona la seguridad de tu cuenta y contraseña.
                       </p>
                     </div>
                     <div className="grid grid-cols-1 gap-4">
                       {/* Modificar Contraseña */}
-                      <Card 
+                      <Card
                         className="cursor-pointer shadow-none hover:shadow-sm transition-shadow border border-gray-200"
                         onClick={() => setIsPasswordSheetOpen(true)}
                       >
@@ -316,21 +413,30 @@ export default function ConfiguracionPage() {
                           <div className="flex items-center gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <HugeiconsIcon icon={ResetPasswordIcon} size={23} className="text-gray-700 flex-shrink-0" />
-                                <h3 className="text-base font-bold text-gray-900">Modificar Contraseña</h3>
+                                <HugeiconsIcon
+                                  icon={ResetPasswordIcon}
+                                  size={23}
+                                  className="text-gray-700 flex-shrink-0"
+                                />
+                                <h3 className="text-base font-bold text-gray-900">
+                                  Modificar Contraseña
+                                </h3>
                               </div>
                               <p className="text-sm text-gray-500">
-                                Actualiza tu contraseña para mantener tu cuenta segura.{' '}
-                                <span className="font-semibold" style={{ color: '#4C6C5A' }}>Última modificación: {mockAdminData.ultimaModificacionContraseña}</span>
+                                Actualiza tu contraseña para mantener tu cuenta
+                                segura.
                               </p>
                             </div>
-                            <ArrowRight className="w-6 h-5 text-gray-500 flex-shrink-0 mr-2" strokeWidth={2} />
+                            <ArrowRight
+                              className="w-6 h-5 text-gray-500 flex-shrink-0 mr-2"
+                              strokeWidth={2}
+                            />
                           </div>
                         </CardContent>
                       </Card>
 
                       {/* Cerrar Sesión */}
-                      <Card 
+                      <Card
                         className="cursor-pointer shadow-none hover:shadow-sm transition-shadow border border-gray-200"
                         onClick={() => setShowLogoutDialog(true)}
                       >
@@ -338,14 +444,24 @@ export default function ConfiguracionPage() {
                           <div className="flex items-center gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <HugeiconsIcon icon={Door01Icon} size={23} className="text-red-800 flex-shrink-0" />
-                                <h3 className="text-base font-bold text-red-800">Cerrar Sesión</h3>
+                                <HugeiconsIcon
+                                  icon={Door01Icon}
+                                  size={23}
+                                  className="text-red-800 flex-shrink-0"
+                                />
+                                <h3 className="text-base font-bold text-red-800">
+                                  Cerrar Sesión
+                                </h3>
                               </div>
                               <p className="text-sm text-gray-500">
-                                Cierra tu sesión actual y regresa a la pantalla de inicio de sesión.
+                                Cierra tu sesión actual y regresa a la pantalla
+                                de inicio de sesión.
                               </p>
                             </div>
-                            <ArrowRight className="w-6 h-5 text-gray-500 flex-shrink-0 mr-2" strokeWidth={2} />
+                            <ArrowRight
+                              className="w-6 h-5 text-gray-500 flex-shrink-0 mr-2"
+                              strokeWidth={2}
+                            />
                           </div>
                         </CardContent>
                       </Card>
@@ -359,19 +475,26 @@ export default function ConfiguracionPage() {
       </div>
 
       {/* Sheet para editar información personal */}
-      <Sheet open={isPersonalInfoSheetOpen} onOpenChange={setIsPersonalInfoSheetOpen}>
+      <Sheet
+        open={isPersonalInfoSheetOpen}
+        onOpenChange={setIsPersonalInfoSheetOpen}
+      >
         <SheetContent
           side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
-          style={{ 
-            width: '600px', 
-            maxWidth: 'none'
+          style={{
+            width: "600px",
+            maxWidth: "none",
           }}
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <HugeiconsIcon icon={PassportIcon} size={28} style={{ color: '#4C6C5A' }} />
+                <HugeiconsIcon
+                  icon={PassportIcon}
+                  size={28}
+                  style={{ color: "#4C6C5A" }}
+                />
               </div>
               <div className="flex-1">
                 <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
@@ -389,11 +512,15 @@ export default function ConfiguracionPage() {
               <div className="flex-1 overflow-y-auto">
                 <form
                   id="personal-info-form"
-                  onSubmit={personalInfoForm.handleSubmit(handlePersonalInfoSubmit)}
+                  onSubmit={personalInfoForm.handleSubmit(
+                    handlePersonalInfoSubmit
+                  )}
                   className="space-y-6 px-6 pt-6"
                 >
                   <div className="space-y-6">
-                    <h3 className="text-sm font-medium text-gray-500">Información Personal</h3>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Información Personal
+                    </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <Controller
                         name="primerNombre"
@@ -474,7 +601,9 @@ export default function ConfiguracionPage() {
                   <Separator className="my-6" />
 
                   <div className="space-y-6">
-                    <h3 className="text-sm font-medium text-gray-500">Información de Contacto</h3>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Información de Contacto
+                    </h3>
                     <div className="grid grid-cols-1 gap-6">
                       <Controller
                         name="telefono"
@@ -492,6 +621,10 @@ export default function ConfiguracionPage() {
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
                             className="[&_input]:[-moz-appearance:textfield] [&_input]:[&::-webkit-outer-spin-button]:appearance-none [&_input]:[&::-webkit-inner-spin-button]:appearance-none"
+                            value={field.value?.toString() ?? ""}
+                            onChange={(value: string) =>
+                              field.onChange(Number(value))
+                            }
                           />
                         )}
                       />
@@ -521,7 +654,9 @@ export default function ConfiguracionPage() {
                   <Separator className="my-6" />
 
                   <div className="space-y-6">
-                    <h3 className="text-sm font-medium text-gray-500">Documento de Identidad</h3>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      Documento de Identidad
+                    </h3>
                     <div className="grid grid-cols-2 gap-6">
                       <Controller
                         name="tipoDocumento"
@@ -556,6 +691,10 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            value={field.value?.toString() ?? ""}
+                            onChange={(value: string) =>
+                              field.onChange(Number(value))
+                            }
                           />
                         )}
                       />
@@ -592,16 +731,20 @@ export default function ConfiguracionPage() {
         <SheetContent
           side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
-          style={{ 
-            width: '520px', 
-            maxWidth: 'none'
+          style={{
+            width: "520px",
+            maxWidth: "none",
           }}
         >
           {/* Header con icono */}
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <HugeiconsIcon icon={ResetPasswordIcon} size={28} style={{ color: '#4C6C5A' }} />
+                <HugeiconsIcon
+                  icon={ResetPasswordIcon}
+                  size={28}
+                  style={{ color: "#4C6C5A" }}
+                />
               </div>
               <div className="flex-1">
                 <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
@@ -626,12 +769,12 @@ export default function ConfiguracionPage() {
                     {/* Sección de contraseña actual */}
                     <div className="space-y-2">
                       <Controller
-                        name="contraseñaActual"
+                        name="currentPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <FormInput
                             {...field}
-                            name="contraseñaActual"
+                            name="currentPassword"
                             label="Contraseña Actual"
                             required={true}
                             placeholder="Ingresa tu contraseña actual"
@@ -640,7 +783,12 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPasswordErrors}
-                            startIcon={<HugeiconsIcon icon={SquareLockPasswordIcon} size={16} />}
+                            startIcon={
+                              <HugeiconsIcon
+                                icon={SquareLockPasswordIcon}
+                                size={16}
+                              />
+                            }
                           />
                         )}
                       />
@@ -651,19 +799,24 @@ export default function ConfiguracionPage() {
                     {/* Sección de nueva contraseña */}
                     <div className="space-y-2">
                       <Controller
-                        name="nuevaContraseña"
+                        name="newPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <PasswordStrengthInput
                             {...field}
-                            name="nuevaContraseña"
+                            name="newPassword"
                             label="Nueva Contraseña"
                             required={true}
                             placeholder="Ingresa tu nueva contraseña"
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPasswordErrors}
-                            startIcon={<HugeiconsIcon icon={SquareLockPasswordIcon} size={16} />}
+                            startIcon={
+                              <HugeiconsIcon
+                                icon={SquareLockPasswordIcon}
+                                size={16}
+                              />
+                            }
                           />
                         )}
                       />
@@ -672,12 +825,12 @@ export default function ConfiguracionPage() {
                     {/* Sección de confirmar contraseña */}
                     <div className="space-y-2 pt-2">
                       <Controller
-                        name="confirmarContraseña"
+                        name="confirmPassword"
                         control={passwordForm.control}
                         render={({ field, fieldState }) => (
                           <FormInput
                             {...field}
-                            name="confirmarContraseña"
+                            name="confirmPassword"
                             label="Confirmar Nueva Contraseña"
                             required={true}
                             placeholder="Confirma tu nueva contraseña"
@@ -686,7 +839,12 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPasswordErrors}
-                            startIcon={<HugeiconsIcon icon={SquareLockPasswordIcon} size={16} />}
+                            startIcon={
+                              <HugeiconsIcon
+                                icon={SquareLockPasswordIcon}
+                                size={16}
+                              />
+                            }
                           />
                         )}
                       />
@@ -700,8 +858,8 @@ export default function ConfiguracionPage() {
                   variant="outline"
                   className="flex-1 h-10 font-medium"
                   onClick={() => {
-                    setIsPasswordSheetOpen(false)
-                    passwordForm.reset()
+                    setIsPasswordSheetOpen(false);
+                    passwordForm.reset();
                   }}
                   type="button"
                 >
@@ -727,18 +885,21 @@ export default function ConfiguracionPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cerrar sesión?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de cerrar tu sesión actual. Serás redirigido a la pantalla de inicio de sesión.
+              Estás a punto de cerrar tu sesión actual. Serás redirigido a la
+              pantalla de inicio de sesión.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={logout} className="bg-red-600 hover:bg-red-800 text-white transition-colors">
+            <AlertDialogAction
+              onClick={logout}
+              className="bg-red-600 hover:bg-red-800 text-white transition-colors"
+            >
               Cerrar Sesión
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }
-

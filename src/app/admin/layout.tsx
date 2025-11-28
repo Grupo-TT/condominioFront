@@ -17,11 +17,10 @@ export default function AdminLayout({
     <CasaProvider>
       <SidebarProvider>
         <AdminSidebar />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           {children}
         </SidebarInset>
       </SidebarProvider>
     </CasaProvider>
   )
 }
-
