@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { Separator } from "@/components/ui/separator";
+import * as React from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,14 +10,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
-import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
-import { DataGridPagination } from "@/components/ui/data-grid-pagination";
-import { DataGridTable } from "@/components/ui/data-grid-table";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/breadcrumb';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
+import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
+import { DataGridPagination } from '@/components/ui/data-grid-pagination';
+import { DataGridTable } from '@/components/ui/data-grid-table';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import {
   ColumnDef,
   ExpandedState,
@@ -28,27 +28,27 @@ import {
   PaginationState,
   SortingState,
   useReactTable,
-} from "@tanstack/react-table";
-import { SquareMinus, SquarePlus, Search, X, Settings } from "lucide-react";
-import { HugeiconsIcon } from "@hugeicons/react";
+} from '@tanstack/react-table';
+import { SquareMinus, SquarePlus, Search, X, Settings } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
   MoneyReceiveFlow01Icon,
   Home01Icon,
   FileDollarIcon,
-} from "@hugeicons/core-free-icons";
-import { CuotaCasa, Obligacion } from "@/types/cuotas.types";
-import { pagoSchema, PagoFormData } from "@/lib/validations/cuotas.validation";
-import { FormFieldWithTooltip } from "@/components/forms";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from '@hugeicons/core-free-icons';
+import { CuotaCasa, Obligacion } from '@/types/cuotas.types';
+import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation';
+import { FormFieldWithTooltip } from '@/components/forms';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   TooltipProvider,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { AnimatedTabs } from "@/components/animated-tabs";
-import { ConfiguracionCuotasDialog } from "@/components/configuracion-cuotas-dialog";
+} from '@/components/ui/tooltip';
+import { AnimatedTabs } from '@/components/animated-tabs';
+import { ConfiguracionCuotasDialog } from '@/components/configuracion-cuotas-dialog';
 import {
   Sheet,
   SheetClose,
@@ -57,16 +57,16 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useCuotas } from "@/hooks/useCuotas";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ObligacionCombobox } from "@/components/obligacion-combobox";
-import { toast } from "sonner";
-import axios from "axios";
-import { enviarPazYSalvo } from "@/lib/services/cuotas.service";
+} from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useCuotas } from '@/hooks/useCuotas';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ObligacionCombobox } from '@/components/obligacion-combobox';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { enviarPazYSalvo } from '@/lib/services/cuotas.service';
 
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
@@ -87,65 +87,65 @@ function ObligacionesSubTable({
   const columns = useMemo<ColumnDef<Obligacion>[]>(
     () => [
       {
-        accessorKey: "titulo",
+        accessorKey: 'titulo',
         header: ({ column }) => (
           <DataGridColumnHeader title="Obligación" column={column} />
         ),
         cell: (info) => {
           const row = info.row.original;
-          return row.titulo || row.motivo || "";
+          return row.titulo || row.motivo || '';
         },
         enableSorting: true,
         size: 300,
       },
       {
-        accessorKey: "valorTotal",
+        accessorKey: 'valorTotal',
         header: ({ column }) => (
           <DataGridColumnHeader title="Valor Total" column={column} />
         ),
         cell: (info) => {
           const value = info.getValue() as number;
-          return new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "COP",
+          return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
           }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        accessorKey: "valorPendiente",
+        accessorKey: 'valorPendiente',
         header: ({ column }) => (
           <DataGridColumnHeader title="Saldo Pendiente" column={column} />
         ),
         cell: (info) => {
           const value = info.getValue() as number;
-          return new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "COP",
+          return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
           }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        accessorKey: "montoPagado",
+        accessorKey: 'montoPagado',
         header: ({ column }) => (
           <DataGridColumnHeader title="Abonado" column={column} />
         ),
         cell: (info) => {
           const value = info.getValue() as number;
-          return new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: "COP",
+          return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
           }).format(value);
         },
         enableSorting: true,
         size: 150,
       },
       {
-        id: "actions",
-        header: "",
+        id: 'actions',
+        header: '',
         cell: ({ row }) => (
           <Button
             size="sm"
@@ -158,13 +158,13 @@ function ObligacionesSubTable({
                 icon={MoneyReceiveFlow01Icon}
                 size={20}
                 style={{
-                  width: "20px",
-                  height: "20px",
-                  paddingBottom: "2px",
-                  color: "#4C6C5B",
+                  width: '20px',
+                  height: '20px',
+                  paddingBottom: '2px',
+                  color: '#4C6C5B',
                 }}
               />
-              <span style={{ paddingTop: "1px", paddingBottom: "0px" }}>
+              <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>
                 Registrar
               </span>
             </div>
@@ -197,8 +197,8 @@ function ObligacionesSubTable({
     <div
       className="bg-muted/30 p-4 [&_thead]:bg-gray-100 [&_thead_th]:text-gray-700 [&_thead_th]:font-medium [&_table]:rounded-lg [&_table]:overflow-hidden"
       style={{
-        animation: "slideDown 0.2s ease-out",
-        transformOrigin: "top",
+        animation: 'slideDown 0.2s ease-out',
+        transformOrigin: 'top',
       }}
     >
       <style jsx>{`
@@ -257,20 +257,20 @@ export default function CuotasPage() {
   const [selectedObligacion, setSelectedObligacion] =
     useState<Obligacion | null>(null);
   const [showAllErrors, setShowAllErrors] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<
-    "todas" | "al-dia" | "pendientes"
-  >("todas");
+    'todas' | 'al-dia' | 'pendientes'
+  >('todas');
   const { casas, loading, error, fetchCasas, handleRegistrarPago } =
     useCuotas();
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
-    setSearchTerm("");
+    setSearchTerm('');
   };
 
   // Filtrar datos basándose en el término de búsqueda y tipo
   const filteredCasas = useMemo(() => {
-    if (!searchTerm && filterType === "todas") {
+    if (!searchTerm && filterType === 'todas') {
       return casas;
     }
 
@@ -278,10 +278,10 @@ export default function CuotasPage() {
 
     return casas.filter((casa) => {
       // Filtrar por tipo
-      if (filterType === "al-dia" && casa.saldoPendiente > 0) {
+      if (filterType === 'al-dia' && casa.saldoPendiente > 0) {
         return false;
       }
-      if (filterType === "pendientes" && casa.saldoPendiente === 0) {
+      if (filterType === 'pendientes' && casa.saldoPendiente === 0) {
         return false;
       }
 
@@ -308,7 +308,7 @@ export default function CuotasPage() {
     resolver: zodResolver(pagoSchema) as any,
     mode: "onChange",
     defaultValues: {
-      obligacionId: "",
+      obligacionId: '',
       monto: 0,
     },
   });
@@ -319,7 +319,7 @@ export default function CuotasPage() {
       setSelectedCasa(casa);
       setSelectedObligacion(null); // No preseleccionar obligación
       form.reset({
-        obligacionId: "",
+        obligacionId: '',
         monto: 0,
       });
       setShowAllErrors(false);
@@ -349,9 +349,9 @@ export default function CuotasPage() {
       (o) => String(o.id) === String(data.obligacionId)
     );
     if (obligacion && data.monto > obligacion.valorPendiente) {
-      form.setError("monto", {
-        type: "manual",
-        message: "El valor ingresado supera la deuda actual.",
+      form.setError('monto', {
+        type: 'manual',
+        message: 'El valor ingresado supera la deuda actual.',
       });
       return;
     }
@@ -370,7 +370,7 @@ export default function CuotasPage() {
       await handleRegistrarPago(payload);
 
       // Mostrar toast de éxito
-      toast.success("Pago registrado exitosamente", {
+      toast.success('Pago registrado exitosamente', {
         duration: 5000,
       });
 
@@ -382,10 +382,10 @@ export default function CuotasPage() {
       const errorMessage = axios.isAxiosError(error)
         ? (error.response?.data as { message?: string })?.message ||
           error.message ||
-          "Error al registrar el pago. Por favor, inténtalo de nuevo."
+          'Error al registrar el pago. Por favor, inténtalo de nuevo.'
         : error instanceof Error
         ? error.message
-        : "Error al registrar el pago. Por favor, inténtalo de nuevo.";
+        : 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
 
       // Mostrar toast de error
       toast.error(errorMessage, {
@@ -420,7 +420,7 @@ export default function CuotasPage() {
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
       {
-        id: "expand",
+        id: 'expand',
         header: () => null,
         cell: ({ row }) => {
           return row.getCanExpand() ? (
@@ -448,8 +448,8 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: "numeroCasa",
-        id: "numeroCasa",
+        accessorKey: 'numeroCasa',
+        id: 'numeroCasa',
         header: ({ column }) => (
           <DataGridColumnHeader title="Número de Casa" column={column} />
         ),
@@ -476,8 +476,8 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: "saldoPendiente",
-        id: "saldoPendiente",
+        accessorKey: 'saldoPendiente',
+        id: 'saldoPendiente',
         header: ({ column }) => (
           <DataGridColumnHeader title="Saldo Pendiente" column={column} />
         ),
@@ -486,12 +486,12 @@ export default function CuotasPage() {
           return (
             <div
               className={`font-semibold ${
-                saldo > 0 ? "text-red-600" : "text-green-600"
+                saldo > 0 ? 'text-red-600' : 'text-green-600'
               }`}
             >
-              {new Intl.NumberFormat("es-CO", {
-                style: "currency",
-                currency: "COP",
+              {new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
               }).format(saldo)}
             </div>
           );
@@ -503,8 +503,8 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: "obligacionesPendientes",
-        id: "obligacionesPendientes",
+        accessorKey: 'obligacionesPendientes',
+        id: 'obligacionesPendientes',
         header: ({ column }) => (
           <DataGridColumnHeader title="Pagos Pendientes" column={column} />
         ),
@@ -514,15 +514,15 @@ export default function CuotasPage() {
             <Badge
               variant={
                 cantidad === 0
-                  ? "success"
+                  ? 'success'
                   : cantidad <= 2
-                  ? "warning"
-                  : "destructive"
+                  ? 'warning'
+                  : 'destructive'
               }
               appearance="outline"
               size="md"
             >
-              {cantidad} {cantidad === 1 ? "pago" : "pagos"}
+              {cantidad} {cantidad === 1 ? 'pago' : 'pagos'}
             </Badge>
           );
         },
@@ -533,8 +533,8 @@ export default function CuotasPage() {
         },
       },
       {
-        accessorKey: "ultimoPago",
-        id: "ultimoPago",
+        accessorKey: 'ultimoPago',
+        id: 'ultimoPago',
         header: ({ column }) => (
           <DataGridColumnHeader title="Último Pago" column={column} />
         ),
@@ -542,10 +542,10 @@ export default function CuotasPage() {
           const fecha = new Date(row.original.ultimoPago);
           return (
             <div className="text-sm text-gray-600">
-              {fecha.toLocaleDateString("es-CO", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
+              {fecha.toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
               })}
             </div>
           );
@@ -557,8 +557,8 @@ export default function CuotasPage() {
         },
       },
       {
-        id: "actions",
-        header: "",
+        id: 'actions',
+        header: '',
         cell: ({ row }) => (
           <>
             <div className="flex items-center gap-2">
@@ -573,12 +573,12 @@ export default function CuotasPage() {
                     icon={MoneyReceiveFlow01Icon}
                     size={20}
                     style={{
-                      width: "20px",
-                      height: "20px",
-                      paddingBottom: "2px",
+                      width: '20px',
+                      height: '20px',
+                      paddingBottom: '2px',
                     }}
                   />
-                  <span style={{ paddingTop: "2px", paddingBottom: "0px" }}>
+                  <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
                     Registrar
                   </span>
                 </div>
@@ -593,9 +593,9 @@ export default function CuotasPage() {
                     onClick={async () => {
                       try {
                         await enviarPazYSalvo(row.original.numeroCasa);
-                        toast.success("Paz y salvo enviado exitosamente");
+                        toast.success('Paz y salvo enviado exitosamente');
                       } catch (err) {
-                        toast.error("Error al enviar el paz y salvo");
+                        toast.error('Error al enviar el paz y salvo');
                       }
                     }}
                   >
@@ -603,14 +603,14 @@ export default function CuotasPage() {
                       icon={FileDollarIcon}
                       size={20}
                       style={{
-                        width: "20px",
-                        height: "20px",
-                        paddingBottom: "2px",
+                        width: '20px',
+                        height: '20px',
+                        paddingBottom: '2px',
                       }}
                     />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Enviar Paz y salvo</TooltipContent>
+                <TooltipContent side='top'>Enviar Paz y salvo</TooltipContent>
               </Tooltip>
             </div>
           </>
@@ -640,7 +640,7 @@ export default function CuotasPage() {
       sorting,
       expanded: expandedRows,
     },
-    columnResizeMode: "onChange",
+    columnResizeMode: 'onChange',
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onExpandedChange: setExpandedRows,
@@ -693,12 +693,12 @@ export default function CuotasPage() {
           <AnimatedTabs
             value={filterType}
             onValueChange={(value) =>
-              setFilterType(value as "todas" | "al-dia" | "pendientes")
+              setFilterType(value as 'todas' | 'al-dia' | 'pendientes')
             }
             tabs={[
               {
-                value: "todas",
-                label: "Todas",
+                value: 'todas',
+                label: 'Todas',
                 content:
                   !loading && !hasResults ? (
                     <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
@@ -713,13 +713,13 @@ export default function CuotasPage() {
                         <div className="space-y-0.5">
                           <p className="text-base font-semibold text-gray-700">
                             {searchTerm
-                              ? "No se encontraron resultados"
-                              : "No hay cuotas registradas"}
+                              ? 'No se encontraron resultados'
+                              : 'No hay cuotas registradas'}
                           </p>
                           <p className="text-sm text-gray-500">
                             {searchTerm
                               ? `No hay casas que coincidan con "${searchTerm}"`
-                              : "No hay registros de cuotas disponibles en este momento"}
+                              : 'No hay registros de cuotas disponibles en este momento'}
                           </p>
                         </div>
                       </div>
@@ -754,8 +754,8 @@ export default function CuotasPage() {
                   ),
               },
               {
-                value: "al-dia",
-                label: "Al Día",
+                value: 'al-dia',
+                label: 'Al Día',
                 content:
                   !loading && !hasResults ? (
                     <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
@@ -770,13 +770,13 @@ export default function CuotasPage() {
                         <div className="space-y-0.5">
                           <p className="text-base font-semibold text-gray-700">
                             {searchTerm
-                              ? "No se encontraron resultados"
-                              : "No hay casas al día"}
+                              ? 'No se encontraron resultados'
+                              : 'No hay casas al día'}
                           </p>
                           <p className="text-sm text-gray-500">
                             {searchTerm
                               ? `No hay casas al día que coincidan con "${searchTerm}"`
-                              : "No hay casas con todas sus cuotas al día registradas"}
+                              : 'No hay casas con todas sus cuotas al día registradas'}
                           </p>
                         </div>
                       </div>
@@ -811,8 +811,8 @@ export default function CuotasPage() {
                   ),
               },
               {
-                value: "pendientes",
-                label: "Pendientes",
+                value: 'pendientes',
+                label: 'Pendientes',
                 content:
                   !loading && !hasResults ? (
                     <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-12 px-6 text-center hover:border-gray-400 transition-colors">
@@ -827,13 +827,13 @@ export default function CuotasPage() {
                         <div className="space-y-0.5">
                           <p className="text-base font-semibold text-gray-700">
                             {searchTerm
-                              ? "No se encontraron resultados"
-                              : "No hay pagos pendientes"}
+                              ? 'No se encontraron resultados'
+                              : 'No hay pagos pendientes'}
                           </p>
                           <p className="text-sm text-gray-500">
                             {searchTerm
                               ? `No hay casas con pagos pendientes que coincidan con "${searchTerm}"`
-                              : "No hay casas con pagos pendientes registradas"}
+                              : 'No hay casas con pagos pendientes registradas'}
                           </p>
                         </div>
                       </div>
@@ -880,7 +880,7 @@ export default function CuotasPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                   />
-                  {searchTerm !== "" && (
+                  {searchTerm !== '' && (
                     <Button
                       onClick={handleClearSearch}
                       variant="ghost"
@@ -925,7 +925,7 @@ export default function CuotasPage() {
         <SheetContent
           side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: "500px", maxWidth: "none" }}
+          style={{ width: '500px', maxWidth: 'none' }}
         >
           <TooltipProvider>
             <SheetHeader className="border-b pb-4">
@@ -1003,7 +1003,7 @@ export default function CuotasPage() {
                           onChange={field.onChange}
                           onObligacionSelect={(obligacion) => {
                             setSelectedObligacion(obligacion);
-                            form.setValue("monto", obligacion.valorPendiente);
+                            form.setValue('monto', obligacion.valorPendiente);
                           }}
                         />
                       )}
@@ -1042,15 +1042,15 @@ export default function CuotasPage() {
                               name="monto"
                               type="number"
                               placeholder="0"
-                              value={field.value?.toString() || ""}
+                              value={field.value?.toString() || ''}
                               onChange={(e) => {
                                 const value = e.target.value;
                                 field.onChange(value ? parseFloat(value) : 0);
                               }}
                               className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${
                                 fieldState.invalid
-                                  ? "border-red-500 focus:border-red-500"
-                                  : ""
+                                  ? 'border-red-500 focus:border-red-500'
+                                  : ''
                               }`}
                             />
                           </div>
@@ -1061,10 +1061,10 @@ export default function CuotasPage() {
 
                   {selectedObligacion && (
                     <div className="text-sm text-gray-500">
-                      Saldo pendiente:{" "}
-                      {new Intl.NumberFormat("es-CO", {
-                        style: "currency",
-                        currency: "COP",
+                      Saldo pendiente:{' '}
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
                       }).format(selectedObligacion.valorPendiente)}
                     </div>
                   )}
@@ -1084,7 +1084,7 @@ export default function CuotasPage() {
                 </Button>
               </SheetClose>
               <Button
-                form="pago-form"
+                form='pago-form'
                 type="submit"
                 onClick={() => {
                   setShowAllErrors(true);
