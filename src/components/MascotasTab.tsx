@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Dog, Cat, PawPrint, MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Dog, Cat, PawPrint, MoreVertical, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,49 +9,49 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { mascotasMock, type Mascotas } from '@/data/mi-casa.mock'
+
+import { mascotasService } from '@/lib/services/casa.service'
+import { Mascotas } from '@/types/casa.types'
 import { AgregarMascotaSheet } from './AgregarMascotaSheet'
 
 type TipoMascota = 'perro' | 'gato' | 'otro'
 
+const convertirMascotas = (data: { tipoMascota: string, cantidad: number }[]) => {
+  return {
+    perro: data.find(m => m.tipoMascota === "PERRO")?.cantidad ?? 0,
+    gato: data.find(m => m.tipoMascota === "GATO")?.cantidad ?? 0,
+    otro: data.find(m => m.tipoMascota === "OTRO")?.cantidad ?? 0,
+  }
+}
+
 export function MascotasTab() {
-  const [mascotas, setMascotas] = useState<Mascotas>(mascotasMock)
+
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "{}")
+      : {};
+
+  const casaNumero = user.idCasa;
+  const [mascotas, setMascotas] = useState<Mascotas>({
+    perro: 0,
+    gato: 0,
+    otro: 0
+  })
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [tipoMascotaEditando, setTipoMascotaEditando] = useState<TipoMascota | null>(null)
-  const [tipoMascotaEliminar, setTipoMascotaEliminar] = useState<TipoMascota | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  
-  const totalMascotas = mascotas.perro + mascotas.gato + mascotas.otro
+
+  useEffect(() => {
+    async function cargarMascotas() {
+      const response = await mascotasService.getMascotasByCasa(casaNumero)
+      setMascotas(convertirMascotas(response))
+    }
+
+    cargarMascotas()
+  }, [casaNumero])
 
   const handleModificar = (tipo: TipoMascota) => {
     setTipoMascotaEditando(tipo)
     setIsEditDialogOpen(true)
-  }
-
-  const handleEliminar = (tipo: TipoMascota) => {
-    setTipoMascotaEliminar(tipo)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const confirmarEliminar = () => {
-    if (tipoMascotaEliminar) {
-      setMascotas(prev => ({
-        ...prev,
-        [tipoMascotaEliminar]: 0
-      }))
-      setIsDeleteDialogOpen(false)
-      setTipoMascotaEliminar(null)
-    }
   }
 
   const getTipoLabel = (tipo: TipoMascota, cantidad: number): string => {
@@ -62,6 +62,8 @@ export function MascotasTab() {
     }
     return labels[tipo]
   }
+
+  const totalMascotas = mascotas.perro + mascotas.gato + mascotas.otro
 
   if (totalMascotas === 0) {
     return (
@@ -99,22 +101,12 @@ export function MascotasTab() {
                 <Pencil className="mr-2 h-4 w-4" />
                 Modificar
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                onSelect={(e) => {
-                  e.preventDefault()
-                  handleEliminar(tipo)
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Eliminar
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         {/* Contenido de la tarjeta */}
-        <div 
+        <div
           className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
           style={{ backgroundColor: bgColor }}
         >
@@ -160,38 +152,9 @@ export function MascotasTab() {
             setIsEditDialogOpen(false)
             setTipoMascotaEditando(null)
           }}
+          idCasa={casaNumero}
         />
       )}
-
-      {/* Dialog para confirmar eliminación */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
-        setIsDeleteDialogOpen(open)
-        if (!open) setTipoMascotaEliminar(null)
-      }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              ¿Eliminar {tipoMascotaEliminar ? getTipoLabel(tipoMascotaEliminar, mascotas[tipoMascotaEliminar]).toLowerCase() : 'mascota'}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {tipoMascotaEliminar && mascotas[tipoMascotaEliminar] > 0 && (
-                <>
-                  Esta acción eliminará {mascotas[tipoMascotaEliminar] === 1 ? 'la mascota' : `todas las ${mascotas[tipoMascotaEliminar]} mascotas`} de tipo &quot;{getTipoLabel(tipoMascotaEliminar, mascotas[tipoMascotaEliminar])}&quot;. Esta acción no se puede deshacer.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmarEliminar}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }

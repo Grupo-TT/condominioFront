@@ -655,6 +655,7 @@ export function MiembrosTab() {
       <AgregarMascotaSheet
         open={isAgregarMascotaSheetOpen}
         onOpenChange={setIsAgregarMascotaSheetOpen}
+        idCasa={casaNumero}
       />
     </>
   );

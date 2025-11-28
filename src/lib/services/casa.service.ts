@@ -1,5 +1,6 @@
 import {
   CreateMiembroHogar,
+  MascotasCasa,
   MiembroCasa,
   UpdateMiembroHogar,
 } from "@/types/casa.types";
@@ -102,7 +103,7 @@ export const miembrosService = {
       const response = await apiClient.post("/miembros/create", data);
       return response.data;
     } catch (error) {
-      console.log("No se pudo crear el miembro.", error);
+      console.error("No se pudo crear el miembro.", error);
       throw error;
     }
   },
@@ -113,7 +114,7 @@ export const miembrosService = {
       const response = await apiClient.put(`/miembros/${id}/edit`, updateData);
       return response.data;
     } catch (error) {
-      console.log("No se pudo modificar el miembro.", error);
+      console.error("No se pudo modificar el miembro.", error);
       throw error;
     }
   },
@@ -123,7 +124,7 @@ export const miembrosService = {
       const response = await apiClient.patch(`/miembros/${id}/edit-estado`);
       return response.data;
     } catch (error) {
-      console.log("No se pudo modificar el estado del miembro", error);
+      console.error("No se pudo modificar el estado del miembro", error);
       throw error;
     }
   },
@@ -133,3 +134,43 @@ interface MiembrosApiResponse {
   message: string;
   data: MiembroCasa[];
 }
+
+interface MascotasApiResponse {
+  message: string;
+  data: MascotasCasa[];
+}
+
+export const mascotasService = {
+
+  async getMascotasByCasa(id: number) {
+    try {
+      const res = await apiClient.get<MascotasApiResponse>(
+        `/mascota/casa/${id}`
+      );
+      return res.data.data || [];
+    } catch (error) {
+      console.error("Error al obtener las mascotas:", error);
+      throw error;
+    }
+  },
+
+  async updateMascotaByCasa(idCasa: number, tipoMascota: string, cantidad: number) {
+    try {
+      const response = await apiClient.put(`/mascota/subtract`, { idCasa, tipoMascota, cantidad });
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo modificar las mascotas.", error);
+      throw error;
+    }
+  },
+
+  async createMascotaByCasa(idCasa: number, tipoMascota: string, cantidad: number) {
+    try {
+      const response = await apiClient.post(`/mascota/add`, { idCasa, tipoMascota, cantidad });
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo crear las mascotas.", error);
+      throw error;
+    }
+  },
+};

@@ -55,3 +55,9 @@ export interface CreateMiembroHogar {
 export interface UpdateMiembroHogar extends CreateMiembroHogar {
   id: number;
 }
+
+export type MascotasCasa = {
+  tipoMascota: "PERRO" | "GATO" | "OTRO";
+  cantidad: number;
+  idCasa: number;
+};
