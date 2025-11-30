@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -29,13 +30,6 @@ export default function RecoverNewPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    if (!recoveryEmail || !tempCode || !tempToken) {
-      router.replace('/recuperar-password');
-    }
-  }, [recoveryEmail, tempCode, tempToken, router]);
 
   const headlineMet = useMemo(() => mainRequirement.regex.test(newPassword), [newPassword]);
 
@@ -75,7 +69,6 @@ export default function RecoverNewPasswordPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-    setSuccessMessage('');
 
     if (!tempCode || !tempToken) {
       setError('Tu sesión de recuperación expiró. Inicia nuevamente el proceso.');
@@ -102,9 +95,9 @@ export default function RecoverNewPasswordPage() {
           },
         }
       );
-      setSuccessMessage('¡Contraseña actualizada correctamente!');
-      resetRecovery();
+      toast.success('¡Contraseña actualizada correctamente!');
       setTimeout(() => {
+        resetRecovery();
         router.push('/login');
       }, 1200);
     } catch (err) {
@@ -169,11 +162,6 @@ export default function RecoverNewPasswordPage() {
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-                {successMessage && (
-                  <Alert>
-                    <AlertDescription>{successMessage}</AlertDescription>
                   </Alert>
                 )}
 

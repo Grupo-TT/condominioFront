@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -18,7 +18,6 @@ export default function RecoverOtpPage() {
   const { recoveryEmail, setTempCode, setTempToken } = usePasswordRecovery();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [hasVerified, setHasVerified] = useState(false);
 
   useEffect(() => {
@@ -32,7 +31,6 @@ export default function RecoverOtpPage() {
   const verifyCode = async (currentCode: string) => {
     if (!recoveryEmail || currentCode.length !== 6) return;
     setIsLoading(true);
-    setError('');
 
     try {
       const response = await axios.post(
@@ -50,17 +48,12 @@ export default function RecoverOtpPage() {
       setHasVerified(true);
       router.push('/recuperar-password/nueva');
     } catch (err) {
-      setError('Código incorrecto');
+      toast.error('Código incorrecto');
+      setCode('');
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (code.length === 6 && !isLoading && !hasVerified) {
-      void verifyCode(code);
-    }
-  }, [code, isLoading, hasVerified]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -116,11 +109,6 @@ export default function RecoverOtpPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
                 <FieldGroup>
                   <Field>
                     <FieldLabel className="sr-only">Código de verificación</FieldLabel>

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -21,7 +22,6 @@ export default function RecoverPasswordPage() {
   const [emailError, setEmailError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', []);
 
@@ -40,7 +40,6 @@ export default function RecoverPasswordPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setServerError('');
-    setSuccessMessage('');
     setIsLoading(true);
     const emailValidation = validateEmail(email);
     setEmailTouched(true);
@@ -62,7 +61,7 @@ export default function RecoverPasswordPage() {
       );
       setRecoveryEmail(email);
       setTempCode('');
-      setSuccessMessage('Te enviamos un código de verificación a tu correo.');
+      toast.success('Te enviamos un código de verificación a tu correo.');
       router.push('/recuperar-password/otp');
     } catch (error: unknown) {
       let message = 'No pudimos enviar el código. Intenta nuevamente.';
@@ -130,11 +129,6 @@ export default function RecoverPasswordPage() {
                     <AlertDescription>{serverError}</AlertDescription>
                   </Alert>
                 )}
-                {successMessage && (
-                  <Alert>
-                    <AlertDescription>{successMessage}</AlertDescription>
-                  </Alert>
-                )}
                 <FieldGroup className="space-y-0">
                   <Field className="mb-0">
                     <FieldLabel className="font-normal text-gray-600" htmlFor="recovery-email">
@@ -151,16 +145,6 @@ export default function RecoverPasswordPage() {
                         value={email}
                         onChange={(event) => {
                           setEmail(event.target.value);
-                          if (!emailTouched) {
-                            setEmailTouched(true);
-                          }
-                          if (emailTouched) {
-                            setEmailError(validateEmail(event.target.value));
-                          }
-                        }}
-                        onBlur={() => {
-                          setEmailTouched(true);
-                          setEmailError(validateEmail(email));
                         }}
                         required
                         disabled={isLoading}
