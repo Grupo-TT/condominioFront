@@ -300,7 +300,7 @@ export default function RecoverNewPasswordPage() {
 
         <div className="relative hidden lg:block">
           <div className="absolute inset-3 rounded-xl overflow-hidden">
-            <Image src="/loginImg.svg" alt="Ilustración nueva contraseña" fill priority className="object-cover" />
+            <Image src="/loginImg.webp" alt="Ilustración nueva contraseña" fill priority className="object-cover" />
           </div>
         </div>
       </div>

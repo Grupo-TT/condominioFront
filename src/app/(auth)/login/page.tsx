@@ -143,21 +143,6 @@ export default function LoginPage() {
                         value={username}
                         onChange={(e) => {
                           setUsername(e.target.value);
-                          if (!emailTouched) {
-                            setEmailTouched(true);
-                          }
-                          if (emailTouched) {
-                            setEmailError(validateEmail(e.target.value));
-                          }
-                        }}
-                        onBlur={() => {
-                          if (username.trim()) {
-                            setEmailTouched(true);
-                            setEmailError(validateEmail(username));
-                          } else {
-                            setEmailTouched(false);
-                            setEmailError('');
-                          }
                         }}
                         required
                         disabled={isLoading}
@@ -191,21 +176,6 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
-                          if (!passwordTouched) {
-                            setPasswordTouched(true);
-                          }
-                          if (passwordTouched) {
-                            setPasswordError(validatePassword(e.target.value));
-                          }
-                        }}
-                        onBlur={() => {
-                          if (password.trim()) {
-                            setPasswordTouched(true);
-                            setPasswordError(validatePassword(password));
-                          } else {
-                            setPasswordTouched(false);
-                            setPasswordError('');
-                          }
                         }}
                         placeholder="Ingresa tu contraseña"
                         required
@@ -258,7 +228,7 @@ export default function LoginPage() {
                   </div>
                 </FieldGroup>
 
-                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={!canSubmit}>
+                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -279,12 +249,13 @@ export default function LoginPage() {
           <div className="absolute inset-3 rounded-xl overflow-hidden">
 
             <Image
-              src="/loginImg.svg"
+              src="/loginImg.webp"
               alt="Ilustración de acceso"
               fill
               priority
               className="object-cover"
             />
+
           </div>
         </div>
       </div>
