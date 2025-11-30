@@ -19,6 +19,7 @@ export default function RecoverOtpPage() {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasVerified, setHasVerified] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   useEffect(() => {
     if (!recoveryEmail) {
@@ -26,7 +27,31 @@ export default function RecoverOtpPage() {
     }
   }, [recoveryEmail, router]);
 
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', []);
+
+  const resendCode = async () => {
+    setResendCountdown(10);
+    try {
+      await axios.post(
+        `${apiUrl}/user/recuperar-password`,
+        null,
+        {
+          params: { email: recoveryEmail },
+          withCredentials: false,
+        }
+      );
+      toast.success('Código reenviado a tu correo.');
+    } catch {
+      toast.error('Error al reenviar el código.');
+    }
+  };
 
   const verifyCode = async (currentCode: string) => {
     if (!recoveryEmail || currentCode.length !== 6) return;
@@ -148,8 +173,8 @@ export default function RecoverOtpPage() {
 
               <div className="text-center text-sm text-muted-foreground">
                 ¿No recibiste el código?{' '}
-                <button type="button" className="underline underline-offset-4 text-primary" disabled={isLoading}>
-                  Reenviar código
+                <button type="button" className="underline underline-offset-4 text-primary hover:text-primary/80 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading || resendCountdown > 0} onClick={resendCode}>
+                  {resendCountdown > 0 ? `Reenviar código (${resendCountdown}s)` : 'Reenviar código'}
                 </button>
               </div>
             </div>
