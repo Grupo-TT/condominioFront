@@ -521,6 +521,45 @@ export default function RecursosPage() {
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
+                {row.original.disponibilidadRecurso === 'EN_MANTENIMIENTO' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        className="text-red-700 focus:bg-red-50 focus:text-red-700 hover:bg-red-50 hover:text-red-700"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Deshabilitar
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          ¿Deshabilitar recurso "{row.original.nombre}"?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          El recurso dejará de estar disponible y saldrá del estado de mantenimiento.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={async () => {
+                            try {
+                              const id = parseInt(row.original.id)
+                              await handleAvailabilityChange(id, 'NO_DISPONIBLE')
+                            } catch (err) {
+                              console.error('No se pudo deshabilitar el recurso, por favor intenta nuevamente.', err)
+                            }
+                          }}
+                        >
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
