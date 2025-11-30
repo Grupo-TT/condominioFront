@@ -3,19 +3,27 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Mail02Icon, RecoveryMailIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
 
 export default function RecoverPasswordPage() {
   const router = useRouter();
+  const { setRecoveryEmail, setTempCode } = usePasswordRecovery();
   const [email, setEmail] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', []);
 
   const validateEmail = (value: string) => {
     if (!value.trim()) {
@@ -31,6 +39,8 @@ export default function RecoverPasswordPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setServerError('');
+    setSuccessMessage('');
     setIsLoading(true);
     const emailValidation = validateEmail(email);
     setEmailTouched(true);
@@ -41,10 +51,31 @@ export default function RecoverPasswordPage() {
       return;
     }
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await axios.post(
+        `${apiUrl}/user/recuperar-password`,
+        null,
+        {
+          params: { email },
+          withCredentials: false,
+        }
+      );
+      setRecoveryEmail(email);
+      setTempCode('');
+      setSuccessMessage('Te enviamos un código de verificación a tu correo.');
       router.push('/recuperar-password/otp');
-    }, 800);
+    } catch (error: unknown) {
+      let message = 'No pudimos enviar el código. Intenta nuevamente.';
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { data?: { message?: string } } };
+        if (typeof apiError.response?.data?.message === 'string') {
+          message = apiError.response.data.message;
+        }
+      }
+      setServerError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -94,6 +125,16 @@ export default function RecoverPasswordPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                {serverError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{serverError}</AlertDescription>
+                  </Alert>
+                )}
+                {successMessage && (
+                  <Alert>
+                    <AlertDescription>{successMessage}</AlertDescription>
+                  </Alert>
+                )}
                 <FieldGroup className="space-y-0">
                   <Field className="mb-0">
                     <FieldLabel className="font-normal text-gray-600" htmlFor="recovery-email">

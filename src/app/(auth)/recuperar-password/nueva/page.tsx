@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -10,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LockPasswordIcon, ResetPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
+import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
 
 const mainRequirement = { regex: /.{8,}/, text: 'Debe tener al menos 8 caracteres.' };
 const suggestionRequirements = [
@@ -20,12 +22,20 @@ const suggestionRequirements = [
 
 export default function RecoverNewPasswordPage() {
   const router = useRouter();
+  const { recoveryEmail, tempCode, tempToken, resetRecovery } = usePasswordRecovery();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    if (!recoveryEmail || !tempCode || !tempToken) {
+      router.replace('/recuperar-password');
+    }
+  }, [recoveryEmail, tempCode, tempToken, router]);
 
   const headlineMet = useMemo(() => mainRequirement.regex.test(newPassword), [newPassword]);
 
@@ -60,9 +70,17 @@ export default function RecoverNewPasswordPage() {
   const passwordsMatch = newPassword.length > 0 && confirmPassword.length > 0 && newPassword === confirmPassword;
   const canSubmit = headlineMet && passwordsMatch && !isLoading;
 
+  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', []);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    setSuccessMessage('');
+
+    if (!tempCode || !tempToken) {
+      setError('Tu sesión de recuperación expiró. Inicia nuevamente el proceso.');
+      return;
+    }
 
     if (newPassword !== confirmPassword) {
       setError('Las contraseñas no coinciden. Verifica e intenta nuevamente.');
@@ -70,11 +88,35 @@ export default function RecoverNewPasswordPage() {
     }
 
     setIsLoading(true);
-
-    setTimeout(() => {
+    try {
+      await axios.put(
+        `${apiUrl}/user/update-password`,
+        {
+          currentPassword: tempCode,
+          newPassword,
+          confirmPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tempToken}`,
+          },
+        }
+      );
+      setSuccessMessage('¡Contraseña actualizada correctamente!');
+      resetRecovery();
+      setTimeout(() => {
+        router.push('/login');
+      }, 1200);
+    } catch (err) {
+      const message =
+        err && typeof err === 'object' && 'response' in err &&
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          ? (err as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : 'No pudimos actualizar tu contraseña. Intenta nuevamente.';
+      setError(message);
+    } finally {
       setIsLoading(false);
-      router.push('/login');
-    }, 1000);
+    }
   };
 
   return (
@@ -127,6 +169,11 @@ export default function RecoverNewPasswordPage() {
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                {successMessage && (
+                  <Alert>
+                    <AlertDescription>{successMessage}</AlertDescription>
                   </Alert>
                 )}
 

@@ -2,27 +2,71 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { MailOpenIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
+import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
 
 export default function RecoverOtpPage() {
   const router = useRouter();
+  const { recoveryEmail, setTempCode, setTempToken } = usePasswordRecovery();
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasVerified, setHasVerified] = useState(false);
 
-  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  useEffect(() => {
+    if (!recoveryEmail) {
+      router.replace('/recuperar-password');
+    }
+  }, [recoveryEmail, router]);
+
+  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || '', []);
+
+  const verifyCode = async (currentCode: string) => {
+    if (!recoveryEmail || currentCode.length !== 6) return;
     setIsLoading(true);
+    setError('');
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await axios.post(
+        `${apiUrl}/auth/login`,
+        { username: recoveryEmail, password: currentCode },
+        { withCredentials: false }
+      );
+
+      if (!response.data?.token) {
+        throw new Error('Respuesta inválida');
+      }
+
+      setTempCode(currentCode);
+      setTempToken(response.data.token);
+      setHasVerified(true);
       router.push('/recuperar-password/nueva');
-    }, 800);
+    } catch (err) {
+      setError('Código incorrecto');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (code.length === 6 && !isLoading && !hasVerified) {
+      void verifyCode(code);
+    }
+  }, [code, isLoading, hasVerified]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (code.length === 6 && !isLoading) {
+      await verifyCode(code);
+    }
   };
 
   return (
@@ -71,7 +115,12 @@ export default function RecoverOtpPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleVerify} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
                 <FieldGroup>
                   <Field>
                     <FieldLabel className="sr-only">Código de verificación</FieldLabel>
@@ -97,7 +146,7 @@ export default function RecoverOtpPage() {
                   </Field>
                 </FieldGroup>
 
-                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={isLoading || code.length !== 6}>
+                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={isLoading || code.length !== 6 || hasVerified}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
