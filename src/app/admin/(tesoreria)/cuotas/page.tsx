@@ -68,6 +68,10 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { enviarPazYSalvo } from '@/lib/services/cuotas.service';
 
+const ZERO_DEBT_THRESHOLD = 1; // pesos
+const isCasaAlDia = (saldoPendiente: number) =>
+  Math.abs(saldoPendiente) <= ZERO_DEBT_THRESHOLD;
+
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
   obligaciones,
@@ -261,6 +265,8 @@ export default function CuotasPage() {
   const [filterType, setFilterType] = useState<
     'todas' | 'al-dia' | 'pendientes'
   >('todas');
+  const [sendingPazYSalvoCasaId, setSendingPazYSalvoCasaId] =
+    useState<number | null>(null);
   const { casas, loading, error, fetchCasas, handleRegistrarPago } =
     useCuotas();
   // Función para limpiar búsqueda
@@ -278,10 +284,10 @@ export default function CuotasPage() {
 
     return casas.filter((casa) => {
       // Filtrar por tipo
-      if (filterType === 'al-dia' && casa.saldoPendiente > 0) {
+      if (filterType === 'al-dia' && !isCasaAlDia(casa.saldoPendiente)) {
         return false;
       }
-      if (filterType === 'pendientes' && casa.saldoPendiente === 0) {
+      if (filterType === 'pendientes' && isCasaAlDia(casa.saldoPendiente)) {
         return false;
       }
 
@@ -587,21 +593,46 @@ export default function CuotasPage() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   {(() => {
-                    const canSendPazYSalvo = row.original.saldoPendiente === 0;
+                    const canSendPazYSalvo = isCasaAlDia(
+                      row.original.saldoPendiente
+                    );
+                    const isSendingPazYSalvo =
+                      sendingPazYSalvoCasaId === row.original.numeroCasa;
+                    const isPazYSalvoDisabled =
+                      !canSendPazYSalvo || isSendingPazYSalvo;
+
                     return (
                       <Button
                         size="sm"
                         variant="outline"
                         className={`gap-2 items-center justify-center ml-2 ${
-                          !canSendPazYSalvo ? "opacity-50" : ""
-                        }`}
-                        disabled={!canSendPazYSalvo}
+                          !canSendPazYSalvo ? 'opacity-50' : ''
+                        } ${isSendingPazYSalvo ? 'cursor-wait' : ''}`}
+                        disabled={isPazYSalvoDisabled}
+                        aria-busy={isSendingPazYSalvo}
                         onClick={async () => {
+                          if (isPazYSalvoDisabled) return;
+                          setSendingPazYSalvoCasaId(row.original.numeroCasa);
                           try {
-                            await enviarPazYSalvo(row.original.numeroCasa);
-                            toast.success("Paz y salvo enviado exitosamente");
+                            const response = await enviarPazYSalvo(
+                              row.original.numeroCasa
+                            );
+                            const successMessage =
+                              response?.message ||
+                              'Paz y salvo enviado exitosamente';
+                            toast.success(successMessage);
                           } catch (err) {
-                            toast.error("Error al enviar el paz y salvo");
+                            const errorMessage = axios.isAxiosError(err)
+                              ? (err.response?.data as { message?: string })
+                                  ?.message ||
+                                err.message ||
+                                'Error al enviar el paz y salvo'
+                              : err instanceof Error
+                              ? err.message
+                              : 'Error al enviar el paz y salvo';
+                            toast.error(errorMessage);
+                          } finally {
+                            setSendingPazYSalvoCasaId(null);
                           }
                         }}
                       >
@@ -609,9 +640,9 @@ export default function CuotasPage() {
                           icon={FileDollarIcon}
                           size={20}
                           style={{
-                            width: "20px",
-                            height: "20px",
-                            paddingBottom: "2px",
+                            width: '20px',
+                            height: '20px',
+                            paddingBottom: '2px',
                           }}
                         />
                       </Button>
@@ -619,9 +650,9 @@ export default function CuotasPage() {
                   })()}
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {row.original.saldoPendiente === 0
-                    ? "Enviar Paz y salvo"
-                    : "No se puede enviar el paz y salvo porque la casa aún tiene deudas"}
+                  {isCasaAlDia(row.original.saldoPendiente)
+                    ? 'Enviar Paz y salvo'
+                    : 'No se puede enviar el paz y salvo porque la casa aún tiene deudas'}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -634,7 +665,7 @@ export default function CuotasPage() {
         },
       },
     ],
-    [handleCasaClick, handleObligacionClick]
+    [handleCasaClick, handleObligacionClick, sendingPazYSalvoCasaId]
   );
 
   const table = useReactTable({
@@ -968,7 +999,7 @@ export default function CuotasPage() {
                     </span>
                     <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
                       {/* Background pattern */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"></div>
+                      <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/10"></div>
                       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
                       <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-12 -translate-x-12"></div>
 
