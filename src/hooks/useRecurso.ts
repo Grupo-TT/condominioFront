@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { recursoService } from '@/services/recurso.service'
-import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
+import { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 
 export const useRecurso = () => {
   const [loading, setLoading] = useState(false)
@@ -26,37 +26,27 @@ export const useRecurso = () => {
     }
   }
 
-  const habilitarRecurso = async (id: number) => {
+  const cambiarDisponibilidad = async (
+    id: number,
+    disponibilidad: DisponibilidadRecurso
+  ) => {
     try {
       setLoading(true)
       setError(null)
-      const response = await recursoService.putRecursoEnable(id)
+      const response = await recursoService.changeAvailability(id, disponibilidad)
       setRecurso(response)
+      return response
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data
-        ? String(err.response.data.message)
-        : 'Error al habilitar el recurso'
+      const errorMessage =
+        err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data
+          ? String(err.response.data.message)
+          : 'Error al actualizar la disponibilidad del recurso'
       setError(errorMessage)
+      throw err
     } finally {
       setLoading(false)
     }
   }
 
-  const deshabilitarRecurso = async (id: number) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await recursoService.putRecursosDisable(id)
-      setRecurso(response)
-    } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data
-        ? String(err.response.data.message)
-        : 'Error al deshabilitar el recurso'
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return { crearRecurso, habilitarRecurso, deshabilitarRecurso, recurso, loading, error }
+  return { crearRecurso, cambiarDisponibilidad, recurso, loading, error }
 }

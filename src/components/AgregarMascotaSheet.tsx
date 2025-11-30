@@ -22,6 +22,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { mascotasService } from '@/lib/services/casa.service'
 
 interface AgregarMascotaSheetProps {
   open: boolean
@@ -29,20 +30,22 @@ interface AgregarMascotaSheetProps {
   tipoMascota?: 'perro' | 'gato' | 'otro' | null
   cantidadInicial?: number
   onSave?: (cantidad: number) => void
+  idCasa: number
 }
 
 const tiposMascota = [
-  { value: 'perro', label: 'Perro', icon: Dog, color: '#A39170', bgColor: '#F1E8D6' },
-  { value: 'gato', label: 'Gato', icon: Cat, color: '#595D75', bgColor: '#E3E4EA' },
-  { value: 'otro', label: 'Otro', icon: PawPrint, color: '#4C6C5A', bgColor: '#E6EFEA' },
+  { value: 'PERRO', label: 'Perro', icon: Dog, color: '#A39170', bgColor: '#F1E8D6' },
+  { value: 'GATO', label: 'Gato', icon: Cat, color: '#595D75', bgColor: '#E3E4EA' },
+  { value: 'OTRO', label: 'Otro', icon: PawPrint, color: '#4C6C5A', bgColor: '#E6EFEA' },
 ]
 
-export function AgregarMascotaSheet({ 
-  open, 
-  onOpenChange, 
-  tipoMascota: tipoMascotaProp, 
+export function AgregarMascotaSheet({
+  open,
+  onOpenChange,
+  tipoMascota: tipoMascotaProp,
   cantidadInicial,
-  onSave 
+  onSave,
+  idCasa
 }: AgregarMascotaSheetProps) {
   const [tipoMascota, setTipoMascota] = useState(tipoMascotaProp || '')
   const [cantidad, setCantidad] = useState(cantidadInicial || 1)
@@ -59,7 +62,7 @@ export function AgregarMascotaSheet({
   // Cargar datos cuando se abre en modo edición
   useEffect(() => {
     if (open && tipoMascotaProp) {
-      setTipoMascota(tipoMascotaProp)
+      setTipoMascota(tipoMascotaProp.toUpperCase())
       setCantidad(cantidadInicial || 1)
     }
   }, [open, tipoMascotaProp, cantidadInicial])
@@ -75,21 +78,31 @@ export function AgregarMascotaSheet({
     }
   }, [open, isEditMode])
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!tipoMascota) {
-      return
+      return;
     }
 
-    if (onSave) {
-      onSave(cantidad)
-    } else {
-      // TODO: Aquí se agregaría la lógica para guardar la mascota
-      console.log('Agregar mascota:', { tipo: tipoMascota, cantidad })
+    try {
+      if (isEditMode) {
+        await mascotasService.updateMascotaByCasa(idCasa, tipoMascota.toUpperCase(), cantidad);
+        if (onSave) {
+          onSave(cantidad);
+        }
+      } else {
+        await mascotasService.createMascotaByCasa(idCasa, tipoMascota.toUpperCase(), cantidad);
+        if (onSave) {
+          onSave(cantidad);
+        }
+      }
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error al guardar mascota:", error);
     }
-    
-    // Cerrar el sheet después de guardar
-    onOpenChange(false)
-  }
+  };
 
   const tipoSeleccionado = tiposMascota.find(t => t.value === tipoMascota)
   const IconComponent = tipoSeleccionado?.icon || PawPrint
@@ -100,7 +113,7 @@ export function AgregarMascotaSheet({
         <DialogHeader>
           <DialogTitle>{isEditMode ? 'Modificar Mascota' : 'Agregar Mascota'}</DialogTitle>
           <DialogDescription>
-            {isEditMode 
+            {isEditMode
               ? 'Modifica la cantidad de mascotas de este tipo en tu hogar.'
               : 'Registra una nueva mascota en tu hogar. Selecciona el tipo y la cantidad.'}
           </DialogDescription>
