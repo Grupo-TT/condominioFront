@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
@@ -79,7 +79,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { RecursoResponse } from '@/types/recursos.types'
+import { RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
 import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
 import type { RecursoUI } from '@/services/recurso.adapter'
@@ -103,7 +103,35 @@ export default function RecursosPage() {
   const [errors, setErrors] = useState<{ nombre?: string; descripcion?: string; tipo?: string }>({})
   const [isEditMode, setIsEditMode] = useState(false)
   const [selectedRecursoId, setSelectedRecursoId] = useState<string | null>(null)
-  const { habilitarRecurso, deshabilitarRecurso } = useRecurso()
+  const { cambiarDisponibilidad } = useRecurso()
+
+  const syncRecurso = useCallback((updated: RecursoResponse) => {
+    setRecursosResponse((prev) => {
+      if (!updated?.id) return prev
+      const exists = prev.some((resp) => resp.id === updated.id)
+      const next = exists
+        ? prev.map((resp) => (resp.id === updated.id ? updated : resp))
+        : [...prev, updated]
+      return next
+    })
+    if (!updated?.id) return
+    setRecursos((prev) =>
+      prev.map((r) => (r.id === updated.id!.toString() ? mapResponseToUI(updated) : r))
+    )
+  }, [])
+
+  const handleAvailabilityChange = useCallback(
+    async (id: number, disponibilidad: DisponibilidadRecurso) => {
+      if (Number.isNaN(id)) return
+      try {
+        const updated = await cambiarDisponibilidad(id, disponibilidad)
+        syncRecurso(updated)
+      } catch (err) {
+        console.error('No se pudo actualizar la disponibilidad del recurso.', err)
+      }
+    },
+    [cambiarDisponibilidad, syncRecurso]
+  )
 
   useEffect(() => {
     let mounted = true
@@ -266,7 +294,7 @@ export default function RecursosPage() {
               style={{ backgroundColor: '#4C6C5B14', borderLeftColor: '#4C6C5B' }}
             >
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-1">
                   <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -438,22 +466,10 @@ export default function RecursosPage() {
                         onClick={async () => {
                           try {
                             const id = parseInt(row.original.id)
-                            const nuevoEstado = !row.original.habilitado
-                            if (nuevoEstado) {
-                              await habilitarRecurso(id)
-                            } else {
-                              await deshabilitarRecurso(id)
-                            }
-                            setRecursos(prev =>
-                              prev.map(r =>
-                                r.id === row.original.id ? { 
-                                  ...r, 
-                                  habilitado: nuevoEstado, 
-                                  estado: nuevoEstado ? 'Disponible' : 'No disponible',
-                                  disponibilidadRecurso: nuevoEstado ? 'DISPONIBLE' : 'NO_DISPONIBLE'
-                                } : r
-                              )
-                            )
+                            const disponibilidad: DisponibilidadRecurso = row.original.habilitado
+                              ? 'NO_DISPONIBLE'
+                              : 'DISPONIBLE'
+                            await handleAvailabilityChange(id, disponibilidad)
                           } catch (err) {
                             console.error('No se pudo actualizar el estado del recurso, por favor intenta nuevamente.', err)
                           }
@@ -492,29 +508,7 @@ export default function RecursosPage() {
                           onClick={async () => {
                             try {
                               const id = parseInt(row.original.id)
-                              const existing = recursosResponse.find(r => r.id === id)
-                              if (existing) {
-                                const payload = mapFormToRequest(
-                                  { 
-                                    nombre: existing.nombre, 
-                                    descripcion: existing.descripcion, 
-                                    tipo: existing.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto' 
-                                  }, 
-                                  'EN_MANTENIMIENTO'
-                                )
-                                const updated = await recursoService.putRecurso(id, payload)
-                                setRecursosResponse((prev) => prev.map((resp) => resp.id === id ? updated : resp))
-                                setRecursos((prev) =>
-                                  prev.map(r =>
-                                    r.id === row.original.id ? {
-                                      ...r,
-                                      disponibilidadRecurso: 'EN_MANTENIMIENTO',
-                                      estado: 'En Mantenimiento',
-                                      habilitado: false
-                                    } : r
-                                  )
-                                )
-                              }
+                              await handleAvailabilityChange(id, 'EN_MANTENIMIENTO')
                             } catch (err) {
                               console.error('No se pudo poner el recurso en mantenimiento, por favor intenta nuevamente.', err)
                             }
@@ -538,7 +532,7 @@ export default function RecursosPage() {
         },
       },
     ],
-    [setRecursos, habilitarRecurso, deshabilitarRecurso, recursosResponse]
+    [setRecursos, handleAvailabilityChange, recursosResponse]
   )
 
   const table = useReactTable({
