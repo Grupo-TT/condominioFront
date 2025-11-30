@@ -53,6 +53,7 @@ import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridPagination } from "@/components/ui/data-grid-pagination";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   ColumnDef,
@@ -142,7 +143,7 @@ export function MiembrosTab() {
   const [miembroParaEditar, setMiembroParaEditar] =
     useState<UpdateMiembroHogar | null>(null);
   const [agregarMenuOpen, setAgregarMenuOpen] = useState(false);
-  const { miembros, refetch } = useMiembros(casaNumero);
+  const { miembros, loading, error, refetch } = useMiembros(casaNumero);
 
   // Filtrar miembros
   const miembrosFiltrados = useMemo(() => {
@@ -438,6 +439,29 @@ export function MiembrosTab() {
 
   const hasMiembros = miembrosFiltrados.length > 0;
 
+  const miembrosSkeleton = (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-6 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <>
       <div className="pb-6 space-y-4">
@@ -595,7 +619,19 @@ export function MiembrosTab() {
         </div>
 
         {/* Tabla de miembros */}
-        {hasMiembros ? (
+        {loading ? (
+          miembrosSkeleton
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-white px-6 py-8 text-center shadow-sm">
+            <p className="text-sm font-medium text-red-600">{error}</p>
+            <p className="text-xs text-gray-500">
+              Intenta recargar la información.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => refetch && void refetch()}>
+              Reintentar
+            </Button>
+          </div>
+        ) : hasMiembros ? (
           <DataGrid
             table={table}
             recordCount={miembrosFiltrados.length}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Dog, Cat, PawPrint, MoreVertical, Pencil } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Dog, Cat, PawPrint, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,10 +9,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 import { mascotasService } from '@/lib/services/casa.service'
 import { Mascotas } from '@/types/casa.types'
 import { AgregarMascotaSheet } from './AgregarMascotaSheet'
+import { toast } from 'sonner'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type TipoMascota = 'perro' | 'gato' | 'otro'
 
@@ -37,21 +49,103 @@ export function MascotasTab() {
     gato: 0,
     otro: 0
   })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [tipoMascotaEditando, setTipoMascotaEditando] = useState<TipoMascota | null>(null)
+  const [tipoMascotaAEliminar, setTipoMascotaAEliminar] = useState<TipoMascota | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    async function cargarMascotas() {
-      const response = await mascotasService.getMascotasByCasa(casaNumero)
-      setMascotas(convertirMascotas(response))
+  const fetchMascotas = useCallback(async () => {
+    if (casaNumero === undefined || casaNumero === null || casaNumero === '') {
+      setMascotas({ perro: 0, gato: 0, otro: 0 })
+      setError('No se pudo identificar la casa del usuario.')
+      setLoading(false)
+      return
     }
 
-    cargarMascotas()
+    try {
+      setLoading(true)
+      setError(null)
+      const casaId = Number(casaNumero)
+      if (Number.isNaN(casaId)) {
+        throw new Error('Identificador de casa inválido')
+      }
+      const response = await mascotasService.getMascotasByCasa(casaId)
+      setMascotas(convertirMascotas(response))
+    } catch (err) {
+      if (
+        (err as { response?: { status?: number } })?.response?.status === 404
+      ) {
+        setMascotas({ perro: 0, gato: 0, otro: 0 })
+        setError(null)
+        return
+      }
+      console.error('Error al obtener las mascotas:', err)
+      const responseMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      const fallbackMessage = err instanceof Error
+        ? err.message
+        : 'No se pudieron cargar las mascotas.'
+      const errorMessage = responseMessage || fallbackMessage
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }, [casaNumero])
+
+  useEffect(() => {
+    void fetchMascotas()
+  }, [fetchMascotas])
 
   const handleModificar = (tipo: TipoMascota) => {
     setTipoMascotaEditando(tipo)
     setIsEditDialogOpen(true)
+  }
+
+  const handleEliminarClick = (tipo: TipoMascota) => {
+    setTipoMascotaAEliminar(tipo)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleEliminarMascota = async () => {
+    if (!tipoMascotaAEliminar) return
+    if (casaNumero === undefined || casaNumero === null || casaNumero === '') {
+      toast.error('No se pudo identificar la casa del usuario.')
+      return
+    }
+
+    const casaId = Number(casaNumero)
+    if (Number.isNaN(casaId)) {
+      toast.error('Identificador de casa inválido')
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      await mascotasService.updateMascotaByCasa(
+        casaId,
+        tipoMascotaAEliminar.toUpperCase(),
+        0
+      )
+      setMascotas((prev) => ({
+        ...prev,
+        [tipoMascotaAEliminar]: 0,
+      }))
+      toast.success('Mascota eliminada correctamente')
+    } catch (err) {
+      console.error('Error al eliminar la mascota:', err)
+      const responseMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      const fallbackMessage = err instanceof Error
+        ? err.message
+        : 'No se pudo eliminar la mascota.'
+      toast.error(responseMessage || fallbackMessage)
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteDialogOpen(false)
+      setTipoMascotaAEliminar(null)
+    }
   }
 
   const getTipoLabel = (tipo: TipoMascota, cantidad: number): string => {
@@ -64,6 +158,39 @@ export function MascotasTab() {
   }
 
   const totalMascotas = mascotas.perro + mascotas.gato + mascotas.otro
+
+  const tarjetasSkeleton = (
+    <div className="flex flex-wrap gap-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="w-[150px] h-[140px] p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center"
+        >
+          <Skeleton className="w-12 h-12 rounded-full mb-3" />
+          <Skeleton className="h-3 w-16 mb-2" />
+          <Skeleton className="h-6 w-10" />
+        </div>
+      ))}
+    </div>
+  )
+
+  if (loading) {
+    return tarjetasSkeleton
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg border border-red-200 p-6 shadow-sm text-center space-y-4">
+        <div>
+          <p className="text-sm font-medium text-red-600">{error}</p>
+          <p className="text-xs text-gray-500 mt-1">Intenta recargar la información.</p>
+        </div>
+        <Button variant="outline" onClick={() => void fetchMascotas()}>
+          Reintentar
+        </Button>
+      </div>
+    )
+  }
 
   if (totalMascotas === 0) {
     return (
@@ -94,12 +221,24 @@ export function MascotasTab() {
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuContent
+              side="right"
+              align="end"
+              sideOffset={8}
+              className="w-40"
+            >
               <DropdownMenuItem
                 onClick={() => handleModificar(tipo)}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Modificar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                onClick={() => handleEliminarClick(tipo)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -155,6 +294,29 @@ export function MascotasTab() {
           idCasa={casaNumero}
         />
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Eliminar mascotas tipo {tipoMascotaAEliminar ? getTipoLabel(tipoMascotaAEliminar, 2).toLowerCase() : 'este tipo'}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Ya no aparecerán en tu lista, pero podrás registrarlas nuevamente cuando quieras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleEliminarMascota()}
+              disabled={isDeleting}
+              className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

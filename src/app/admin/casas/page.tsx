@@ -144,7 +144,7 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
 export default function CasasPage() {
   const router = useRouter()
-  const { casas, loading } = useCasas()
+  const { casas, loading, refetch: refetchCasas } = useCasas()
   const { setCasaInCache } = useCasaContext()
   
   const [pagination, setPagination] = useState<PaginationState>({
@@ -205,6 +205,8 @@ export default function CasasPage() {
 
       // Cerrar el sheet
       setIsSheetOpen(false)
+      // Refrescar la lista de casas para mostrar el cambio
+      refetchCasas()
       // Recargar la lista de casas si es necesario
       // fetchCasas()
       return true
@@ -487,7 +489,7 @@ export default function CasasPage() {
         },
       },
     ],
-    [handleDelete, router, setCasaInCache]
+    [handleDelete, refetchCasas, router, setCasaInCache]
   )
 
   const table = useReactTable({
