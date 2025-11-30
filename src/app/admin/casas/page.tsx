@@ -301,8 +301,6 @@ export default function CasasPage() {
         id: 'propietario',
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
         cell: ({ row }) => {
-          const esArrendada = row.original.usoCasa.toUpperCase() === 'ARRENDADA'
-          const rol = esArrendada ? 'Arrendatario' : 'Propietario'
           const nombrePropietario = row.original.propietario.nombreCompleto
           const sinPropietario = nombrePropietario === 'Sin propietario' || nombrePropietario === 'Sin nombre'
           
@@ -499,7 +497,7 @@ export default function CasasPage() {
         },
       },
     ],
-    [handleDelete, refetchCasas, router, setCasaInCache]
+    [handleDelete, router, setCasaInCache]
   )
 
   const table = useReactTable({

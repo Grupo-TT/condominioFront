@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, NotificationSquareIcon, Door01Icon, UserGroupIcon, User03Icon } from '@hugeicons/core-free-icons'
-import { ArrowLeft, Edit, Trash2, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
+import { ArrowLeft, Edit, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,17 +18,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMiembros } from '@/hooks/useCasa'
@@ -94,15 +83,10 @@ export default function CasaDetailPage() {
     return 'neutro'
   }
 
-  const handleDelete = () => {
-    // Aquí agregarías la lógica para eliminar la casa
-    router.push('/admin/casas')
-  } 
-
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -124,7 +108,7 @@ export default function CasaDetailPage() {
   if (!casaSeleccionada) {
     return (
       <div className="flex flex-col h-full">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -180,7 +164,7 @@ export default function CasaDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
@@ -287,7 +271,7 @@ export default function CasaDetailPage() {
                   <HugeiconsIcon
                     icon={NotificationSquareIcon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
                 <p className="text-lg font-bold text-gray-900">
                   {casaSeleccionada?.estadoFinancieroCasa
@@ -306,7 +290,7 @@ export default function CasaDetailPage() {
                   <HugeiconsIcon
                     icon={Door01Icon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
                     {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Propia'}
@@ -323,7 +307,7 @@ export default function CasaDetailPage() {
                   <HugeiconsIcon
                     icon={UserGroupIcon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.cantidadMiembros}</p>
                 </div>
@@ -335,7 +319,7 @@ export default function CasaDetailPage() {
                   MASCOTAS
                 </label>
                 <div className="flex items-center gap-2 min-w-0">
-                  <PawPrint className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <PawPrint className="w-5 h-5 text-gray-500 shrink-0" />
                   <p className="text-lg font-bold text-gray-900">
                     {totalMascotas}
                   </p>

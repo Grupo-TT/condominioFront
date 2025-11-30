@@ -674,7 +674,7 @@ export default function MultasPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
                     }`}>
                     <HugeiconsIcon
                       icon={FileCorruptIcon}

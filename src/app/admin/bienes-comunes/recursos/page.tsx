@@ -535,7 +535,7 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Deshabilitar recurso "{row.original.nombre}"?
+                          ¿Deshabilitar recurso &ldquo;{row.original.nombre}&rdquo;?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           El recurso dejará de estar disponible y saldrá del estado de mantenimiento.
@@ -571,7 +571,7 @@ export default function RecursosPage() {
         },
       },
     ],
-    [setRecursos, handleAvailabilityChange, recursosResponse]
+    [handleAvailabilityChange]
   )
 
   const table = useReactTable({
