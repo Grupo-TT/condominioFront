@@ -258,7 +258,7 @@ export default function LoginPage() {
                   </div>
                 </FieldGroup>
 
-                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={isLoading}>
+                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={!canSubmit}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

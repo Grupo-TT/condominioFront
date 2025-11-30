@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ const suggestionRequirements = [
 
 export default function RecoverNewPasswordPage() {
   const router = useRouter();
-  const { recoveryEmail, tempCode, tempToken, resetRecovery } = usePasswordRecovery();
+  const { tempCode, tempToken, resetRecovery } = usePasswordRecovery();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);

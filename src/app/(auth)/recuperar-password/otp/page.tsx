@@ -47,7 +47,7 @@ export default function RecoverOtpPage() {
       setTempToken(response.data.token);
       setHasVerified(true);
       router.push('/recuperar-password/nueva');
-    } catch (err) {
+    } catch {
       toast.error('Código incorrecto');
       setCode('');
     } finally {
