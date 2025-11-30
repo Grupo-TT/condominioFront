@@ -2,7 +2,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +25,47 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const { login } = useAuth();
+
+  const validateEmail = (value: string) => {
+    if (!value.trim()) {
+      return 'El correo es obligatorio.';
+    }
+    const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
+    return emailRegex.test(value) ? '' : 'Ingresa un correo electrónico válido.';
+  };
+
+  const validatePassword = (value: string) => {
+    if (!value.trim()) {
+      return 'La contraseña es obligatoria.';
+    }
+    return '';
+  };
+
+  const canSubmit = useMemo(() => {
+    return !validateEmail(username) && !validatePassword(password) && !isLoading;
+  }, [username, password, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const emailValidation = validateEmail(username);
+    const passwordValidation = validatePassword(password);
+
+    setEmailTouched(true);
+    setPasswordTouched(true);
+    setEmailError(emailValidation);
+    setPasswordError(passwordValidation);
+
+    if (emailValidation || passwordValidation) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -68,7 +105,7 @@ export default function LoginPage() {
         {/* Left side - Login Form */}
         <div className="flex flex-col gap-6 p-8 md:p-12 lg:p-16 text-base md:text-lg">
           <div className="flex justify-center gap-2 md:justify-start">
-            <a href="#" className="flex items-center gap-3 text-foreground font-normal">
+            <a href="/login" className="flex items-center gap-3 text-foreground font-normal">
               <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
                 <Building2 className="size-6" />
               </div>
@@ -78,14 +115,14 @@ export default function LoginPage() {
 
           <div className="flex flex-1 items-center justify-center">
             <div className="w-full max-w-sm space-y-4">
-              <div className="space-y-3 text-center">
+              <div className="space-y-4 text-center mb-8">
                 <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Accede al Portal del Condominio</h1>
                 <p className="text-muted-foreground text-sm">
                   Consulta información, gestiona tus actividades y mantente conectado con tu comunidad.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -93,7 +130,7 @@ export default function LoginPage() {
                 )}
 
                 <FieldGroup className="space-y-0">
-                  <Field className="mb-0">
+                  <Field className="mb-0 gap-2">
                     <FieldLabel className="font-normal text-gray-600" htmlFor="email">Correo electrónico</FieldLabel>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -104,15 +141,37 @@ export default function LoginPage() {
                         type="email"
                         placeholder="usuario@example.com"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                          setUsername(e.target.value);
+                          if (!emailTouched) {
+                            setEmailTouched(true);
+                          }
+                          if (emailTouched) {
+                            setEmailError(validateEmail(e.target.value));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (username.trim()) {
+                            setEmailTouched(true);
+                            setEmailError(validateEmail(username));
+                          } else {
+                            setEmailTouched(false);
+                            setEmailError('');
+                          }
+                        }}
                         required
                         disabled={isLoading}
-                        className="h-12 text-sm pl-10 bg-white/30 border-[1.5px] border-gray-300/70 rounded-xl focus:ring-2 focus:ring-primary/50 focus:ring-offset-0 shadow-none"
+                        className={`h-12 text-sm pl-10 bg-white/30 border-[1.5px] ${emailError && emailTouched ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
                       />
                     </div>
+                    {emailError && emailTouched && (
+                      <p className="text-xs text-red-500 -mt-1" role="alert">
+                        {emailError}
+                      </p>
+                    )}
                   </Field>
 
-                  <Field className="mt-0">
+                  <Field className="mt-0 gap-2">
                     <div className="flex items-center">
                       <FieldLabel className="font-normal text-gray-600" htmlFor="password">Contraseña</FieldLabel>
                       <a
@@ -130,10 +189,28 @@ export default function LoginPage() {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (!passwordTouched) {
+                            setPasswordTouched(true);
+                          }
+                          if (passwordTouched) {
+                            setPasswordError(validatePassword(e.target.value));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (password.trim()) {
+                            setPasswordTouched(true);
+                            setPasswordError(validatePassword(password));
+                          } else {
+                            setPasswordTouched(false);
+                            setPasswordError('');
+                          }
+                        }}
+                        placeholder="Ingresa tu contraseña"
                         required
                         disabled={isLoading}
-                        className="h-12 text-sm pl-10 pr-10 bg-white/30 border-[1.5px] border-gray-300/70 rounded-xl focus:ring-2 focus:ring-primary/50 focus:ring-offset-0 shadow-none"
+                        className={`h-12 text-sm pl-10 pr-10 bg-white/30 border-[1.5px] ${passwordError && passwordTouched ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
                       />
                       <button
                         type="button"
@@ -158,12 +235,16 @@ export default function LoginPage() {
                         )}
                       </button>
                     </div>
+                    {passwordError && passwordTouched && (
+                      <p className="text-xs text-red-500 -mt-1" role="alert">
+                        {passwordError}
+                      </p>
+                    )}
                   </Field>
-
                   <div className="flex justify-between items-center w-full -mt-3 mb-4">
                     <label
                       htmlFor="rememberMe"
-                      className="text-sm text-gray-700 opacity-80 cursor-pointer"
+                      className={`text-sm cursor-pointer transition-colors ${rememberMe ? 'text-primary font-medium' : 'text-gray-700 opacity-80'}`}
                     >
                       Recordar mis datos de acceso
                     </label>
@@ -189,17 +270,6 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              <div className="text-center text-sm text-muted-foreground mt-6">
-                Al continuar, aceptas nuestros{' '}
-                <a href="/terminos" className="underline underline-offset-4">
-                  Términos de Servicio
-                </a>{' '}
-                y{' '}
-                <a href="/privacidad" className="underline underline-offset-4">
-                  Política de Privacidad
-                </a>
-                .
-              </div>
             </div>
           </div>
         </div>
