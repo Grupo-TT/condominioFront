@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/config/axios.config'
-import { RecursoRequest, RecursoResponse } from '../types/recursos.types';
+import { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '../types/recursos.types';
 
 export const recursoService = {
     async postRecurso(data: RecursoRequest): Promise<RecursoResponse> {
@@ -22,20 +22,14 @@ export const recursoService = {
         if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
         return []
     },  
-    async putRecursoEnable(id: number): Promise<RecursoResponse> {
-        const response = await apiClient.put(`/recurso/enable/${id}`);
+    async changeAvailability(id: number, disponibilidad: DisponibilidadRecurso): Promise<RecursoResponse> {
+        const response = await apiClient.put(`/recurso/change-availability/${id}`, null, {
+            params: { disponibilidad }
+        })
         const body = response.data
         if (body && typeof body === 'object' && 'data' in body) {
-            return body.data as RecursoResponse;
+            return body.data as RecursoResponse
         }
-        return body as RecursoResponse;
-    },
-    async putRecursosDisable(id: number): Promise<RecursoResponse> {
-        const response = await apiClient.put(`/recurso/disable/${id}`);
-        const body = response.data
-        if (body && typeof body === 'object' && 'data' in body) {
-            return body.data as RecursoResponse;
-        }
-        return body as RecursoResponse;
+        return body as RecursoResponse
     }
 }

@@ -71,6 +71,13 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
     }
   })
 
+  const selectedRol = form.watch('rolEnCasa')
+  const submitLabel = selectedRol === 'ARRENDATARIO'
+    ? 'Crear arrendatario'
+    : selectedRol === 'PROPIETARIO'
+    ? 'Crear propietario'
+    : 'Registrar persona'
+
   const handleFormSubmit = async (data: PropietarioFormData) => {
     const result = await onSubmit(data)
     // Solo resetear el formulario si el submit fue exitoso
@@ -314,7 +321,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
             className="flex-1 h-10 font-medium"
             onClick={() => setShowAllErrors(true)}
           >
-            Crear Propietario
+            {submitLabel}
           </Button>
         </SheetFooter>
       </div>
