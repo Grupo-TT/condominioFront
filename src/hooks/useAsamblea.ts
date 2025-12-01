@@ -16,7 +16,7 @@ export const useAsamblea = () => {
       // Simular llamada a API
       await new Promise(resolve => setTimeout(resolve, 500));
       setAsambleas(mockAsambleas);
-    } catch (error) {
+    } catch {
       toast.error('Error al cargar las asambleas');
     } finally {
       setLoading(false);

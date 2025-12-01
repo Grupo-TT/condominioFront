@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Clock8Icon, MapPin, Users, Plus, CheckCircle, XCircle, ChevronDown, BarChart3 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Book02Icon, UserCheck02Icon, Delete02Icon, PencilEdit02Icon, FullScreenIcon } from '@hugeicons/core-free-icons';
 import { useAsamblea } from '@/hooks/useAsamblea';
@@ -26,9 +26,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  FormInput,
-} from "@/components/forms";
 import {
   AlertDialog,
   AlertDialogAction,
