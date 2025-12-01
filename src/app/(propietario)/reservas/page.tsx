@@ -1,6 +1,9 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import { useRecursoPropietario } from '@/hooks/useRecursoPropietario'
+import { toast } from 'sonner'
+import { authService } from '@/lib/services/auth.service'
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -17,7 +20,6 @@ import { Carousel } from '@/components/ui/apple-cards-carousel'
 import { MapPin, Package, User, Minus, Plus, Calendar as CalendarIcon, Clock, Pencil, Trash2 } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Calendar02Icon } from '@hugeicons/core-free-icons'
-import { RECURSOS_MOCK } from '@/data/recursos-mock'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +44,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Sheet,
   SheetContent,
@@ -50,14 +53,13 @@ import {
 } from '@/components/ui/sheet'
 import { Calendar } from '@/components/ui/calendar'
 import { HoraCombobox } from '@/components/hora-combobox'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import type { RecursoUI } from '@/services/recurso.adapter'
-
-// Tipo para las reservas del usuario
+import { useReservasPropietario } from '@/hooks/useReservasPropietario'
+import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
 interface ReservaUsuario {
   id: string
-  recursoId: string
+  idRecurso: number
   recursoNombre: string
   tipoRecurso: 'zona' | 'objeto'
   estado: 'pendiente' | 'aprobada' | 'rechazada'
@@ -69,63 +71,6 @@ interface ReservaUsuario {
   fechaCreacion: Date
 }
 
-// Datos mock de reservas
-// Fechas fijas para facilitar pruebas - DICIEMBRE 2025 (válidas desde 9 de noviembre 2025)
-const RESERVAS_MOCK: ReservaUsuario[] = [
-  {
-    id: '1',
-    recursoId: '1', // Salón de Eventos
-    recursoNombre: 'Salón de Eventos',
-    tipoRecurso: 'zona',
-    estado: 'aprobada',
-    fechaInicio: new Date(2025, 11, 15), // 15 de diciembre 2025
-    fechaFin: new Date(2025, 11, 15),
-    horaInicio: '14:00',
-    horaFin: '18:00', // Ocupa: 14:00, 15:00, 16:00, 17:00
-    numeroInvitados: 25,
-    fechaCreacion: new Date(2025, 10, 10),
-  },
-  {
-    id: '2',
-    recursoId: '1', // Salón de Eventos (mismo recurso, diferente día)
-    recursoNombre: 'Salón de Eventos',
-    tipoRecurso: 'zona',
-    estado: 'pendiente',
-    fechaInicio: new Date(2025, 11, 17), // 17 de diciembre 2025
-    fechaFin: new Date(2025, 11, 17),
-    horaInicio: '10:00',
-    horaFin: '12:00', // Ocupa: 10:00, 11:00
-    numeroInvitados: 10,
-    fechaCreacion: new Date(2025, 10, 12),
-  },
-  {
-    id: '3',
-    recursoId: '2', // Piscina
-    recursoNombre: 'Piscina',
-    tipoRecurso: 'zona',
-    estado: 'aprobada',
-    fechaInicio: new Date(2025, 11, 16), // 16 de diciembre 2025
-    fechaFin: new Date(2025, 11, 16),
-    horaInicio: '15:00',
-    horaFin: '17:00', // Ocupa: 15:00, 16:00
-    numeroInvitados: 8,
-    fechaCreacion: new Date(2025, 10, 11),
-  },
-  {
-    id: '4',
-    recursoId: '4', // Sillas Plegables
-    recursoNombre: 'Sillas Plegables',
-    tipoRecurso: 'objeto',
-    estado: 'rechazada', // Esta NO debería bloquear horas (estado rechazada)
-    fechaInicio: new Date(2025, 11, 15),
-    fechaFin: new Date(2025, 11, 15),
-    horaInicio: '19:00',
-    horaFin: '21:00',
-    numeroInvitados: 5,
-    fechaCreacion: new Date(2025, 10, 10),
-  },
-]
-
 export default function ReservasPropietarioPage() {
   const [activeTab, setActiveTab] = useState<string>('recursos')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -135,22 +80,23 @@ export default function ReservasPropietarioPage() {
   const [horaInicial, setHoraInicial] = useState<string>('')
   const [horaFinal, setHoraFinal] = useState<string>('')
   const [numeroInvitados, setNumeroInvitados] = useState<number>(1)
-  const [reservas, setReservas] = useState<ReservaUsuario[]>(RESERVAS_MOCK)
+  const { reservas, loading: loadingReservas, error, fetchReservasPropietario, eliminarReserva, postReservasPropietario, updateReserva } = useReservasPropietario();
   const [openDialogConfirmacion, setOpenDialogConfirmacion] = useState(false)
   const [reservaEditando, setReservaEditando] = useState<ReservaUsuario | null>(null)
-  // Estados para el formulario de edición
+  const [missingIdCasa, setMissingIdCasa] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
   const [editDate, setEditDate] = useState<Date | undefined>(undefined)
   const [editHoraInicial, setEditHoraInicial] = useState<string>('')
   const [editHoraFinal, setEditHoraFinal] = useState<string>('')
   const [editNumeroInvitados, setEditNumeroInvitados] = useState<number>(1)
+  const { recurso, loading: loadingRecursos, error: errorRecursos, fetchRecursoPropietario } = useRecursoPropietario()
 
-  // Separar recursos por tipo
-  const zonas = useMemo(() => RECURSOS_MOCK.filter(r => r.tipo === 'zona' && r.habilitado), [])
-  const objetos = useMemo(() => RECURSOS_MOCK.filter(r => r.tipo === 'objeto' && r.habilitado), [])
-
+  const zonas = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'zona' && r.habilitado) || [], [recurso])
+  const objetos = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'objeto' && r.habilitado) || [], [recurso])
   // Generar opciones de hora en formato 12 horas (7:00 AM a 11:00 PM)
   const horas = useMemo(() => {
-    const horasArray: Array<{ value: string; label: string; hora24: number }> = []
+  const horasArray: Array<{ value: string; label: string; hora24: number }> = []
     
     // Generar horas de 7:00 AM (07:00) a 11:59 PM (23:59)
     for (let i = 7; i < 24; i++) {
@@ -166,6 +112,124 @@ export default function ReservasPropietarioPage() {
     return horasArray
   }, [])
 
+  useEffect(() => {
+    fetchRecursoPropietario()
+  }, [])
+
+  useEffect(() => {
+    const idCasa = authService.getIdCasa()
+    if (idCasa && !Number.isNaN(Number(idCasa))) {
+      fetchReservasPropietario(Number(idCasa))
+      setMissingIdCasa(false)
+    } else {
+      setMissingIdCasa(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (errorRecursos) {
+      toast.error(errorRecursos)
+    }
+  }, [errorRecursos])
+
+  useEffect(() => {
+    if (missingIdCasa) {
+      toast.error('Ocurrio un error al obtener las reservas.')
+    }
+  }, [missingIdCasa])
+
+  useEffect(() => {
+    if (error && !missingIdCasa) {
+      toast.error(error)
+    }
+  }, [error, missingIdCasa])
+
+  const handleCreateReserva = async () => {
+    if (!selectedRecurso || !selectedDate || !horaInicial || !horaFinal) {
+      toast.error("Por favor selecciona recurso, fecha e intervalo de horas para la reserva.");
+      return;
+    }
+
+    setCreateError(null);
+    setIsCreating(true);
+
+    try {
+      const idCasa = authService.getIdCasa();
+      if (!idCasa) {
+        toast.error("No se pudo crear la reserva.");
+        return;
+      }
+
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser?.idPersona) {
+        toast.error("No se pudo identificar al solicitante.");
+        return;
+      }
+
+      const payload = adaptarReservaCreate({
+        idRecurso: Number(selectedRecurso.id),
+        idSolicitante: Number(currentUser.idPersona),
+        fecha: selectedDate,
+        horaInicial,
+        horaFinal,
+        numeroInvitados
+      });
+
+      await postReservasPropietario(payload);
+
+      toast.success("Reserva creada correctamente");
+
+      setOpenDialogConfirmacion(false);
+      setIsSheetOpen(false);
+
+      fetchReservasPropietario(Number(idCasa));
+
+    } catch (err: any) {
+      const msg = err?.message || err?.response?.data?.message || "Ocurrió un error creando la reserva";
+      setCreateError(msg);
+      toast.error(msg);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleUpdateReserva = async () => {
+    if (!reservaEditando || !editDate || !editHoraInicial || !editHoraFinal) {
+      toast.error("Faltan datos para actualizar la reserva.");
+      return;
+    }
+
+    try {
+      const idCasa = authService.getIdCasa();
+      if (!idCasa) {
+        toast.error("No se pudo actualizar la reserva: idCasa no encontrado.");
+        return;
+      }
+
+      const payload = adaptarReservaUpdate({
+        idSolicitud: Number(reservaEditando.id),
+        fechaSolicitud: editDate.toISOString().split("T")[0],
+        horaInicio: editHoraInicial,
+        horaFin: editHoraFinal,
+        numeroInvitados: editNumeroInvitados,
+      });
+
+      console.debug("Payload EDITAR", payload);
+
+      await updateReserva(payload);
+
+      toast.success("Reserva actualizada correctamente");
+
+      setIsEditSheetOpen(false);
+      setReservaEditando(null);
+
+      fetchReservasPropietario(Number(idCasa));
+
+    } catch (err: any) {
+      toast.error(err.message || "Error al actualizar la reserva");
+    }
+  };
+
   // Obtener horas ocupadas para el recurso y fecha seleccionada (para crear)
   const horasOcupadas = useMemo(() => {
     if (!selectedRecurso || !selectedDate) {
@@ -176,15 +240,15 @@ export default function ReservasPropietarioPage() {
     
     // Filtrar reservas que coincidan con el recurso y la fecha
     const reservasDelDia = reservas.filter(reserva => {
-      // Comparar recursoId
-      if (reserva.recursoId !== selectedRecurso.id) {
+      // Comparar nombre del recurso (el backend entrega nombre en la reserva)
+      if (String(reserva.idRecurso) !== String(selectedRecurso.id)) {
         return false
       }
       
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(reserva.fechaInicio)
       fechaReserva.setHours(0, 0, 0, 0)
-      const fechaSeleccionada = new Date(selectedDate)
+      const fechaSeleccionada = new Date(selectedDate as Date)
       fechaSeleccionada.setHours(0, 0, 0, 0)
       
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
@@ -236,15 +300,15 @@ export default function ReservasPropietarioPage() {
         return false
       }
       
-      // Comparar recursoId
-      if (reserva.recursoId !== selectedRecurso.id) {
+      // Comparar recurso por nombre (backend devuelve nombre en la reserva)
+      if (String(reserva.idRecurso) !== String(selectedRecurso.id)) {
         return false
       }
       
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(reserva.fechaInicio)
       fechaReserva.setHours(0, 0, 0, 0)
-      const fechaSeleccionada = new Date(editDate)
+      const fechaSeleccionada = new Date(editDate as Date)
       fechaSeleccionada.setHours(0, 0, 0, 0)
       
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
@@ -744,10 +808,10 @@ export default function ReservasPropietarioPage() {
                                 </div>
                                 {/* Descripción del recurso */}
                                 {(() => {
-                                  const recurso = RECURSOS_MOCK.find(r => r.id === reserva.recursoId)
-                                  return recurso?.descripcion ? (
+                                  const recursoEncontrado = recurso.find(r => r.id === String(reserva.idRecurso))
+                                  return recursoEncontrado?.descripcion ? (
                                     <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                      {recurso.descripcion}
+                                      {recursoEncontrado.descripcion}
                                     </p>
                                   ) : null
                                 })()}
@@ -784,10 +848,10 @@ export default function ReservasPropietarioPage() {
                                         className="h-7 w-7"
                                         disabled={reserva.estado === 'aprobada' || reserva.estado === 'rechazada'}
                                         onClick={() => {
-                                          const recurso = RECURSOS_MOCK.find(r => r.id === reserva.recursoId)
-                                          if (recurso) {
+                                          const recursoEncontrado = recurso.find(r => r.id === String(reserva.idRecurso))
+                                          if (recursoEncontrado) {
                                             setReservaEditando(reserva)
-                                            setSelectedRecurso(recurso)
+                                            setSelectedRecurso(recursoEncontrado)
                                             setEditDate(new Date(reserva.fechaInicio))
                                             setEditHoraInicial(reserva.horaInicio)
                                             setEditHoraFinal(reserva.horaFin)
@@ -835,8 +899,15 @@ export default function ReservasPropietarioPage() {
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                         <AlertDialogAction
-                                          onClick={() => {
-                                            setReservas(reservas.filter(r => r.id !== reserva.id))
+                                          onClick={async () => {
+                                            try {
+                                              await eliminarReserva(Number(reserva.id))
+                                              toast.success("Reserva eliminada correctamente")
+                                              fetchReservasPropietario(Number(authService.getIdCasa()))
+
+                                            } catch (error: any) {
+                                              toast.error(error.message)
+                                            }
                                           }}
                                           className="bg-red-600 hover:bg-red-700"
                                         >
@@ -1066,9 +1137,7 @@ export default function ReservasPropietarioPage() {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={() => {
-                      setOpenDialogConfirmacion(true)
-                    }}
+                    onClick={() => setOpenDialogConfirmacion(true)}
                     disabled={!selectedDate || !horaInicial || !horaFinal}
                     className="flex-1"
                   >
@@ -1373,24 +1442,9 @@ export default function ReservasPropietarioPage() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => {
+                          onClick={async () => {
                             if (reservaEditando && editDate && editHoraInicial && editHoraFinal) {
-                              // Actualizar la reserva
-                              setReservas(prev => prev.map(r => 
-                                r.id === reservaEditando.id 
-                                  ? {
-                                      ...r,
-                                      fechaInicio: editDate,
-                                      fechaFin: editDate,
-                                      horaInicio: editHoraInicial,
-                                      horaFin: editHoraFinal,
-                                      numeroInvitados: editNumeroInvitados
-                                    }
-                                  : r
-                              ))
-                              setIsEditSheetOpen(false)
-                              setReservaEditando(null)
-                              // TODO: Aquí iría la llamada a la API para actualizar la reserva
+                              handleUpdateReserva()
                             }
                           }}
                         >
@@ -1471,7 +1525,6 @@ export default function ReservasPropietarioPage() {
               </div>
             </div>
           )}
-
           <DialogFooter>
             <Button 
               variant="outline" 
@@ -1480,12 +1533,7 @@ export default function ReservasPropietarioPage() {
               Cancelar
             </Button>
             <Button 
-              onClick={() => {
-                // TODO: Implementar lógica de reserva
-                setOpenDialogConfirmacion(false)
-                setIsSheetOpen(false)
-                // Aquí iría la llamada a la API para crear la reserva
-              }}
+              onClick={handleCreateReserva}
             >
               Confirmar Reserva
             </Button>

@@ -21,7 +21,14 @@ export const recursoService = {
         if (Array.isArray(body)) return body as RecursoResponse[]
         if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
         return []
-    },  
+    },
+    async getRecursoEnabled(): Promise<RecursoResponse[]> {
+        const response = await apiClient.get(`/recurso/all-public`);
+        const body = response.data
+        if (Array.isArray(body)) return body as RecursoResponse[]
+        if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
+        return []
+    },
     async putRecursoEnable(id: number): Promise<RecursoResponse> {
         const response = await apiClient.put(`/recurso/enable/${id}`);
         const body = response.data

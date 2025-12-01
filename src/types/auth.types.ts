@@ -19,6 +19,8 @@ export interface LoginResponse {
     email: string;
     nombre: string;
     roles: string[];
+    idCasa: number;
+    idPersona: number;
   };
 }
 
@@ -29,6 +31,8 @@ export interface User {
   email: string;
   nombre: string;
   role: string;
+  idCasa: number;
+  idPersona: number;
 }
 
 /**
