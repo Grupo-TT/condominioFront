@@ -896,8 +896,6 @@ export default function MultasPage() {
                     value={formDescripcion}
                     onChange={(e) => setFormDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>
@@ -1004,8 +1002,6 @@ export default function MultasPage() {
                     value={editDescripcion}
                     onChange={(e) => setEditDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>

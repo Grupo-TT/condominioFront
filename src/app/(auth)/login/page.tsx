@@ -25,8 +25,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [passwordTouched, setPasswordTouched] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const { login } = useAuth();
@@ -46,10 +44,6 @@ export default function LoginPage() {
     return '';
   };
 
-  const canSubmit = useMemo(() => {
-    return !validateEmail(username) && !validatePassword(password) && !isLoading;
-  }, [username, password, isLoading]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -57,8 +51,6 @@ export default function LoginPage() {
     const emailValidation = validateEmail(username);
     const passwordValidation = validatePassword(password);
 
-    setEmailTouched(true);
-    setPasswordTouched(true);
     setEmailError(emailValidation);
     setPasswordError(passwordValidation);
 
@@ -130,6 +122,7 @@ export default function LoginPage() {
                 )}
 
                 <FieldGroup className="space-y-0">
+
                   <Field className="mb-0 gap-2">
                     <FieldLabel className="font-normal text-gray-600" htmlFor="email">Correo electrónico</FieldLabel>
                     <div className="relative">
@@ -146,10 +139,10 @@ export default function LoginPage() {
                         }}
                         required
                         disabled={isLoading}
-                        className={`h-12 text-sm pl-10 bg-white/30 border-[1.5px] ${emailError && emailTouched ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
+                        className={`h-12 text-sm pl-10 bg-white/30 border-[1.5px] ${emailError ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
                       />
                     </div>
-                    {emailError && emailTouched && (
+                    {emailError && (
                       <p className="text-xs text-red-500 -mt-1" role="alert">
                         {emailError}
                       </p>
@@ -180,7 +173,7 @@ export default function LoginPage() {
                         placeholder="Ingresa tu contraseña"
                         required
                         disabled={isLoading}
-                        className={`h-12 text-sm pl-10 pr-10 bg-white/30 border-[1.5px] ${passwordError && passwordTouched ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
+                        className={`h-12 text-sm pl-10 pr-10 bg-white/30 border-[1.5px] ${passwordError ? 'border-red-400 focus:ring-red-400/60' : 'border-gray-300/70 focus:ring-primary/50'} rounded-xl focus:ring-2 focus:ring-offset-0 shadow-none`}
                       />
                       <button
                         type="button"
@@ -205,7 +198,7 @@ export default function LoginPage() {
                         )}
                       </button>
                     </div>
-                    {passwordError && passwordTouched && (
+                    {passwordError && (
                       <p className="text-xs text-red-500 -mt-1" role="alert">
                         {passwordError}
                       </p>
@@ -223,21 +216,23 @@ export default function LoginPage() {
                       checked={rememberMe}
                       onCheckedChange={setRememberMe}
                       disabled={isLoading}
-                      className="h-5 w-9 border-2 border-gray-200/50 data-[state=checked]:bg-primary"
                     />
                   </div>
+                  <Button
+                    type="submit"
+                    className="w-full py-4 h-12 text-base rounded-xl"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Iniciando sesión...
+                      </>
+                    ) : (
+                      'Iniciar sesión'
+                    )}
+                  </Button>
                 </FieldGroup>
-
-                <Button type="submit" className="w-full py-4 h-12 text-base rounded-xl" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Iniciando sesión...
-                    </>
-                  ) : (
-                    'Iniciar sesión'
-                  )}
-                </Button>
               </form>
 
             </div>

@@ -929,7 +929,7 @@ export default function MovimientosPage() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent 
-                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                    className="w-(--radix-popover-trigger-width) p-0"
                     onWheel={(e) => e.stopPropagation()}
                   >
                     <Command>
@@ -1109,7 +1109,7 @@ export default function MovimientosPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                     selectedMovimiento.tipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
                   }`}>
                     <HugeiconsIcon
@@ -1215,12 +1215,12 @@ export default function MovimientosPage() {
       <Sheet open={isFormSheetOpen} onOpenChange={setIsFormSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{ width: '565px', maxWidth: 'none' }}
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                 formTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
               }`}>
                 <HugeiconsIcon
@@ -1317,7 +1317,7 @@ export default function MovimientosPage() {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent 
-                          className="w-[var(--radix-popover-trigger-width)] p-0"
+                          className="w-(--radix-popover-trigger-width) p-0"
                           onWheel={(e) => e.stopPropagation()}
                         >
                           <Command>
@@ -1373,8 +1373,6 @@ export default function MovimientosPage() {
                         value={formDescripcion}
                         onChange={(e) => setFormDescripcion(e.target.value)}
                         placeholder="Describe los detalles del movimiento..."
-                        autoExpand
-                        maxHeight={250}
                         required
                         className="min-h-[100px] border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
@@ -1459,12 +1457,12 @@ export default function MovimientosPage() {
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{ width: '565px', maxWidth: 'none' }}
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                 editTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
               }`}>
                 <HugeiconsIcon
@@ -1554,7 +1552,7 @@ export default function MovimientosPage() {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent 
-                          className="w-[var(--radix-popover-trigger-width)] p-0"
+                          className="w-(--radix-popover-trigger-width) md:w-[calc(var(--radix-popover-trigger-width)-1rem)]"
                           onWheel={(e) => e.stopPropagation()}
                         >
                           <Command>
@@ -1610,8 +1608,6 @@ export default function MovimientosPage() {
                         value={editDescripcion}
                         onChange={(e) => setEditDescripcion(e.target.value)}
                         placeholder="Describe los detalles del movimiento..."
-                        autoExpand
-                        maxHeight={250}
                         required
                         className="min-h-[100px] border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
