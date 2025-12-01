@@ -408,7 +408,7 @@ export default function AsambleaPage() {
         <CardHeader className="px-4 pt-2 pb-1 gap-0">
           <div className="flex items-center justify-between gap-3 min-w-0">
             <CardTitle className="flex flex-1 items-center gap-3 text-lg font-semibold text-gray-900 min-w-0 overflow-hidden">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 shadow-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700 shadow-sm">
                 <HugeiconsIcon icon={Book02Icon} size={18} strokeWidth={1.8} />
               </span>
               <span className="truncate leading-tight">
@@ -437,7 +437,7 @@ export default function AsambleaPage() {
           {options?.showAttendance && (
             <div className="flex items-center justify-between gap-4 py-1">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-100 text-gray-600">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-700">
                   <HugeiconsIcon icon={UserCheck02Icon} size={20} strokeWidth={1.8} />
                 </div>
                 <div className="min-w-0">
@@ -552,7 +552,7 @@ export default function AsambleaPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col gap-6 p-6 overflow-hidden">
-          <div className="flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center justify-between shrink-0">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Asambleas
@@ -582,7 +582,7 @@ export default function AsambleaPage() {
                               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                                 {year}
                               </h3>
-                              <div className="h-px flex-1 ml-4 bg-gradient-to-r from-gray-200 to-transparent" />
+                              <div className="h-px flex-1 ml-4 bg-linear-to-r from-gray-200 to-transparent" />
                             </div>
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                               {list.map((asamblea) => renderAsambleaCard(asamblea))}
@@ -625,7 +625,7 @@ export default function AsambleaPage() {
                                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                                   {year}
                                 </h3>
-                                <div className="h-px flex-1 ml-4 bg-gradient-to-r from-gray-200 to-transparent" />
+                                <div className="h-px flex-1 ml-4 bg-linear-to-r from-gray-200 to-transparent" />
                               </div>
                               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 {list.map((asamblea) => renderAsambleaCard(asamblea, { showAttendance: true, variant: 'past' }))}
@@ -758,7 +758,7 @@ export default function AsambleaPage() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{
             width: "500px",
             maxWidth: "none",
@@ -984,7 +984,7 @@ export default function AsambleaPage() {
       <Sheet open={isAttendanceSheetOpen} onOpenChange={setIsAttendanceSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{
             width: "720px",
             maxWidth: "none",
@@ -992,7 +992,7 @@ export default function AsambleaPage() {
         >
           <SheetHeader className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center shrink-0 shadow-sm">
                 <HugeiconsIcon icon={Book02Icon} size={24} strokeWidth={1.8} />
               </div>
               <div className="flex-1">
@@ -1129,7 +1129,7 @@ export default function AsambleaPage() {
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{ width: "600px", maxWidth: "none" }}
         >
           <SheetHeader className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
