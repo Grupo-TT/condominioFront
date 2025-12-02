@@ -16,13 +16,11 @@ export function useReservasPropietario() {
       const response = await reservasService.getReservasPropietario(userId)
       console.debug('[useReservasPropietario] raw response', response)
       const formatTime = (t: any) => {
-        // Caso 1: viene como string "HH:mm:ss"
         if (typeof t === "string") {
           const [hour, minute] = t.split(":").map(Number);
           return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
         }
 
-        // Caso 2: viene como objeto {hour, minute, second…}
         if (t && typeof t === "object") {
           const hour = Number(t.hour ?? 0);
           const minute = Number(t.minute ?? 0);
