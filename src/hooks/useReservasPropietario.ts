@@ -33,18 +33,23 @@ export function useReservasPropietario() {
         return "00:00";
       };
 
+      const parseFecha = (fechaStr: string) => {
+        const [year, month, day] = fechaStr.split('T')[0].split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+
       const reservasAdaptadas: ReservaAdaptada[] = response.map((r: ReservaPropietarioItem) =>  ({
         id: String(r.id),
         idRecurso: r.idRecurso,
         recursoNombre: r.nombre,
         tipoRecurso: r.tipoRecursoComun.toLowerCase() as 'zona' | 'objeto',
         estado: r.estadoSolicitud.toLowerCase() as 'pendiente' | 'aprobada' | 'rechazada',
-        fechaInicio: new Date(r.fechaReserva),
-        fechaFin: new Date(r.fechaReserva),
+        fechaInicio: parseFecha(r.fechaReserva),
+        fechaFin: parseFecha(r.fechaReserva),
         horaInicio: formatTime(r.horaInicio),
         horaFin: formatTime(r.horaFin),
         numeroInvitados: r.numeroInvitados,
-        fechaCreacion: new Date(r.fechaCreacion)
+        fechaCreacion: parseFecha(r.fechaCreacion)
       }))
 
       reservasAdaptadas.forEach((ra, idx) => {
