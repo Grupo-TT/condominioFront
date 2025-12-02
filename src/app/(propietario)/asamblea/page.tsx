@@ -156,11 +156,14 @@ export default function AsambleaPropietarioPage() {
                 </CardContent>
               </Card>
             ) : upcomingAsambleas.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-10 text-center">
+              <div className="rounded-lg border border-dashed p-10 text-center flex flex-col items-center gap-3">
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 text-gray-600">
+                  <HugeiconsIcon icon={Book02Icon} size={32} strokeWidth={1.8} />
+                </span>
                 <p className="text-base font-medium text-gray-900">
                   No hay asambleas programadas.
                 </p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-gray-500">
                   En cuanto se programe una nueva asamblea, aparecerá en este listado.
                 </p>
               </div>
