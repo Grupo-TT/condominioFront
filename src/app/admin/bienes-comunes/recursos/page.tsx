@@ -81,8 +81,8 @@ import {
 } from '@tanstack/react-table'
 import { RecursoResponse } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
-import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import { mapFormToRequest, mapResponseToUI } from '@/services/admin.recurso.adapter'
+import type { RecursoUI } from '@/services/admin.recurso.adapter'
 import { useRecurso } from '@/hooks/useRecurso'
 import { useRecursos } from '@/hooks/useRecursos'
 

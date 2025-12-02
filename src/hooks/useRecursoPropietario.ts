@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { recursoService } from "@/services/recurso.service";
-import { RecursoUI, mapResponseToUI } from "@/services/recurso.adapter";
+import { RecursoUI, mapResponseToUI } from "@/services/propietario.recurso.adapter";
 
 export const useRecursoPropietario = () => {
   const [loading, setLoading] = useState(false);

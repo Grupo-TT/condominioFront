@@ -54,7 +54,7 @@ import {
 import { Calendar } from '@/components/ui/calendar'
 import { HoraCombobox } from '@/components/hora-combobox'
 import { cn } from '@/lib/utils'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/propietario.recurso.adapter'
 import { useReservasPropietario } from '@/hooks/useReservasPropietario'
 import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
 interface ReservaUsuario {
@@ -92,8 +92,8 @@ export default function ReservasPropietarioPage() {
   const [editNumeroInvitados, setEditNumeroInvitados] = useState<number>(1)
   const { recurso, loading: loadingRecursos, error: errorRecursos, fetchRecursoPropietario } = useRecursoPropietario()
 
-  const zonas = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'zona' && r.habilitado) || [], [recurso])
-  const objetos = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'objeto' && r.habilitado) || [], [recurso])
+  const zonas = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'zona') || [], [recurso])
+  const objetos = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'objeto') || [], [recurso])
   // Generar opciones de hora en formato 12 horas (7:00 AM a 11:00 PM)
   const horas = useMemo(() => {
   const horasArray: Array<{ value: string; label: string; hora24: number }> = []
@@ -213,8 +213,6 @@ export default function ReservasPropietarioPage() {
         horaFin: editHoraFinal,
         numeroInvitados: editNumeroInvitados,
       });
-
-      console.debug("Payload EDITAR", payload);
 
       await updateReserva(payload);
 

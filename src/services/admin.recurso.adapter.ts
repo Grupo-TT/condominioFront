@@ -1,7 +1,5 @@
-// src/services/recurso.adapter.ts (ejemplo)
 import type { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 
-// Tipo usado por la UI: forma adaptada de la respuesta de la API
 export type RecursoUI = Omit<RecursoResponse, 'id'> & {
   id: string
   tipo: 'zona' | 'objeto'

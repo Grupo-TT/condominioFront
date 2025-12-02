@@ -1,4 +1,4 @@
-import type { RecursoUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/admin.recurso.adapter'
 
 // Datos mock para desarrollo - TODO: Conectar con API
 export const RECURSOS_MOCK: RecursoUI[] = [

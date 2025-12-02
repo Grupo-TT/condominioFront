@@ -4,7 +4,6 @@ import { RecursoRequest, RecursoResponse } from '../types/recursos.types';
 export const recursoService = {
     async postRecurso(data: RecursoRequest): Promise<RecursoResponse> {
         const response = await apiClient.post('/recurso/create', data);
-        // Normalizar si el backend devuelve { message, data: { ... } }
         const body = response.data
         if (body && typeof body === 'object' && 'data' in body) return body.data as RecursoResponse
         return body as RecursoResponse
