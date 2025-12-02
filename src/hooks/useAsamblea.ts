@@ -2,22 +2,34 @@
 
 import { useState, useCallback } from 'react';
 import { Asamblea, Asistente, CreateAsambleaData, UpdateAsambleaData } from '@/types/asamblea.types';
-import { mockAsambleas, mockAsistentes } from '@/data/asamblea.mock';
 import { toast } from 'sonner';
+import { AsambleaService } from '@/lib/services/asamblea.service';
 
 export const useAsamblea = () => {
   const [loading, setLoading] = useState(false);
-  const [asambleas, setAsambleas] = useState<Asamblea[]>(mockAsambleas);
-  const [asistentes, setAsistentes] = useState<Asistente[]>(mockAsistentes);
+  const [asambleas, setAsambleas] = useState<Asamblea[]>([]);
+  const [asistentes, setAsistentes] = useState<Asistente[]>([]);
 
   const fetchAsambleas = useCallback(async () => {
     setLoading(true);
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setAsambleas(mockAsambleas);
+      const data = await AsambleaService.getAll();
+      setAsambleas(data);
     } catch {
       toast.error('Error al cargar las asambleas');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchAsistentes = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const res = await AsambleaService.getAsistentes(id);
+      console.log("🚀 ~ useAsamblea ~ res:", res)
+      setAsistentes(res);
+    } catch {
+      toast.error("Error al cargar los asistentes");
     } finally {
       setLoading(false);
     }
@@ -26,12 +38,7 @@ export const useAsamblea = () => {
   const createAsamblea = useCallback(async (data: CreateAsambleaData) => {
     setLoading(true);
     try {
-      // Simular creación
-      const newAsamblea: Asamblea = {
-        id: Date.now().toString(),
-        ...data,
-        estado: 'programada',
-      };
+      const newAsamblea = await AsambleaService.createAsamblea({ ...data, estado: 'PROGRAMADA' } as any);
       setAsambleas(prev => [...prev, newAsamblea]);
       toast.success('Asamblea creada exitosamente');
       return newAsamblea;
@@ -46,8 +53,13 @@ export const useAsamblea = () => {
   const updateAsamblea = useCallback(async (id: string, data: UpdateAsambleaData) => {
     setLoading(true);
     try {
+      const updated = await AsambleaService.updateAsamblea(Number(id), data);
       setAsambleas(prev =>
-        prev.map(asamblea => (asamblea.id === id ? { ...asamblea, ...data } : asamblea))
+        prev.map(asamblea =>
+          asamblea.id === id
+            ? { ...asamblea, ...updated, id: String(updated.id) }
+            : asamblea
+        )
       );
       toast.success('Asamblea actualizada exitosamente');
     } catch (error) {
@@ -61,8 +73,14 @@ export const useAsamblea = () => {
   const deleteAsamblea = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      setAsambleas(prev => prev.filter(asamblea => asamblea.id !== id));
-      toast.success('Asamblea eliminada exitosamente');
+      const deleted = await AsambleaService.deleteAsamblea(Number(id));
+      setAsambleas(prev =>
+        prev.map(asamblea =>
+          asamblea.id === id
+            ? { ...asamblea, ...deleted, id: String(deleted.id) }
+            : asamblea
+        )
+      ); toast.success('Asamblea eliminada exitosamente');
     } catch (error) {
       toast.error('Error al eliminar la asamblea');
       throw error;
@@ -71,23 +89,24 @@ export const useAsamblea = () => {
     }
   }, []);
 
-  const getAsistentesByAsamblea = useCallback((asambleaId: string) => {
-    return asistentes.filter(asistente => asistente.asambleaId === asambleaId);
+  const getAsistentesByAsamblea = useCallback(() => {
+    return Array.isArray(asistentes) ? asistentes : [];
   }, [asistentes]);
 
-  const markAsistencia = useCallback(async (asistenteId: string, asistio: boolean) => {
-    setAsistentes(prev =>
-      prev.map(asistente =>
-        asistente.id === asistenteId ? { ...asistente, asistio } : asistente
-      )
-    );
-    toast.success('Asistencia actualizada');
-  }, []);
+  const markAsistencia = useCallback(async (id: number, asistio: boolean) => {
+  setAsistentes(prev =>
+    prev.map(asistente =>
+      asistente.id === id ? { ...asistente, asistio } : asistente
+    )
+  );
+  toast.success('Asistencia actualizada');
+}, []);
 
   return {
     loading,
     asambleas,
     fetchAsambleas,
+    fetchAsistentes,
     createAsamblea,
     updateAsamblea,
     deleteAsamblea,

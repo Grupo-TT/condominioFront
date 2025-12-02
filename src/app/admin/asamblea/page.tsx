@@ -63,20 +63,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { ButtonArrow } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { toast } from "sonner";
 
 // Esquema de validación para nueva asamblea
 const asambleaSchema = z.object({
   titulo: z.string().min(1, "El título es requerido"),
   descripcion: z.string().min(1, "La descripción es requerida"),
   fecha: z.string().min(1, "La fecha es requerida"),
-  hora: z.string().min(1, "La hora es requerida"),
+  horaInicio: z.string().min(1, "La hora es requerida"),
   lugar: z.string().min(1, "El lugar es requerido"),
 });
 
 type AsambleaFormData = z.infer<typeof asambleaSchema>;
 
 export default function AsambleaPage() {
-  const { loading, asambleas, fetchAsambleas, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
+  const { loading, asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [selectedAsamblea, setSelectedAsamblea] = useState<Asamblea | null>(null);
@@ -93,7 +94,7 @@ export default function AsambleaPage() {
 
   const selectedAttendance = useMemo(() => {
     if (!selectedAsamblea) return [];
-    return getAsistentesByAsamblea(selectedAsamblea.id);
+    return getAsistentesByAsamblea();
   }, [selectedAsamblea, getAsistentesByAsamblea]);
 
   const attendanceStats = useMemo(() => {
@@ -105,13 +106,12 @@ export default function AsambleaPage() {
   }, [selectedAttendance]);
 
   const filteredAttendance = useMemo(() => {
-    if (!attendanceSearch) return selectedAttendance;
-    const term = attendanceSearch.toLowerCase();
-    return selectedAttendance.filter((asistente) =>
-      asistente.nombre.toLowerCase().includes(term) ||
-      asistente.casaId.toLowerCase().includes(term)
-    );
-  }, [attendanceSearch, selectedAttendance]);
+  const term = (attendanceSearch || '').toLowerCase();
+  return selectedAttendance.filter((asistente) =>
+    (asistente.nombre || '').toLowerCase().includes(term) ||
+    String(asistente.id).includes(term)
+  );
+}, [attendanceSearch, selectedAttendance]);
 
   const presentAttendees = useMemo(() => selectedAttendance.filter((asistente) => asistente.asistio), [selectedAttendance]);
 
@@ -135,7 +135,7 @@ export default function AsambleaPage() {
       titulo: '',
       descripcion: '',
       fecha: '',
-      hora: '',
+      horaInicio: '',
       lugar: '',
     },
   });
@@ -152,7 +152,7 @@ export default function AsambleaPage() {
   const handleSubmit = async (data: AsambleaFormData) => {
     try {
       if (isEditing && selectedAsamblea) {
-        await updateAsamblea(selectedAsamblea.id, data);
+        await updateAsamblea(selectedAsamblea.id, { ...data, estado: selectedAsamblea.estado });
       } else {
         await createAsamblea(data);
       }
@@ -175,15 +175,20 @@ export default function AsambleaPage() {
       titulo: asamblea.titulo,
       descripcion: asamblea.descripcion,
       fecha: asamblea.fecha,
-      hora: asamblea.hora,
+      horaInicio: asamblea.horaInicio,
       lugar: asamblea.lugar,
     });
   };
 
-  const handleOpenAttendanceSheet = (asamblea: Asamblea) => {
+  const handleOpenAttendanceSheet = async (asamblea: Asamblea) => {
     setSelectedAsamblea(asamblea);
     setIsAttendanceSheetOpen(true);
     setAttendanceSearch('');
+    try {
+      await fetchAsistentes(asamblea.id);
+    } catch {
+      toast.error('No se pudo cargar la asistencia');
+    }
   };
 
   const handleOpenDetailSheet = (asamblea: Asamblea) => {
@@ -250,9 +255,9 @@ export default function AsambleaPage() {
     setSearchTerm('');
   };
 
-  const handleMarkAttendance = async (asistenteId: string, asistio: boolean) => {
+  const handleMarkAttendance = async (numeroCasa: number, asistio: boolean) => {
     if (selectedAsamblea) {
-      await markAsistencia(asistenteId, asistio);
+      await markAsistencia(numeroCasa, asistio);
     }
   };
 
@@ -273,7 +278,7 @@ export default function AsambleaPage() {
     switch (estado) {
       case 'programada': return 'bg-blue-100 text-blue-800';
       case 'en_curso': return 'bg-green-100 text-green-800';
-      case 'finalizada': return 'bg-gray-100 text-gray-800';
+      case 'realizada': return 'bg-gray-100 text-gray-800';
       case 'cancelada': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -283,14 +288,14 @@ export default function AsambleaPage() {
     switch (estado) {
       case 'programada': return 'Programada';
       case 'en_curso': return 'En Curso';
-      case 'finalizada': return 'Finalizada';
+      case 'realizada': return 'Realizada';
       case 'cancelada': return 'Cancelada';
       default: return estado;
     }
   };
 
   const formatPrettyDate = (dateString: string) => {
-    const date = new Date(`${dateString}T00:00:00`);
+    const date = new Date(`${dateString}`);
     if (isNaN(date.getTime())) return dateString;
     const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
     const month = monthFormatter.format(date);
@@ -300,14 +305,31 @@ export default function AsambleaPage() {
     return `${capitalizedMonth} ${day}, ${year}`;
   };
 
-  const formatPrettyTime = (timeString: string) => {
-    const [hoursStr, minutesStr] = timeString.split(':');
-    const hours = Number(hoursStr);
-    const minutes = Number(minutesStr);
-    if (Number.isNaN(hours) || Number.isNaN(minutes)) return timeString;
-    const period = hours >= 12 ? 'PM' : 'AM';
+  const formatPrettyTime = (timeString?: string) => {
+    if (!timeString || typeof timeString !== "string") {
+      return "Hora no disponible";
+    }
+
+    // Soportar formatos: HH:MM o HH:MM:SS
+    const parts = timeString.split(":"); // ['06','00','00']
+
+    if (parts.length < 2) {
+      return timeString; // formato raro, retornar tal cual
+    }
+
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return timeString;
+    }
+
+    const period = hours >= 12 ? "PM" : "AM";
     const hour12 = hours % 12 || 12;
-    return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+
+    return `${hour12.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${period}`;
   };
 
   const renderAsambleaDetails = (
@@ -326,7 +348,7 @@ export default function AsambleaPage() {
       {
         icon: Clock,
         label: 'Hora de la asamblea',
-        value: formatPrettyTime(asamblea.hora),
+        value: formatPrettyTime(asamblea.horaInicio),
       },
       {
         icon: MapPin,
@@ -387,13 +409,13 @@ export default function AsambleaPage() {
     asamblea: Asamblea,
     options?: { showAttendance?: boolean; variant?: 'future' | 'past' }
   ) => {
-    const asambleaDate = new Date(`${asamblea.fecha}T23:59:59`);
+    const asambleaDate = new Date(`${asamblea.fecha}`);
     const now = new Date();
     const isFutureAssembly = asambleaDate >= now;
     const canEdit = isFutureAssembly;
     const canDelete = isFutureAssembly;
     const isPastCard = options?.variant === 'past';
-    const attendees = options?.showAttendance ? getAsistentesByAsamblea(asamblea.id) : null;
+    const attendees = options?.showAttendance ? getAsistentesByAsamblea() : null;
     const totalAttendees = attendees?.length ?? 0;
     const attendedCount = attendees ? attendees.filter((a) => a.asistio).length : 0;
     const attendanceRate = attendees && totalAttendees > 0
@@ -870,13 +892,13 @@ export default function AsambleaPage() {
                                   <span className="truncate">
                                     {field.value
                                       ? (() => {
-                                          const formatted = new Date(`${field.value}T00:00:00`).toLocaleDateString('es-ES', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                          });
-                                          return formatted.replace(/^\p{L}/u, (char) => char.toUpperCase());
-                                        })()
+                                        const formatted = new Date(`${field.value}`).toLocaleDateString('es-ES', {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric',
+                                        });
+                                        return formatted.replace(/^\p{L}/u, (char) => char.toUpperCase());
+                                      })()
                                       : 'Selecciona una fecha'}
                                   </span>
                                 </span>
@@ -900,14 +922,14 @@ export default function AsambleaPage() {
                     />
 
                     <Controller
-                      name="hora"
+                      name="horaInicio"
                       control={form.control}
                       render={({ field, fieldState }) => (
                         <FormFieldWithTooltip
                           label="Hora"
                           required
                           invalid={fieldState.invalid && showErrors}
-                          error={form.formState.errors.hora?.message}
+                          error={form.formState.errors.horaInicio?.message}
                         >
                           <TimeSelector
                             value={field.value}
@@ -1064,24 +1086,26 @@ export default function AsambleaPage() {
                     <h3 className="text-sm font-medium text-gray-900 mb-4">Lista de Asistentes</h3>
                     <div className="space-y-2">
                       {filteredAttendance.map((asistente) => {
-                        const switchId = `asistencia-${asistente.id}`;
+                        const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
+                        const switchId = `asistencia-${asistente.id}-${safeName}`;
+                        const itemKey = `${asistente.nombre}-${safeName}`;
                         return (
                           <div
-                            key={asistente.id}
+                            key={itemKey}
                             className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {asistente.nombre
+                                {(asistente.nombre || '')
                                   .split(' ')
-                                  .map((n) => n[0])
+                                  .map(n => n[0])
                                   .join('')
                                   .slice(0, 2)
                                   .toUpperCase()}
                               </div>
                               <div>
                                 <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
-                                <p className="text-xs text-gray-500">Casa {asistente.casaId}</p>
+                                <p className="text-xs text-gray-500">Casa {asistente.id}</p>
                               </div>
                             </div>
                             <div className="inline-flex items-center gap-3 w-[160px] justify-end">
@@ -1172,7 +1196,7 @@ export default function AsambleaPage() {
                         {
                           icon: Clock,
                           label: 'Hora de la asamblea',
-                          value: formatPrettyTime(selectedAsamblea.hora),
+                          value: formatPrettyTime(selectedAsamblea.horaInicio),
                         }].map(({ icon: Icon, label, value }) => (
                           <div key={label} className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-600">
@@ -1247,25 +1271,29 @@ export default function AsambleaPage() {
                     </div>
                     {presentAttendees.length > 0 ? (
                       <div className="space-y-2">
-                        {presentAttendees.map((asistente) => (
-                          <div key={asistente.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {asistente.nombre
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
+                        {presentAttendees.map((asistente) => {
+                          const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
+                          const itemKey = `${asistente.id}-${safeName}`;
+                          return (
+                            <div key={itemKey} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                  {asistente.nombre
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
+                                  <p className="text-xs text-gray-500">Casa {asistente.id}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
-                                <p className="text-xs text-gray-500">Casa {asistente.casaId}</p>
-                              </div>
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Asistió</span>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Asistió</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-gray-500 border border-dashed border-gray-200 rounded-xl">
