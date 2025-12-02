@@ -93,14 +93,26 @@ export const useAsamblea = () => {
     return Array.isArray(asistentes) ? asistentes : [];
   }, [asistentes]);
 
-  const markAsistencia = useCallback(async (id: number, asistio: boolean) => {
-  setAsistentes(prev =>
-    prev.map(asistente =>
-      asistente.id === id ? { ...asistente, asistio } : asistente
-    )
-  );
-  toast.success('Asistencia actualizada');
-}, []);
+  const markAsistencia = useCallback(
+  async (idAsamblea: number, id: number, asistio: boolean) => {
+    try {
+      // Actualizar estado local
+      setAsistentes(prev =>
+        prev.map(a =>
+          a.id === id ? { ...a, asistio } : a
+        )
+      );
+
+      await AsambleaService.markAsistencia(idAsamblea, id, asistio);
+
+      toast.success('Asistencia actualizada');
+    } catch (error) {
+      console.error(error);
+      toast.error('Error actualizando asistencia');
+    }
+  },
+  []
+);
 
   return {
     loading,

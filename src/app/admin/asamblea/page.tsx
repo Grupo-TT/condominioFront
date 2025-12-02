@@ -255,9 +255,9 @@ export default function AsambleaPage() {
     setSearchTerm('');
   };
 
-  const handleMarkAttendance = async (numeroCasa: number, asistio: boolean) => {
+  const handleMarkAttendance = async (idAsamblea: number, numeroCasa: number, asistio: boolean) => {
     if (selectedAsamblea) {
-      await markAsistencia(numeroCasa, asistio);
+      await markAsistencia(idAsamblea, numeroCasa, asistio);
     }
   };
 
@@ -1121,7 +1121,7 @@ export default function AsambleaPage() {
                               <Switch
                                 id={switchId}
                                 checked={asistente.asistio}
-                                onCheckedChange={(checked) => handleMarkAttendance(asistente.id, checked)}
+                                onCheckedChange={(checked) => handleMarkAttendance(Number(selectedAsamblea.id), asistente.id, checked)}
                                 aria-label={`Cambiar asistencia de ${asistente.nombre}`}
                               />
                             </div>

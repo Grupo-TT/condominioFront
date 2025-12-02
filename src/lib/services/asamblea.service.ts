@@ -46,14 +46,25 @@ export const AsambleaService = {
     async getAsistentes(id: string): Promise<Asistente[]> {
         try {
             const response = await apiClient.get(`/asamblea/${id}`);
-            const propietarios = response.data.data.propietarios; // extraemos el array
+            const propietarios = response.data.data.propietarios;
+            console.log("🚀 ~ propietarios:", propietarios)
             return propietarios.map((p: any) => ({
-                id: String(p.numeroCasa),      // asigna un id único si quieres
-                nombre: p.nombrePropietario,  // o como lo tengas en Asistente
-                asistio: false
+                id: String(p.numeroCasa),
+                nombre: p.nombrePropietario,
+                asistio: p.asistio
             }));
         } catch (error) {
             console.error("No se pudo obtener la asistencia.", error);
+            throw error;
+        }
+    },
+    async markAsistencia(idAsamblea: number, numeroCasa: number, asistio: boolean): Promise<void> {
+        try {
+            const data = [{ numeroCasa, estado: asistio }];
+            console.log("🚀 ~ data:", data)
+            await apiClient.post(`/asistencia/registrar/${idAsamblea}`, data);
+        } catch (error) {
+            console.error('No se pudo actualizar la asistencia.', error);
             throw error;
         }
     }
