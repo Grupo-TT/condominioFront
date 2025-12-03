@@ -79,6 +79,38 @@ export const mockAsambleas: Asamblea[] = [
     hora: '19:30',
     lugar: 'Salón de eventos principal',
   }),
+  createAsamblea({
+    id: '7',
+    titulo: 'Asamblea Extraordinaria - Seguridad Perimetral',
+    descripcion: 'Presentación del plan de refuerzo de cerramiento, iluminación y rondas de vigilancia.',
+    fecha: '2025-05-22',
+    hora: '18:45',
+    lugar: 'Auditorio Principal',
+  }),
+  createAsamblea({
+    id: '8',
+    titulo: 'Asamblea Ordinaria 2026',
+    descripcion: 'Revisión del presupuesto anual, actualización de cuotas y calendario de actividades 2026.',
+    fecha: '2026-02-10',
+    hora: '19:00',
+    lugar: 'Salón Social Torre 1',
+  }),
+  createAsamblea({
+    id: '9',
+    titulo: 'Asamblea Informativa - Plan de Energía Solar',
+    descripcion: 'Informe técnico y financiero sobre la instalación de paneles solares en áreas comunes.',
+    fecha: '2025-07-18',
+    hora: '18:00',
+    lugar: 'Sala de reuniones torre central',
+  }),
+  createAsamblea({
+    id: '10',
+    titulo: 'Asamblea Extraordinaria - Actualización Tecnológica',
+    descripcion: 'Reunión para aprobar la implementación de nuevos sistemas de control de acceso y domótica.',
+    fecha: '2026-09-05',
+    hora: '19:15',
+    lugar: 'Auditorio Smart Living',
+  }),
 ];
 
 export const mockAsistentes: Asistente[] = [
