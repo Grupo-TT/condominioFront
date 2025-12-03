@@ -20,30 +20,41 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Book02Icon } from '@hugeicons/core-free-icons'
 
 const formatPrettyDate = (dateString: string) => {
-  const date = new Date(`${dateString}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return dateString
+    const date = new Date(`${dateString}`);
+    if (isNaN(date.getTime())) return dateString;
+    const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+    const month = monthFormatter.format(date);
+    const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+    const day = date.getDate().toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${capitalizedMonth} ${day}, ${year}`;
+  };
 
-  return new Intl.DateTimeFormat('es-ES', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-    .format(date)
-    .replace(/(^\w)|(\s\w)/g, (match) => match.toUpperCase())
-}
+  const formatPrettyTime = (timeString?: string) => {
+    if (!timeString || typeof timeString !== "string") {
+      return "Hora no disponible";
+    }
 
-const formatPrettyTime = (timeString: string) => {
-  const [hours, minutes] = timeString.split(':').map(Number)
-  const hoursValue = Number.isFinite(hours) ? hours! : 0
-  const minutesValue = Number.isFinite(minutes) ? minutes! : 0
+    const parts = timeString.split(":");
 
-  const period = hoursValue >= 12 ? 'PM' : 'AM'
-  const normalizedHours = hoursValue % 12 || 12
-  const paddedMinutes = minutesValue.toString().padStart(2, '0')
+    if (parts.length < 2) {
+      return timeString;
+    }
 
-  return `${normalizedHours}:${paddedMinutes} ${period}`
-}
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return timeString;
+    }
+
+    const period = hours >= 12 ? "PM" : "AM";
+    const hour12 = hours % 12 || 12;
+
+    return `${hour12.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${period}`;
+  };
 
 const estadoLabels: Record<string, string> = {
   programada: 'Programada',
@@ -60,20 +71,21 @@ const estadoStyles: Record<string, string> = {
 }
 
 const formatTimelineDate = (dateString: string) => {
-  const date = new Date(`${dateString}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return dateString
+  const date = new Date(`${dateString}`);
+  if (isNaN(date.getTime())) return dateString;
 
-  const formatter = new Intl.DateTimeFormat('es-ES', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  })
+  const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+  const month = monthFormatter.format(date);
+  const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
 
-  return formatter.format(date)
-}
+  const day = date.getDate().toString().padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${capitalizedMonth} ${day}, ${year}`;
+};
 
 const formatTimelineWeekday = (dateString: string) => {
-  const date = new Date(`${dateString}T00:00:00`)
+  const date = new Date(`${dateString}`)
   if (Number.isNaN(date.getTime())) return ''
 
   const formatter = new Intl.DateTimeFormat('es-ES', { weekday: 'long' })
@@ -106,13 +118,30 @@ export default function AsambleaPropietarioPage() {
     const now = new Date()
     return asambleas
       .filter((asamblea) => {
-        const asambleaDate = new Date(`${asamblea.fecha}T${asamblea.hora || '00:00'}`)
-        return asambleaDate >= now
+        const baseDate = new Date(asamblea.fecha)
+
+        if (asamblea.horaInicio) {
+          const [h, m, s] = asamblea.horaInicio.split(':')
+          baseDate.setHours(Number(h), Number(m), Number(s || 0))
+        }
+
+        return baseDate >= now
       })
       .sort((a, b) => {
-        const dateA = new Date(`${a.fecha}T${a.hora || '00:00'}`).getTime()
-        const dateB = new Date(`${b.fecha}T${b.hora || '00:00'}`).getTime()
-        return dateA - dateB
+        const dateA = new Date(a.fecha)
+        const dateB = new Date(b.fecha)
+
+        if (a.horaInicio) {
+          const [h, m, s] = a.horaInicio.split(':')
+          dateA.setHours(Number(h), Number(m), Number(s || 0))
+        }
+
+        if (b.horaInicio) {
+          const [h, m, s] = b.horaInicio.split(':')
+          dateB.setHours(Number(h), Number(m), Number(s || 0))
+        }
+
+        return dateA.getTime() - dateB.getTime()
       })
   }, [asambleas])
 
@@ -213,7 +242,7 @@ export default function AsambleaPropietarioPage() {
                                 {[{
                                   icon: Clock,
                                   label: 'Hora de la asamblea',
-                                  value: formatPrettyTime(asamblea.hora),
+                                  value: formatPrettyTime(asamblea.horaInicio),
                                 }, {
                                   icon: MapPin,
                                   label: 'Lugar de reunión',

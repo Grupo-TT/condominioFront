@@ -310,11 +310,10 @@ export default function AsambleaPage() {
       return "Hora no disponible";
     }
 
-    // Soportar formatos: HH:MM o HH:MM:SS
-    const parts = timeString.split(":"); // ['06','00','00']
+    const parts = timeString.split(":");
 
     if (parts.length < 2) {
-      return timeString; // formato raro, retornar tal cual
+      return timeString;
     }
 
     const hours = Number(parts[0]);
