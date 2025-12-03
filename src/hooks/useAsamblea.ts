@@ -26,7 +26,6 @@ export const useAsamblea = () => {
     setLoading(true);
     try {
       const res = await AsambleaService.getAsistentes(id);
-      console.log("🚀 ~ useAsamblea ~ res:", res)
       setAsistentes(res);
     } catch {
       toast.error("Error al cargar los asistentes");
@@ -38,7 +37,7 @@ export const useAsamblea = () => {
   const createAsamblea = useCallback(async (data: CreateAsambleaData) => {
     setLoading(true);
     try {
-      const newAsamblea = await AsambleaService.createAsamblea({ ...data, estado: 'PROGRAMADA' } as any);
+      const newAsamblea = await AsambleaService.createAsamblea({ ...data, estado: 'PROGRAMADA' });
       setAsambleas(prev => [...prev, newAsamblea]);
       toast.success('Asamblea creada exitosamente');
       return newAsamblea;
@@ -94,25 +93,24 @@ export const useAsamblea = () => {
   }, [asistentes]);
 
   const markAsistencia = useCallback(
-  async (idAsamblea: number, id: number, asistio: boolean) => {
-    try {
-      // Actualizar estado local
-      setAsistentes(prev =>
-        prev.map(a =>
-          a.id === id ? { ...a, asistio } : a
-        )
-      );
+    async (idAsamblea: number, id: number, asistio: boolean) => {
+      try {
+        setAsistentes(prev =>
+          prev.map(a =>
+            a.id === id ? { ...a, asistio } : a
+          )
+        );
 
-      await AsambleaService.markAsistencia(idAsamblea, id, asistio);
+        await AsambleaService.markAsistencia(idAsamblea, id, asistio);
 
-      toast.success('Asistencia actualizada');
-    } catch (error) {
-      console.error(error);
-      toast.error('Error actualizando asistencia');
-    }
-  },
-  []
-);
+        toast.success('Asistencia actualizada');
+      } catch (error) {
+        console.error(error);
+        toast.error('Error actualizando asistencia');
+      }
+    },
+    []
+  );
 
   return {
     loading,

@@ -1,4 +1,4 @@
-import { Asamblea, Asistente, CreateAsambleaData, UpdateAsambleaData } from "@/types/asamblea.types";
+import { Asamblea, Asistente, CreateAsambleaData, Propietario, UpdateAsambleaData } from "@/types/asamblea.types";
 import { apiClient } from "../config/axios.config";
 
 interface AsambleaApiResponse {
@@ -47,8 +47,7 @@ export const AsambleaService = {
         try {
             const response = await apiClient.get(`/asamblea/${id}`);
             const propietarios = response.data.data.propietarios;
-            console.log("🚀 ~ propietarios:", propietarios)
-            return propietarios.map((p: any) => ({
+            return propietarios.map((p: Propietario) => ({
                 id: String(p.numeroCasa),
                 nombre: p.nombrePropietario,
                 asistio: p.asistio
@@ -60,8 +59,7 @@ export const AsambleaService = {
     },
     async markAsistencia(idAsamblea: number, numeroCasa: number, asistio: boolean): Promise<void> {
         try {
-            const data = [{ numeroCasa, estado: asistio }];
-            console.log("🚀 ~ data:", data)
+            const data = { numeroCasa, estado: asistio };
             await apiClient.post(`/asistencia/registrar/${idAsamblea}`, data);
         } catch (error) {
             console.error('No se pudo actualizar la asistencia.', error);

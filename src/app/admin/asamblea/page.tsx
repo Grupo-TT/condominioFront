@@ -106,12 +106,12 @@ export default function AsambleaPage() {
   }, [selectedAttendance]);
 
   const filteredAttendance = useMemo(() => {
-  const term = (attendanceSearch || '').toLowerCase();
-  return selectedAttendance.filter((asistente) =>
-    (asistente.nombre || '').toLowerCase().includes(term) ||
-    String(asistente.id).includes(term)
-  );
-}, [attendanceSearch, selectedAttendance]);
+    const term = (attendanceSearch || '').toLowerCase();
+    return selectedAttendance.filter((asistente) =>
+      (asistente.nombre || '').toLowerCase().includes(term) ||
+      String(asistente.id).includes(term)
+    );
+  }, [attendanceSearch, selectedAttendance]);
 
   const presentAttendees = useMemo(() => selectedAttendance.filter((asistente) => asistente.asistio), [selectedAttendance]);
 
@@ -276,20 +276,20 @@ export default function AsambleaPage() {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'programada': return 'bg-blue-100 text-blue-800';
-      case 'en_curso': return 'bg-green-100 text-green-800';
-      case 'realizada': return 'bg-gray-100 text-gray-800';
-      case 'cancelada': return 'bg-red-100 text-red-800';
+      case 'PROGRAMADA': return 'bg-blue-100 text-blue-800';
+      case 'EN_CURSO': return 'bg-green-100 text-green-800';
+      case 'REALIZADA': return 'bg-gray-100 text-gray-800';
+      case 'CANCELADA': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getEstadoLabel = (estado: string) => {
     switch (estado) {
-      case 'programada': return 'Programada';
-      case 'en_curso': return 'En Curso';
-      case 'realizada': return 'Realizada';
-      case 'cancelada': return 'Cancelada';
+      case 'PROGRAMADA': return 'Programada';
+      case 'EN_CURSO': return 'En Curso';
+      case 'REALIZADA': return 'Realizada';
+      case 'CANCELADA': return 'Cancelada';
       default: return estado;
     }
   };

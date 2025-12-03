@@ -7,12 +7,18 @@ export interface Asamblea {
   fecha: string; // ISO date string
   horaInicio: string; // HH:MM format
   lugar: string;
-  estado: 'programada' | 'en_curso' | 'realizada' | 'cancelada';
+  estado: 'PROGRAMADA' | 'EN_CURSO' | 'REALIZADA' | 'CANCELADA';
 }
 
 export interface Asistente {
   nombre: string;
   id: number;
+  asistio?: boolean;
+}
+
+export interface Propietario {
+  nombrePropietario: string;
+  numeroCasa: number;
   asistio?: boolean;
 }
 
@@ -22,6 +28,7 @@ export interface CreateAsambleaData {
   fecha: string;
   horaInicio: string;
   lugar: string;
+  estado?: Asamblea['estado'];
 }
 
 export interface UpdateAsambleaData extends Partial<CreateAsambleaData> {
