@@ -12,14 +12,21 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { FinanzasSection } from '@/components/FinanzasSection'
 import { FinanzasCards } from '@/components/FinanzasCards'
-import {
-  saldoPendiente,
-  obligacionesPendientesCount,
-  fechaUltimoPago,
-  multasPendientesCount,
-} from '@/data/mi-casa.mock'
+import { useObligacionesCasa } from '@/hooks/useFinanzas'
 
 export default function FinanzasPage() {
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "{}")
+      : {};
+
+  const casaNumero = user.idCasa;
+  const { data, loading } = useObligacionesCasa(casaNumero);
+
+  if (loading) return <p className="px-6 py-6">Cargando...</p>;
+
+  if (!data) return <p className="px-6 py-6 text-red-500">No se pudo cargar la información.</p>;
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -62,14 +69,15 @@ export default function FinanzasPage() {
 
           {/* Tarjetas de finanzas */}
           <FinanzasCards
-            saldoPendiente={saldoPendiente}
-            obligacionesPendientesCount={obligacionesPendientesCount}
-            fechaUltimoPago={fechaUltimoPago}
-            multasPendientesCount={multasPendientesCount}
+            saldoPendiente={data.saldoPendienteTotal}
+            obligacionesPendientesCount={data.obligacionesPendientesCount}
+            fechaUltimoPago={data.ultimoPago}
+            multasPendientesCount={data.multasPendientesCount}
           />
 
           {/* Sección de Finanzas */}
-          <FinanzasSection />
+          <FinanzasSection 
+            obligaciones={data.deudasActivas}/>
         </div>
       </div>
     </>

@@ -25,13 +25,17 @@ const formatCurrency = (value: number): string => {
 }
 
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
+  const [year, month, day] = dateString.split('-').map(Number)
+
+  const date = new Date(year, month - 1, day)
+
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   }).format(date)
 }
+
 
 export function FinanzasCards({
   saldoPendiente,

@@ -8,8 +8,16 @@ import { Alert02Icon } from '@hugeicons/core-free-icons'
 import { FileText } from 'lucide-react'
 import { ObligacionesTab } from './ObligacionesTab'
 import { MultasTab } from './MultasTab'
+import { ObligacionPendiente } from '@/types/casa.types'
 
-export function FinanzasSection() {
+interface FinanzasSectionProps {
+  obligaciones: ObligacionPendiente[]
+}
+
+export function FinanzasSection({
+  obligaciones,
+}: FinanzasSectionProps) {
+  console.log("🚀 ~ FinanzasSection ~ obligaciones:", obligaciones)
   const [activeTab, setActiveTab] = useState('obligaciones')
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 })
@@ -72,7 +80,8 @@ export function FinanzasSection() {
         </div>
         
         <TabsContent value="obligaciones" className="mt-6">
-          <ObligacionesTab />
+          <ObligacionesTab 
+            obligaciones = {obligaciones}/>
         </TabsContent>
 
         <TabsContent value="multas" className="mt-6">
