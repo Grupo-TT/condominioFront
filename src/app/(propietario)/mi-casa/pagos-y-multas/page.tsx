@@ -77,7 +77,8 @@ export default function FinanzasPage() {
 
           {/* Sección de Finanzas */}
           <FinanzasSection 
-            obligaciones={data.deudasActivas}/>
+            obligaciones ={data.obligaciones}
+            multas = {data.multas}/>
         </div>
       </div>
     </>

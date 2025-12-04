@@ -183,7 +183,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por mascota sin correa',
     motivo: 'Se observó mascota sin correa en áreas comunes',
     monto: 50000,
-    fecha: '2025-01-15',
+    fechaGenerada: '2025-01-15',
     estadoPago: 'PENDIENTE',
     tipoPago: 'DINERO',
     año: 2025
@@ -193,7 +193,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por ruido excesivo',
     motivo: 'Ruido excesivo después de las 10 PM',
     monto: 75000,
-    fecha: '2025-01-20',
+    fechaGenerada: '2025-01-20',
     estadoPago: 'PENDIENTE',
     tipoPago: 'DINERO',
     año: 2025
@@ -203,7 +203,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por mal estacionamiento',
     motivo: 'Vehículo estacionado en área no permitida',
     monto: 100000,
-    fecha: '2024-12-10',
+    fechaGenerada: '2024-12-10',
     estadoPago: 'CONDONADO',
     tipoPago: 'DINERO',
     año: 2024
@@ -213,7 +213,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por basura fuera de horario',
     motivo: 'Basura depositada fuera del horario establecido',
     monto: 30000,
-    fecha: '2024-11-25',
+    fechaGenerada: '2024-11-25',
     estadoPago: 'POR_COBRAR',
     tipoPago: 'LABOR_SOCIAL',
     año: 2024

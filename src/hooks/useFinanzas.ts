@@ -12,14 +12,6 @@ export function useObligacionesCasa(idCasa: number | string) {
             try {
                 const estado = await casaService.getObligacionesByCasa(idCasa);
 
-                // estado = {
-                //   numeroCasa,
-                //   propietario,
-                //   saldoPendienteTotal,
-                //   deudasActivas,
-                //   ultimoPago
-                // }
-
                 const deudasConAño = estado.deudasActivas.map((d: any) => {
                     const date = d.fechaGenerada
                         ? new Date(`${d.fechaGenerada}T00:00:00`)  // ← aquí la magia
@@ -33,20 +25,17 @@ export function useObligacionesCasa(idCasa: number | string) {
                     };
                 });
 
-                const multasPendientesCount = estado.deudasActivas.filter(
-                    (o: any) =>
-                        o.tipoObligacion === "MULTA" &&
-                        o.estadoPago !== "CONDONADO"
-                ).length;
+                const multas = deudasConAño.filter(d => d.tipoObligacion === "MULTA");
+                const obligaciones = deudasConAño.filter(d => d.tipoObligacion !== "MULTA");
 
-                const obligacionesPendientesCount = estado.deudasActivas.filter(
-                    (o: any) =>
-                        o.estadoPago !== "CONDONADO"
-                ).length;
+                const multasPendientesCount = multas.filter(d => d.estadoPago !== "CONDONADO").length;
+                const obligacionesPendientesCount = obligaciones.filter(d => d.estadoPago !== "CONDONADO").length;
 
                 setData({
                     ...estado,
                     deudasActivas: deudasConAño,
+                    multas,
+                    obligaciones,
                     multasPendientesCount,
                     obligacionesPendientesCount,
                 });

@@ -97,7 +97,7 @@ export function ObligacionesTab({
     }
 
     return filtradas
-  }, [searchTerm, estadoFilter, añoSeleccionado])
+  }, [searchTerm, estadoFilter, añoSeleccionado, obligaciones])
 
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -338,7 +338,7 @@ export function ObligacionesTab({
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="ms-1 size-1.5 rounded-full bg-green-500"></span>
-                        <span className="truncate">Pagadas</span>
+                        <span className="truncate">Condonadas</span>
                       </span>
                       {estadoFilter === 'CONDONADO' && <CommandCheck />}
                     </CommandItem>

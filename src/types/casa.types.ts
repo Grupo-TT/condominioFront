@@ -67,10 +67,10 @@ export interface MultaPropietario {
   titulo: string
   motivo: string
   monto: number
-  fecha: string
   estadoPago: 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'
   tipoPago?: 'DINERO' | 'LABOR_SOCIAL'
   año: number
+  fechaGenerada: string
 }
 
 export interface ObligacionPendiente {
