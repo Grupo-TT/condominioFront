@@ -13,7 +13,11 @@ export const useRecursoPropietario = () => {
       setError(null);
       const list = await recursoService.getRecursoEnabled();
       const adaptados = list.map(mapResponseToUI);
-      setRecurso(adaptados);
+      const filtrados = adaptados.filter(r =>
+        r.disponibilidadRecurso === 'DISPONIBLE' ||
+        r.disponibilidadRecurso === 'EN_MANTENIMIENTO'
+      );
+      setRecurso(filtrados);
     } catch (error) {
       setError("Error fetching recurso propietario");
     } finally {

@@ -1,42 +1,35 @@
 import type { RecursoPropietarioResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 
-export type RecursoUI = Omit<RecursoPropietarioResponse, 'id'> & {
+export type RecursoUI = Omit<RecursoPropietarioResponse, 'id' | 'tipoRecursoComun' | 'disponibilidadRecurso'> & {
   id: string
   tipo: 'zona' | 'objeto'
-  estado: string
+  estado: 'Disponible' | 'En Mantenimiento' | 'No disponible'
   habilitado: boolean
+  tipoRecursoComun: RecursoPropietarioResponse['tipoRecursoComun']
+  disponibilidadRecurso: DisponibilidadRecurso
+}
+
+const ESTADOS_MAP: Record<DisponibilidadRecurso, RecursoUI['estado']> = {
+  DISPONIBLE: 'Disponible',
+  EN_MANTENIMIENTO: 'En Mantenimiento',
+  NO_DISPONIBLE: 'No disponible'
 }
 
 export function mapResponseToUI(resp: RecursoPropietarioResponse): RecursoUI {
-  const tipo = resp.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto';
-
-  const disponibilidadNormalizada =
-    resp.disponibilidadRecurso === 'NO_DISPONIBLE'
-      ? 'EN_MANTENIMIENTO'
-      : resp.disponibilidadRecurso;
-
-  const getEstado = (disponibilidad: DisponibilidadRecurso) => {
-    switch (disponibilidad) {
-      case 'DISPONIBLE':
-        return 'Disponible';
-      case 'EN_MANTENIMIENTO':
-        return 'En Mantenimiento';
-      default:
-        return 'No disponible';
-    }
-  };
+  const disponibilidad = resp.disponibilidadRecurso;
 
   return {
-    id: resp.id?.toString() ?? String(Date.now()),
+    id: String(resp.id ?? Date.now()),
     nombre: resp.nombre,
     descripcion: resp.descripcion,
-    tipo,
+
+    tipo: resp.tipoRecursoComun === 'ZONA' ? 'zona' : 'objeto',
     tipoRecursoComun: resp.tipoRecursoComun,
 
-    disponibilidadRecurso: disponibilidadNormalizada as DisponibilidadRecurso,
+    disponibilidadRecurso: disponibilidad,
 
-    estado: getEstado(disponibilidadNormalizada as DisponibilidadRecurso),
+    estado: ESTADOS_MAP[disponibilidad],
 
-    habilitado: disponibilidadNormalizada === 'DISPONIBLE'
+    habilitado: disponibilidad === 'DISPONIBLE'
   };
 }

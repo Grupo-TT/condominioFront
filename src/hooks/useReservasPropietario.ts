@@ -8,26 +8,28 @@ export function useReservasPropietario() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchReservasPropietario = async (userId: number) => {
+  const fetchReservasPropietario = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await reservasService.getReservasPropietario(userId)
-      console.debug('[useReservasPropietario] raw response', response)
-      const formatTime = (t: any) => {
+      const response = await reservasService.getReservasPropietario()
+      const formatTime = (t: any): string => {
+        // Caso 1: string "HH:mm:ss"
         if (typeof t === "string") {
-          const [hour, minute] = t.split(":").map(Number);
+          const parts = t.split(":").map(Number);
+          const hour = parts[0] ?? 0;
+          const minute = parts[1] ?? 0;
           return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
         }
 
+        // Caso 2: objeto Hora
         if (t && typeof t === "object") {
           const hour = Number(t.hour ?? 0);
           const minute = Number(t.minute ?? 0);
           return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
         }
 
-        // Fallback
         return "00:00";
       };
 
@@ -38,21 +40,17 @@ export function useReservasPropietario() {
 
       const reservasAdaptadas: ReservaAdaptada[] = response.map((r: ReservaPropietarioItem) =>  ({
         id: String(r.id),
-        idRecurso: r.idRecurso,
-        recursoNombre: r.nombre,
-        tipoRecurso: r.tipoRecursoComun.toLowerCase() as 'zona' | 'objeto',
+        idRecurso: r.recursoComun.id,
+        recursoNombre: r.recursoComun.nombre,
+        tipoRecurso: r.recursoComun.tipoRecursoComun.toLowerCase() as 'zona' | 'objeto',
         estado: r.estadoSolicitud.toLowerCase() as 'pendiente' | 'aprobada' | 'rechazada',
-        fechaInicio: parseFecha(r.fechaReserva),
-        fechaFin: parseFecha(r.fechaReserva),
+        fechaInicio: parseFecha(r.fechaSolicitud),
+        fechaFin: parseFecha(r.fechaSolicitud),
         horaInicio: formatTime(r.horaInicio),
         horaFin: formatTime(r.horaFin),
         numeroInvitados: r.numeroInvitados,
-        fechaCreacion: parseFecha(r.fechaCreacion)
+        idCasa: r.casa.id
       }))
-
-      reservasAdaptadas.forEach((ra, idx) => {
-        console.debug(`[useReservasPropietario] mapped reserva[${idx}] id=${ra.id} horaInicio=${ra.horaInicio} horaFin=${ra.horaFin}`)
-      })
 
       setReservas(reservasAdaptadas)
     } catch (err) {

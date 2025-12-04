@@ -57,6 +57,7 @@ import { cn } from '@/lib/utils'
 import type { RecursoUI } from '@/services/propietario.recurso.adapter'
 import { useReservasPropietario } from '@/hooks/useReservasPropietario'
 import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
+import { ReservaAdaptada } from '@/types/propietario.reservas.types'
 interface ReservaUsuario {
   id: string
   idRecurso: number
@@ -68,7 +69,6 @@ interface ReservaUsuario {
   horaInicio: string
   horaFin: string
   numeroInvitados: number
-  fechaCreacion: Date
 }
 
 export default function ReservasPropietarioPage() {
@@ -81,6 +81,7 @@ export default function ReservasPropietarioPage() {
   const [horaFinal, setHoraFinal] = useState<string>('')
   const [numeroInvitados, setNumeroInvitados] = useState<number>(1)
   const { reservas, loading: loadingReservas, error, fetchReservasPropietario, eliminarReserva, postReservasPropietario, updateReserva } = useReservasPropietario();
+  const [ reservasFiltradas, setReservasFiltradas ] = useState<ReservaUsuario[]>([])
   const [openDialogConfirmacion, setOpenDialogConfirmacion] = useState(false)
   const [reservaEditando, setReservaEditando] = useState<ReservaUsuario | null>(null)
   const [missingIdCasa, setMissingIdCasa] = useState(false)
@@ -119,12 +120,32 @@ export default function ReservasPropietarioPage() {
   useEffect(() => {
     const idCasa = authService.getIdCasa()
     if (idCasa && !Number.isNaN(Number(idCasa))) {
-      fetchReservasPropietario(Number(idCasa))
+      fetchReservasPropietario()
       setMissingIdCasa(false)
     } else {
       setMissingIdCasa(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!reservas || reservas.length === 0) {
+      setReservasFiltradas([]);
+      return;
+    }
+
+    const currentUser = authService.getCurrentUser();
+
+    if (!currentUser?.idPersona) {
+      setReservasFiltradas([]);
+      return;
+    }
+
+    const soloCasa = reservas.filter(r => Number(r.idCasa) === Number(currentUser.idCasa));
+
+    setReservasFiltradas(soloCasa);
+
+  }, [reservas]);
+
 
   useEffect(() => {
     if (errorRecursos) {
@@ -182,7 +203,7 @@ export default function ReservasPropietarioPage() {
       setOpenDialogConfirmacion(false);
       setIsSheetOpen(false);
 
-      fetchReservasPropietario(Number(idCasa));
+      fetchReservasPropietario();
 
     } catch (err: any) {
       const msg = err?.message || err?.response?.data?.message || "Ocurrió un error creando la reserva";
@@ -221,12 +242,35 @@ export default function ReservasPropietarioPage() {
       setIsEditSheetOpen(false);
       setReservaEditando(null);
 
-      fetchReservasPropietario(Number(idCasa));
+      fetchReservasPropietario();
 
     } catch (err: any) {
       toast.error(err.message || "Error al actualizar la reserva");
     }
   };
+
+  const handleOpenEditReserva = (reserva: ReservaAdaptada) => {
+    // 1. Setear reserva que se está editando
+    setReservaEditando(reserva);
+
+    // 2. Seleccionar el recurso (para mostrar nombre e ícono)
+    const recursoEncontrado = recurso?.find(r => Number(r.id) === reserva.idRecurso);
+    setSelectedRecurso(recursoEncontrado || null);
+
+    // 3. Cargar fecha
+    setEditDate(reserva.fechaInicio);
+
+    // 4. Cargar horas
+    setEditHoraInicial(reserva.horaInicio);
+    setEditHoraFinal(reserva.horaFin);
+
+    // 5. Cargar número de invitados
+    setEditNumeroInvitados(reserva.numeroInvitados);
+
+    // 6. Abrir sheet
+    setIsEditSheetOpen(true);
+  };
+
 
   // Obtener horas ocupadas para el recurso y fecha seleccionada (para crear)
   const horasOcupadas = useMemo(() => {
@@ -238,17 +282,18 @@ export default function ReservasPropietarioPage() {
     
     // Filtrar reservas que coincidan con el recurso y la fecha
     const reservasDelDia = reservas.filter(reserva => {
-      // Comparar nombre del recurso (el backend entrega nombre en la reserva)
+      // Comparar recursoId
       if (String(reserva.idRecurso) !== String(selectedRecurso.id)) {
         return false
       }
+
       
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(reserva.fechaInicio)
       fechaReserva.setHours(0, 0, 0, 0)
       const fechaSeleccionada = new Date(selectedDate as Date)
       fechaSeleccionada.setHours(0, 0, 0, 0)
-      
+        
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
       const mismoDia = fechaReserva.getDate() === fechaSeleccionada.getDate()
       const mismoMes = fechaReserva.getMonth() === fechaSeleccionada.getMonth()
@@ -696,7 +741,7 @@ export default function ReservasPropietarioPage() {
 
             <TabsContent value="mis-reservas" className="mt-6">
               <div className="space-y-4">
-                {reservas.length === 0 ? (
+                {reservasFiltradas.length === 0 ? (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 px-6 flex flex-col items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <CalendarIcon className="w-8 h-8 text-gray-400" />
@@ -710,7 +755,7 @@ export default function ReservasPropietarioPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {reservas.map((reserva) => {
+                    {reservasFiltradas.map((reserva) => {
                       const estadoColors = {
                         aprobada: 'bg-transparent text-green-700 border-green-300',
                         pendiente: 'bg-transparent text-yellow-700 border-yellow-300',
@@ -725,12 +770,18 @@ export default function ReservasPropietarioPage() {
 
                       // Formatear hora en formato 12 horas
                       const formatearHora = (hora24: string) => {
-                        const [hora, minutos] = hora24.split(':')
-                        const horaNum = parseInt(hora)
-                        const hora12 = horaNum === 0 ? 12 : horaNum > 12 ? horaNum - 12 : horaNum
-                        const ampm = horaNum >= 12 ? 'PM' : 'AM'
-                        return `${hora12}:${minutos} ${ampm}`
-                      }
+                        if (!hora24) return "—";
+
+                        // asegurar formato HH:mm sin segundos
+                        const [h, m] = hora24.split(':').slice(0, 2);
+                        const hora = parseInt(h, 10);
+                        const minutos = m ?? "00";
+
+                        const hora12 = hora === 0 ? 12 : hora > 12 ? hora - 12 : hora;
+                        const ampm = hora >= 12 ? "PM" : "AM";
+
+                        return `${hora12}:${minutos} ${ampm}`;
+                      };
 
                       // Formatear fecha
                       const formatearFecha = (fecha: Date) => {
@@ -833,9 +884,6 @@ export default function ReservasPropietarioPage() {
 
                               {/* Footer con fecha de creación y botones - siempre al final */}
                               <div className="pt-1.5 border-t border-gray-100 flex items-center justify-between mt-auto">
-                                <p className="text-xs text-gray-500">
-                                  Creada el {formatearFechaCreacion(reserva.fechaCreacion)}
-                                </p>
                                 <div className="flex items-center gap-1">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -848,12 +896,12 @@ export default function ReservasPropietarioPage() {
                                         onClick={() => {
                                           const recursoEncontrado = recurso.find(r => r.id === String(reserva.idRecurso))
                                           if (recursoEncontrado) {
-                                            setReservaEditando(reserva)
                                             setSelectedRecurso(recursoEncontrado)
                                             setEditDate(new Date(reserva.fechaInicio))
                                             setEditHoraInicial(reserva.horaInicio)
                                             setEditHoraFinal(reserva.horaFin)
                                             setEditNumeroInvitados(reserva.numeroInvitados)
+                                            handleOpenEditReserva(reserva)
                                             setIsEditSheetOpen(true)
                                           }
                                         }}
@@ -901,7 +949,7 @@ export default function ReservasPropietarioPage() {
                                             try {
                                               await eliminarReserva(Number(reserva.id))
                                               toast.success("Reserva eliminada correctamente")
-                                              fetchReservasPropietario(Number(authService.getIdCasa()))
+                                              fetchReservasPropietario()
 
                                             } catch (error: any) {
                                               toast.error(error.message)

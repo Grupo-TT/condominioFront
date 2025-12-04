@@ -5,16 +5,33 @@ export interface GetReservasPropResponse {
 
 export interface ReservaPropietarioItem {
   id: number;
-  idRecurso: number;
-  fechaCreacion: string;
-  fechaReserva: string;
+  fechaSolicitud: string;
   horaInicio: Hora;
   horaFin: Hora;
   numeroInvitados: number;
   estadoSolicitud: "PENDIENTE" | "APROBADA" | "RECHAZADA" | "FINALIZADA";
+  casa: Casa;
+  solicitante: Solicitante;
+  recursoComun: RecursoComun;
+}
+
+export interface Casa {
+  id: number; 
+  numeroCasa: number;
+}
+
+export interface Solicitante {
+  nombreCompleto: string;
+  telefono: number;
+  correo: string;
+}
+
+export interface RecursoComun {
+  id: number;
   nombre: string;
   descripcion: string;
-  tipoRecursoComun: "ZONA" | "OTRO";
+  disponibilidadRecurso: "DISPONIBLE" | "EN_MANTENIMIENTO" | "NO_DISPONIBLE";
+  tipoRecursoComun: "ZONA" | "OBJETO";
 }
 
 export interface ReservaPropUpdateRequest {
@@ -55,7 +72,7 @@ export interface ReservaAdaptada {
   horaInicio: string
   horaFin: string
   numeroInvitados: number
-  fechaCreacion: Date
+  idCasa?: number
 }
 
 export type ReservaPropCreateRequest = ReservaBasePayload;
