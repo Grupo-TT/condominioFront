@@ -77,6 +77,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Movimiento } from '@/types/cuotas.types'
 import { useMovimientosMes } from '@/hooks/useMovimientos'
 
+  const categoriaLabels: Record<string, string> = {
+    ADMINISTRACION_CUOTAS: "Administración / Cuotas",
+    SERVICIOS_PUBLICOS: "Servicios Públicos",
+    ASEO_JARDINERIA: "Aseo y Jardinería",
+    MANTENIMIENTO_REPARACIONES: "Mantenimiento y Reparaciones",
+    PISCINA: "Piscina",
+    SEGURIDAD_ACCESO: "Seguridad / Acceso",
+    EVENTOS_DECORACION: "Eventos / Decoración",
+    PERSONAL_MANO_OBRA: "Personal / Mano de Obra",
+    MULTAS: "Multas",
+    OTROS: "Otros",
+  }
+
 export default function MovimientosPage() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -253,19 +266,6 @@ export default function MovimientosPage() {
     })
     return periodoTexto.charAt(0).toUpperCase() + periodoTexto.slice(1)
   }, [periodoSeleccionado])
-
-  const categoriaLabels: Record<string, string> = {
-    ADMINISTRACION_CUOTAS: "Administración / Cuotas",
-    SERVICIOS_PUBLICOS: "Servicios Públicos",
-    ASEO_JARDINERIA: "Aseo y Jardinería",
-    MANTENIMIENTO_REPARACIONES: "Mantenimiento y Reparaciones",
-    PISCINA: "Piscina",
-    SEGURIDAD_ACCESO: "Seguridad / Acceso",
-    EVENTOS_DECORACION: "Eventos / Decoración",
-    PERSONAL_MANO_OBRA: "Personal / Mano de Obra",
-    MULTAS: "Multas",
-    OTROS: "Otros",
-  }
 
   const categoriasOptions = [
     { value: "todas", label: "Todas las categorías" },
