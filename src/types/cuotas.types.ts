@@ -50,3 +50,14 @@ export interface MultaForm {
   motivo: string;
   tipoPago?: string | null;
 }
+
+export interface Movimiento {
+  id: string
+  fecha: string
+  tipo: 'ENTRADA' | 'SALIDA'
+  concepto: string
+  descripcion?: string
+  monto: number
+  categoria?: string
+  responsable?: string
+}

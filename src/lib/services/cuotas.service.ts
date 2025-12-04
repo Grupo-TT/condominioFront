@@ -51,3 +51,23 @@ export const enviarPazYSalvo = async (idCasa: number): Promise<PazYSalvoResponse
     throw error;
   }
 };
+
+export const getMovimientosMes = async (mes: number, anio: number) => {
+  try {
+    const { data } = await apiClient.get("/movimientos/por-mes", {
+      params: {
+        mes,
+        año: anio,
+      },
+    });
+    return data;
+  } catch (error: unknown) {
+    const message = isAxiosError(error)
+      ? error.response?.data || error.message
+      : error instanceof Error
+      ? error.message
+      : "Error desconocido";
+    console.error("Error al obtener los movimientos del mes:", message);
+    throw error;
+  }
+};
