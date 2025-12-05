@@ -1,9 +1,10 @@
 import { getMovimientosMes } from "@/lib/services/cuotas.service";
-import { Movimiento } from "@/types/cuotas.types";
+import { Metricas, Movimiento } from "@/types/cuotas.types";
 import { useEffect, useState } from "react";
 
 export function useMovimientosMes(periodo: Date) {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,12 +13,14 @@ export function useMovimientosMes(periodo: Date) {
 
       try {
         const mes = periodo.getMonth() + 1;
-        console.log("🚀 ~ cargar ~ mes:", mes)
         const anio = periodo.getFullYear();
-        console.log("🚀 ~ cargar ~ anio:", anio)
 
         const res = await getMovimientosMes(mes, anio);
-        console.log("🚀 ~ cargar ~ res:", res)
+
+        const metrics =
+          res?.data?.metricas ??
+          res?.metricas ??
+          null;
 
         const lista =
           res?.data?.movimientos ??
@@ -27,9 +30,11 @@ export function useMovimientosMes(periodo: Date) {
           [];
 
         setMovimientos(lista);
+        setMetricas(metrics);
       } catch (err) {
         console.error("Error cargando movimientos:", err);
-        setMovimientos([]); // evitar undefined
+        setMovimientos([]);
+        setMetricas(null);
       } finally {
         setLoading(false);
       }
@@ -38,5 +43,5 @@ export function useMovimientosMes(periodo: Date) {
     cargar();
   }, [periodo]);
 
-  return { movimientos, loading };
+  return { movimientos, loading, metricas };
 }

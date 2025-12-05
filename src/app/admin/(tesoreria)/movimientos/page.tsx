@@ -76,19 +76,21 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Movimiento } from '@/types/cuotas.types'
 import { useMovimientosMes } from '@/hooks/useMovimientos'
+import { editarMovimiento, eliminarMovimiento, registrarMovimiento } from '@/lib/services/cuotas.service'
+import { toast } from 'sonner'
 
-  const categoriaLabels: Record<string, string> = {
-    ADMINISTRACION_CUOTAS: "Administración / Cuotas",
-    SERVICIOS_PUBLICOS: "Servicios Públicos",
-    ASEO_JARDINERIA: "Aseo y Jardinería",
-    MANTENIMIENTO_REPARACIONES: "Mantenimiento y Reparaciones",
-    PISCINA: "Piscina",
-    SEGURIDAD_ACCESO: "Seguridad / Acceso",
-    EVENTOS_DECORACION: "Eventos / Decoración",
-    PERSONAL_MANO_OBRA: "Personal / Mano de Obra",
-    MULTAS: "Multas",
-    OTROS: "Otros",
-  }
+const categoriaLabels: Record<string, string> = {
+  ADMINISTRACION_CUOTAS: "Administración / Cuotas",
+  SERVICIOS_PUBLICOS: "Servicios Públicos",
+  ASEO_JARDINERIA: "Aseo y Jardinería",
+  MANTENIMIENTO_REPARACIONES: "Mantenimiento y Reparaciones",
+  PISCINA: "Piscina",
+  SEGURIDAD_ACCESO: "Seguridad / Acceso",
+  EVENTOS_DECORACION: "Eventos / Decoración",
+  PERSONAL_MANO_OBRA: "Personal / Mano de Obra",
+  MULTAS: "Multas",
+  OTROS: "Otros",
+}
 
 export default function MovimientosPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -101,7 +103,7 @@ export default function MovimientosPage() {
   const [filterCategoria, setFilterCategoria] = useState<string>('todas')
   const [categoriaComboboxOpen, setCategoriaComboboxOpen] = useState(false)
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Date>(new Date())
-  const { movimientos, loading: loadingMovimientos } = useMovimientosMes(periodoSeleccionado)
+  const { movimientos, loading: loadingMovimientos, metricas } = useMovimientosMes(periodoSeleccionado)
   const isLoading = loadingMovimientos
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMovimiento, setSelectedMovimiento] = useState<Movimiento | null>(null)
@@ -190,40 +192,6 @@ export default function MovimientosPage() {
 
   // Verificar si hay resultados
   const hasResults = filteredMovimientos.length > 0
-
-  // Calcular estadísticas del mes seleccionado
-  const estadisticasMes = useMemo(() => {
-    const mesSeleccionado = periodoSeleccionado.getMonth()
-    const añoSeleccionado = periodoSeleccionado.getFullYear()
-
-    const movimientosMes = movimientos.filter((mov) => {
-      const fechaMov = new Date(mov.fecha)
-      return fechaMov.getMonth() === mesSeleccionado && fechaMov.getFullYear() === añoSeleccionado
-    })
-
-    const ingresos = movimientosMes
-      .filter((mov) => mov.tipo === 'ENTRADA')
-      .reduce((sum, mov) => sum + mov.monto, 0)
-
-    const egresos = movimientosMes
-      .filter((mov) => mov.tipo === 'SALIDA')
-      .reduce((sum, mov) => sum + mov.monto, 0)
-
-    const balance = ingresos - egresos
-
-    // Calcular saldo actual: suma acumulada de todos los movimientos hasta el final del mes seleccionado
-    const fechaFinMes = new Date(añoSeleccionado, mesSeleccionado + 1, 0, 23, 59, 59)
-    const movimientosHastaFinMes = movimientos.filter((mov) => {
-      const fechaMov = new Date(mov.fecha)
-      return fechaMov <= fechaFinMes
-    })
-
-    const saldoActual = movimientosHastaFinMes.reduce((sum, mov) => {
-      return mov.tipo === 'ENTRADA' ? sum + mov.monto : sum - mov.monto
-    }, 0)
-
-    return { ingresos, egresos, balance, saldoActual }
-  }, [periodoSeleccionado, movimientos])
 
   // Funciones para navegar entre períodos
   const handleMesAnterior = () => {
@@ -521,8 +489,16 @@ export default function MovimientosPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          console.log('Eliminar movimiento:', row.original.id)
+                        onClick={async () => {
+                          try {
+                            await eliminarMovimiento(row.original.id);
+
+                            toast.success("Movimiento eliminado correctamente");
+
+                          } catch (error) {
+                            console.error("Error al eliminar:", error);
+                            toast.error("No se pudo eliminar el movimiento");
+                          }
                         }}
                         className="bg-red-600 hover:bg-red-700"
                       >
@@ -630,7 +606,7 @@ export default function MovimientosPage() {
                         currency: 'COP',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                      }).format(estadisticasMes.ingresos)}
+                      }).format(metricas?.ingresos ?? 0)}
                     </div>
                     <p className="text-xs text-gray-500">
                       Total de entradas en {periodoTextoCapitalizado.toLowerCase()}
@@ -649,7 +625,7 @@ export default function MovimientosPage() {
                         currency: 'COP',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                      }).format(estadisticasMes.egresos)}
+                      }).format(metricas?.egresos ?? 0)}
                     </div>
                     <p className="text-xs text-gray-500">
                       Total de salidas en {periodoTextoCapitalizado.toLowerCase()}
@@ -662,18 +638,18 @@ export default function MovimientosPage() {
                       <HugeiconsIcon icon={BalanceScaleIcon} className="w-5 h-5" style={{ color: '#081534' }} />
                       <p className="text-sm font-medium text-gray-600">Balance del mes</p>
                     </div>
-                    <div className={`text-3xl font-bold mb-1 ${estadisticasMes.balance >= 0 ? 'text-gray-900' : 'text-rose-600'
+                    <div className={`text-3xl font-bold mb-1 ${(metricas?.balance ?? 0) >= 0 ? 'text-gray-900' : 'text-rose-600'
                       }`}>
-                      {estadisticasMes.balance < 0 ? '-' : ''}
+                      {(metricas?.balance ?? 0) < 0 ? '-' : ''}
                       {new Intl.NumberFormat('es-CO', {
                         style: 'currency',
                         currency: 'COP',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                      }).format(Math.abs(estadisticasMes.balance))}
+                      }).format(Math.abs((metricas?.balance ?? 0)))}
                     </div>
                     <p className="text-xs text-gray-500">
-                      {estadisticasMes.balance >= 0 ? 'Balance positivo' : 'Balance negativo'}
+                      {(metricas?.balance ?? 0) >= 0 ? 'Balance positivo' : 'Balance negativo'}
                     </p>
                   </div>
 
@@ -683,15 +659,15 @@ export default function MovimientosPage() {
                       <HugeiconsIcon icon={MoneyBag02Icon} className="w-5 h-5" style={{ color: '#081534' }} />
                       <p className="text-sm font-medium text-gray-600">Saldo actual</p>
                     </div>
-                    <div className={`text-3xl font-bold mb-1 ${estadisticasMes.saldoActual >= 0 ? 'text-gray-900' : 'text-rose-600'
+                    <div className={`text-3xl font-bold mb-1 ${(metricas?.saldoActual ?? 0) >= 0 ? 'text-gray-900' : 'text-rose-600'
                       }`}>
-                      {estadisticasMes.saldoActual < 0 ? '-' : ''}
+                      {(metricas?.saldoActual ?? 0) < 0 ? '-' : ''}
                       {new Intl.NumberFormat('es-CO', {
                         style: 'currency',
                         currency: 'COP',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
-                      }).format(Math.abs(estadisticasMes.saldoActual))}
+                      }).format(Math.abs((metricas?.saldoActual ?? 0)))}
                     </div>
                     <p className="text-xs text-gray-500">
                       Saldo acumulado hasta {periodoTextoCapitalizado.toLowerCase()}
@@ -1086,24 +1062,33 @@ export default function MovimientosPage() {
 
           <form
             onSubmit={async (e) => {
-              e.preventDefault()
-              // Aquí se implementará la lógica de registro cuando se conecte la API
-              console.log('Registrar movimiento:', {
-                fecha: formFecha?.toISOString().split('T')[0],
+              e.preventDefault();
+
+              const payload = {
+                fecha: formFecha?.toISOString().split("T")[0],
                 tipo: formTipo,
                 descripcion: formDescripcion,
                 monto: Number(formMonto),
                 categoria: formCategoria,
                 responsable: formResponsable,
-              })
-              setIsFormSheetOpen(false)
-              // Limpiar formulario
-              setFormFecha(new Date())
-              setFormTipo('ENTRADA')
-              setFormDescripcion('')
-              setFormMonto('')
-              setFormCategoria('')
-              setFormResponsable('')
+              };
+
+              try {
+                await registrarMovimiento(payload);
+
+                toast.success("Movimiento registrado correctamente");
+                setIsFormSheetOpen(false);
+
+                // Resetear formulario
+                setFormFecha(new Date());
+                setFormTipo("ENTRADA");
+                setFormDescripcion("");
+                setFormMonto("");
+                setFormCategoria("");
+                setFormResponsable("");
+              } catch {
+                toast.error("No se pudo registrar el movimiento");
+              }
             }}
             className="flex flex-col h-full"
           >
@@ -1324,19 +1309,33 @@ export default function MovimientosPage() {
 
           <form
             onSubmit={async (e) => {
-              e.preventDefault()
-              // Aquí se implementará la lógica de edición cuando se conecte la API
-              console.log('Editar movimiento:', {
-                id: editingMovimiento?.id,
-                fecha: editFecha?.toISOString().split('T')[0],
+              e.preventDefault();
+
+              if (!editingMovimiento?.id) {
+                console.error("No hay ID del movimiento a editar");
+                return;
+              }
+
+              const payload = {
+                fecha: editFecha?.toISOString().split("T")[0],
                 tipo: editTipo,
                 descripcion: editDescripcion,
                 monto: Number(editMonto),
                 categoria: editCategoria,
                 responsable: editResponsable,
-              })
-              setIsEditSheetOpen(false)
-              handleEditCancel()
+              };
+
+              try {
+                await editarMovimiento(editingMovimiento.id, payload);
+                toast.success("Movimiento actualizado correctamente");
+
+                setIsEditSheetOpen(false);
+                handleEditCancel();
+
+              } catch (error) {
+                console.error("Error al editar el movimiento:", error);
+                toast.error("No se pudo editar el movimiento");
+              }
             }}
             className="flex flex-col h-full"
           >

@@ -61,3 +61,23 @@ export interface Movimiento {
   categoria?: string
   responsable?: string
 }
+
+export interface Metricas {
+  ingresos: number;
+  egresos: number;
+  balance: number;
+  saldoActual: number;
+};
+
+export interface CreateMovimiento {
+  fecha?: string
+  tipo: string
+  descripcion: string
+  monto: number
+  categoria: string
+  responsable: string
+}
+
+export interface UpdateMovimiento extends CreateMovimiento {
+  id: number | string
+}
