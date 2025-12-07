@@ -411,8 +411,8 @@ export default function AsambleaPage() {
     const asambleaDate = new Date(`${asamblea.fecha}`);
     const now = new Date();
     const isFutureAssembly = asambleaDate >= now;
-    const canEdit = isFutureAssembly;
-    const canDelete = isFutureAssembly;
+    const canEdit = true;
+    const canDelete = true;
     const isPastCard = options?.variant === 'past';
     const attendees = options?.showAttendance ? getAsistentesByAsamblea() : null;
     const totalAttendees = attendees?.length ?? 0;
@@ -511,9 +511,7 @@ export default function AsambleaPage() {
                     <HugeiconsIcon icon={PencilEdit02Icon} size={21} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {canEdit ? 'Editar asamblea' : 'Solo puedes editar asambleas futuras'}
-                </TooltipContent>
+                <TooltipContent side="top">Editar asamblea</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -531,9 +529,7 @@ export default function AsambleaPage() {
                     <HugeiconsIcon icon={Delete02Icon} size={21} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {canDelete ? 'Eliminar asamblea' : 'Solo puedes eliminar asambleas futuras'}
-                </TooltipContent>
+                <TooltipContent side="top">Eliminar asamblea</TooltipContent>
               </Tooltip>
             </div>
           </div>
@@ -1264,9 +1260,30 @@ export default function AsambleaPage() {
                         <h3 className="text-sm font-semibold text-gray-900">Asistentes presentes</h3>
                         <p className="text-xs text-gray-500">Solo se listan quienes marcaron asistencia</p>
                       </div>
-                      <Badge variant="outline" className="text-gray-600 border-gray-200">
-                        {presentAttendees.length} {presentAttendees.length === 1 ? 'asistente' : 'asistentes'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-gray-600 border-gray-200">
+                          {presentAttendees.length} {presentAttendees.length === 1 ? 'asistente' : 'asistentes'}
+                        </Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="w-8 h-8 rounded-md border-gray-200 shadow-sm"
+                              aria-label="Editar asistencia"
+                              onClick={() => {
+                                setIsDetailSheetOpen(false);
+                                if (selectedAsamblea) {
+                                  handleOpenAttendanceSheet(selectedAsamblea);
+                                }
+                              }}
+                            >
+                              <HugeiconsIcon icon={PencilEdit02Icon} size={16} strokeWidth={1.8} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Editar asistencia</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     {presentAttendees.length > 0 ? (
                       <div className="space-y-2">
