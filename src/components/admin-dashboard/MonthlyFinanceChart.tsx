@@ -5,7 +5,7 @@ import {
     ChartTooltip,
     ChartTooltipContent
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Customized } from "recharts"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Calendar03Icon } from '@hugeicons/core-free-icons'
@@ -14,13 +14,55 @@ import { MonthlyData } from "@/data/dashboard.mock"
 const chartConfig = {
     entradas: {
         label: "Entradas",
-        color: "#e8e1e1ff",
+        color: "#4C6C5B",
     },
     salidas: {
         label: "Salidas",
-        color: "#1f2937",
+        color: "#525252",
     },
 }
+
+// Componente para definir los patrones de líneas diagonales
+const DiagonalStripePatterns = () => (
+    <defs>
+        {/* Patrón para entradas - verde */}
+        <pattern
+            id="diagonalStripesGreen"
+            patternUnits="userSpaceOnUse"
+            width="8"
+            height="8"
+            patternTransform="rotate(45)"
+        >
+            <rect width="8" height="8" fill="#4C6C5B" />
+            <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="8"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="3"
+            />
+        </pattern>
+        {/* Patrón para salidas - gris claro */}
+        <pattern
+            id="diagonalStripesGray"
+            patternUnits="userSpaceOnUse"
+            width="8"
+            height="8"
+            patternTransform="rotate(45)"
+        >
+            <rect width="8" height="8" fill="#525252" />
+            <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="8"
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth="3"
+            />
+        </pattern>
+    </defs>
+)
 
 interface MonthlyFinanceChartProps {
     selectedYear: number
@@ -61,6 +103,7 @@ export function MonthlyFinanceChart({
             <div className="bg-[#F6F6F6] rounded-xl p-4">
                 <ChartContainer config={chartConfig} className="h-[280px] w-full">
                     <BarChart data={monthlyData} margin={{ top: 15, right: 20, left: -15, bottom: 5 }}>
+                        <Customized component={DiagonalStripePatterns} />
                         <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#d1d5db" />
                         <XAxis
                             dataKey="mes"
@@ -87,13 +130,13 @@ export function MonthlyFinanceChart({
                         />
                         <Bar
                             dataKey="entradas"
-                            fill="var(--color-entradas)"
+                            fill="url(#diagonalStripesGreen)"
                             radius={8}
                             maxBarSize={50}
                         />
                         <Bar
                             dataKey="salidas"
-                            fill="var(--color-salidas)"
+                            fill="url(#diagonalStripesGray)"
                             radius={8}
                             maxBarSize={50}
                         />

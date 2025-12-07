@@ -184,7 +184,10 @@ function ChartTooltipContent({
           .map((item, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color || item.payload.fill || item.color
+            // Use config color when fill is a pattern (url(...))
+            const fillValue = item.payload.fill || item.color
+            const isPattern = typeof fillValue === 'string' && fillValue.startsWith('url(')
+            const indicatorColor = color || (isPattern ? `var(--color-${item.dataKey})` : fillValue)
 
             return (
               <div

@@ -5,7 +5,7 @@ import {
     ChartTooltip,
     ChartTooltipContent
 } from "@/components/ui/chart"
-import { RadialBarChart, RadialBar, PolarRadiusAxis, Label } from "recharts"
+import { RadialBarChart, RadialBar, PolarRadiusAxis, Label, Customized } from "recharts"
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveSquareIcon } from '@hugeicons/core-free-icons'
 import { HousesStatusData } from "@/data/dashboard.mock"
@@ -13,13 +13,55 @@ import { HousesStatusData } from "@/data/dashboard.mock"
 const chartConfig = {
     alDia: {
         label: "Al Día",
-        color: "#d1d5db",
+        color: "#4C6C5B",
     },
     morosas: {
         label: "Morosas",
-        color: "#374151",
+        color: "#525252",
     },
 }
+
+// Componente para definir los patrones de líneas diagonales
+const DiagonalStripePatterns = () => (
+    <defs>
+        {/* Patrón para Al Día - verde */}
+        <pattern
+            id="radialStripesGreen"
+            patternUnits="userSpaceOnUse"
+            width="8"
+            height="8"
+            patternTransform="rotate(45)"
+        >
+            <rect width="8" height="8" fill="#4C6C5B" />
+            <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="8"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="3"
+            />
+        </pattern>
+        {/* Patrón para Morosas - gris claro */}
+        <pattern
+            id="radialStripesGray"
+            patternUnits="userSpaceOnUse"
+            width="8"
+            height="8"
+            patternTransform="rotate(45)"
+        >
+            <rect width="8" height="8" fill="#525252" />
+            <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="8"
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth="3"
+            />
+        </pattern>
+    </defs>
+)
 
 interface HousesStatusChartProps {
     housesStatus: HousesStatusData
@@ -46,6 +88,7 @@ export function HousesStatusChart({ housesStatus }: HousesStatusChartProps) {
                         outerRadius={150}
                         cy="95%"
                     >
+                        <Customized component={DiagonalStripePatterns} />
                         <ChartTooltip
                             cursor={false}
                             content={<ChartTooltipContent hideLabel />}
@@ -80,12 +123,12 @@ export function HousesStatusChart({ housesStatus }: HousesStatusChartProps) {
                             dataKey="alDia"
                             stackId="a"
                             cornerRadius={10}
-                            fill="var(--color-alDia)"
+                            fill="url(#radialStripesGreen)"
                             className="stroke-[#F6F6F6] stroke-[3px]"
                         />
                         <RadialBar
                             dataKey="morosas"
-                            fill="var(--color-morosas)"
+                            fill="url(#radialStripesGray)"
                             stackId="a"
                             cornerRadius={10}
                             className="stroke-[#F6F6F6] stroke-[3px]"
@@ -95,14 +138,15 @@ export function HousesStatusChart({ housesStatus }: HousesStatusChartProps) {
             </div>
             <div className="flex justify-center gap-6 mt-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#4C6C5B]"></div>
                     <span className="text-xs text-gray-600">Al Día ({housesStatus.alDia.count})</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gray-700"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#525252]"></div>
                     <span className="text-xs text-gray-600">Morosas ({housesStatus.morosas.count})</span>
                 </div>
             </div>
         </div>
     )
 }
+
