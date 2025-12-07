@@ -248,7 +248,7 @@ export default function Page() {
           </div>
 
           {/* Houses Status Section - Same 3-column grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-0.5">
             {/* Left side - Takes 2 columns with header */}
             <div className="lg:col-span-2 flex flex-col gap-4">
               {/* Section Header */}
@@ -264,45 +264,49 @@ export default function Page() {
               {/* Cards Container */}
               <div className="flex gap-6">
                 {/* House Types Card */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 flex-1">
-                  <div className="grid grid-cols-[auto_1fr] gap-12">
-                    <div className="flex flex-col justify-center gap-2">
-                      <span className="text-lg font-semibold">Distribución</span>
+                <div className="bg-white rounded-xl border border-gray-200 p-4 flex-1">
+                  <div className="grid grid-cols-[auto_1fr] gap-6 h-full">
+                    <div className="bg-[#F6F6F6] rounded-xl p-4 flex flex-col items-center justify-center text-center h-full">
+                      <span className="text-lg font-semibold">Total</span>
                       <span className="text-6xl font-medium">{houseTypes.total}</span>
                       <span className="text-sm text-gray-500">Total de propiedades<br />en el condominio</span>
                     </div>
-                    <div className="flex flex-col justify-center gap-3 pt-2">
-                      <span className="text-xl font-semibold">Distribución de propiedades</span>
-                      <span className="text-base text-gray-500">
-                        Información detallada sobre la distribución de propiedades según su tipo de uso: arrendadas a terceros o residenciales ocupadas por propietarios.
-                      </span>
-                      <div className="flex justify-between items-center mt-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base text-gray-600">Arrendadas</span>
-                          <span className="text-2xl font-bold">{houseTypes.arrendadas.count}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-base text-gray-600">Residenciales</span>
-                          <span className="text-2xl font-bold">{houseTypes.residenciales.count}</span>
-                        </div>
+                    <div className="flex flex-col justify-between h-full">
+                      <div>
+                        <span className="text-xl font-semibold">Uso de las propiedades</span>
+                        <span className="text-base text-gray-500 block mt-1">
+                          Desglose del uso actual de las propiedades: arrendadas a terceros o residenciales ocupadas por propietarios.
+                        </span>
                       </div>
-                      <div className="flex gap-1">
-                        {Array.from({ length: 24 }, (_, index) => {
-                          const filledBars = Math.round((houseTypes.arrendadas.percentage * 24) / 100)
-                          return (
-                            <div
-                              key={index}
-                              className={`h-7 flex-1 rounded-full ${index < filledBars ? 'bg-gray-800' : 'bg-gray-200'}`}
-                            />
-                          )
-                        })}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base text-gray-600">Arrendadas</span>
+                            <span className="text-2xl font-bold">{houseTypes.arrendadas.count}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base text-gray-600">Residenciales</span>
+                            <span className="text-2xl font-bold">{houseTypes.residenciales.count}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          {Array.from({ length: 24 }, (_, index) => {
+                            const filledBars = Math.round((houseTypes.arrendadas.percentage * 24) / 100)
+                            return (
+                              <div
+                                key={index}
+                                className={`h-7 flex-1 rounded-full ${index < filledBars ? 'bg-gray-800' : 'bg-gray-200'}`}
+                              />
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Status Card with Radial Chart */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4 min-w-[280px] overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 pt-4 pb-3 px-4 min-w-[280px] overflow-hidden self-start">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                       <HugeiconsIcon icon={MoneyReceiveSquareIcon} className="w-5 h-5 text-gray-600" />
