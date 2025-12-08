@@ -85,6 +85,17 @@ export const casaService = {
       throw error;
     }
   },
+  async getObligacionesByCasa(idCasa: number | string) {
+    try {
+      const res = await apiClient.get(
+        `/obligacion/all/${idCasa}`
+      );
+      return res.data.data || [];
+    } catch (error) {
+      console.error("Error al obtener los pagos y multas de la casa:", error);
+      throw error;
+    }
+  },
 };
 
 export const miembrosService = {

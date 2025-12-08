@@ -1,12 +1,13 @@
 'use client'
 
 import { HugeiconsIcon } from '@hugeicons/react'
-import { 
-  MoneySendSquareIcon, 
+import {
+  MoneySendSquareIcon,
   MoneyReceiveSquareIcon,
   Calendar02Icon,
   Alert02Icon,
 } from '@hugeicons/core-free-icons'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface FinanzasCardsProps {
   saldoPendiente: number
@@ -25,13 +26,17 @@ const formatCurrency = (value: number): string => {
 }
 
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
+  const [year, month, day] = dateString.split('-').map(Number)
+
+  const date = new Date(year, month - 1, day)
+
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   }).format(date)
 }
+
 
 export function FinanzasCards({
   saldoPendiente,
@@ -59,7 +64,7 @@ export function FinanzasCards({
       <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
         <div className="flex items-center gap-2 mb-4">
           <HugeiconsIcon icon={MoneyReceiveSquareIcon} className="w-5 h-5" style={{ color: '#081534' }} />
-          <p className="text-sm font-medium text-gray-600">Obligaciones pendientes</p>
+          <p className="text-sm font-medium text-gray-600">Obligaciones pendientes y/o abonadas</p>
         </div>
         <div className="text-3xl font-bold mb-1 text-gray-900">
           {obligacionesPendientesCount}
@@ -100,3 +105,20 @@ export function FinanzasCards({
   )
 }
 
+
+export function FinanzasCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <Skeleton className="h-8 w-32 mb-1" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}
