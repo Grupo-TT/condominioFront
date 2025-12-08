@@ -928,127 +928,159 @@ export default function MovimientosPage() {
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 p-0 flex flex-col"
-          style={{ width: '420px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '480px', maxWidth: 'none' }}
         >
           {selectedMovimiento && (
             <>
-              {/* Header */}
-              <SheetHeader className="px-6 py-4 border-b border-gray-200">
-                <SheetTitle className="text-base font-semibold text-gray-900">Detalles de Movimiento</SheetTitle>
-              </SheetHeader>
-
-              {/* Título y descripción */}
-              <div className="px-6 pt-3 pb-4 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${selectedMovimiento.tipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
+              {/* Header con icono */}
+              <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedMovimiento.tipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
                     }`}>
                     <HugeiconsIcon
-                      icon={selectedMovimiento.tipo === 'ENTRADA' ? MoneyReceiveFlow01Icon : MoneySendFlow01Icon}
-                      size={18}
+                      icon={selectedMovimiento.tipo === 'ENTRADA' ? MoneyReceiveSquareIcon : MoneySendSquareIcon}
+                      size={24}
                       className={selectedMovimiento.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'}
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedMovimiento.concepto}</h3>
+                  <div className="flex-1 min-w-0">
+                    <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                      Detalles del Movimiento
+                    </SheetTitle>
+                    <SheetDescription className="text-sm text-gray-500">
+                      {selectedMovimiento.tipo === 'ENTRADA' ? 'Entrada' : 'Salida'} registrada el{' '}
+                      {(() => {
+                        const dateStr = selectedMovimiento.fecha as string;
+                        const [year, month, day] = dateStr.includes('T')
+                          ? dateStr.split('T')[0].split('-').map(Number)
+                          : dateStr.split('-').map(Number);
+                        const fecha = new Date(year, month - 1, day);
+                        return fecha.toLocaleDateString('es-CO', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        });
+                      })()}
+                    </SheetDescription>
+                  </div>
                 </div>
-                {selectedMovimiento.descripcion && (
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                    {selectedMovimiento.descripcion}
-                  </p>
-                )}
               </div>
 
               {/* Contenido */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
-                <div className="space-y-6">
-                  {/* Grid 3 columnas: ID, Fecha, Tipo */}
-                  <div className="grid grid-cols-[auto_auto_auto] gap-6">
-                    {/* ID Movimiento */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">ID Movimiento</div>
-                      <div className="text-sm text-gray-900">#{selectedMovimiento.id}</div>
-                    </div>
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-6 py-6 space-y-6">
+                  {/* Concepto / Título del movimiento */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Concepto</div>
+                    <h3 className="text-lg font-bold text-gray-900">{selectedMovimiento.concepto}</h3>
+                    {selectedMovimiento.descripcion && (
+                      <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                        {selectedMovimiento.descripcion}
+                      </p>
+                    )}
+                  </div>
 
-                    {/* Fecha */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Fecha:</div>
-                      <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {(() => {
-                          const dateStr = selectedMovimiento.fecha as string;
-                          const [year, month, day] = dateStr.includes('T')
-                            ? dateStr.split('T')[0].split('-').map(Number)
-                            : dateStr.split('-').map(Number);
-
-                          const fecha = new Date(year, month - 1, day);
-
-                          return fecha.toLocaleDateString('es-CO', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          });
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Tipo */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Tipo:</div>
-                      <Badge
-                        variant={selectedMovimiento.tipo === 'ENTRADA' ? 'success' : 'destructive'}
-                        appearance="outline"
-                        size="sm"
-                      >
-                        {selectedMovimiento.tipo === 'ENTRADA' ? 'Entrada' : 'Salida'}
-                      </Badge>
+                  {/* Monto */}
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</div>
+                    <div className={`text-xl font-bold ${selectedMovimiento.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'}`}>
+                      {selectedMovimiento.tipo === 'ENTRADA' ? '+' : '-'}{' '}
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                      }).format(selectedMovimiento.monto)}
                     </div>
                   </div>
 
-                  {/* Detalles financieros */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="text-xs text-gray-500">Monto:</div>
-                        <div className={`text-sm font-semibold ${selectedMovimiento.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'
-                          }`}>
-                          {selectedMovimiento.tipo === 'ENTRADA' ? '+' : '-'}{' '}
-                          {new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                          }).format(selectedMovimiento.monto)}
+                  {/* Detalles en grid */}
+                  <div className="space-y-4 pt-4 border-t border-gray-200">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* ID Movimiento */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">ID Movimiento</div>
+                        <div className="text-sm font-medium text-gray-900">#{selectedMovimiento.id}</div>
+                      </div>
+
+                      {/* Tipo */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Tipo</div>
+                        <Badge
+                          variant={selectedMovimiento.tipo === 'ENTRADA' ? 'success' : 'destructive'}
+                          appearance="outline"
+                          size="sm"
+                        >
+                          {selectedMovimiento.tipo === 'ENTRADA' ? 'Entrada' : 'Salida'}
+                        </Badge>
+                      </div>
+
+                      {/* Fecha */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Fecha</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {(() => {
+                            const dateStr = selectedMovimiento.fecha as string;
+                            const [year, month, day] = dateStr.includes('T')
+                              ? dateStr.split('T')[0].split('-').map(Number)
+                              : dateStr.split('-').map(Number);
+                            const fecha = new Date(year, month - 1, day);
+                            return fecha.toLocaleDateString('es-CO', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            });
+                          })()}
                         </div>
                       </div>
+
+                      {/* Categoría */}
                       {selectedMovimiento.categoria && (
-                        <div className="flex justify-between">
-                          <div className="text-xs text-gray-500">Categoría:</div>
-                          <div className="text-sm text-gray-900">
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-500">Categoría</div>
+                          <div className="text-sm font-medium text-gray-900">
                             {categoriaLabels[selectedMovimiento.categoria ?? ''] ??
                               selectedMovimiento.categoria ??
                               'Sin categoría'}
                           </div>
                         </div>
                       )}
-                      {selectedMovimiento.responsable && (
-                        <div className="flex justify-between">
-                          <div className="text-xs text-gray-500">Responsable:</div>
-                          <div className="text-sm text-gray-900">{selectedMovimiento.responsable}</div>
-                        </div>
-                      )}
                     </div>
+
+                    {/* Responsable (fila completa) */}
+                    {selectedMovimiento.responsable && (
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-500">Responsable</div>
+                          <div className="text-sm font-medium text-gray-900">{selectedMovimiento.responsable}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Footer con acciones */}
-              <div className="px-6 py-4 border-t border-gray-200">
+              <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
                 <Button
-                  onClick={() => handleEdit(selectedMovimiento)}
-                  className="w-full"
+                  onClick={() => setIsDetailSheetOpen(false)}
+                  className="flex-1 h-10 font-medium"
                   variant="outline"
                 >
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Editar Movimiento
+                  Cerrar
                 </Button>
-              </div>
+                <Button
+                  onClick={() => {
+                    setIsDetailSheetOpen(false)
+                    handleEdit(selectedMovimiento)
+                  }}
+                  className="flex-1 h-10 font-medium"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              </SheetFooter>
             </>
           )}
         </SheetContent>

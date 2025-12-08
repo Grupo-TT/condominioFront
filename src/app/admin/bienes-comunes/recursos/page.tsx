@@ -146,14 +146,14 @@ export default function RecursosPage() {
       // Filtrar por tipo
       if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
       if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
-      
+
       // Filtrar por estado
       if (estadoFilter !== 'todas') {
         if (estadoFilter === 'disponible' && r.disponibilidadRecurso !== 'DISPONIBLE') return false
         if (estadoFilter === 'no-disponible' && r.disponibilidadRecurso !== 'NO_DISPONIBLE') return false
         if (estadoFilter === 'en-mantenimiento' && r.disponibilidadRecurso !== 'EN_MANTENIMIENTO') return false
       }
-      
+
       // Filtrar por término de búsqueda
       if (!term) return true
       return (
@@ -329,8 +329,8 @@ export default function RecursosPage() {
         id: 'tipo',
         header: ({ column }) => <DataGridColumnHeader title="Tipo" column={column} />,
         cell: ({ row }) => (
-          <Badge 
-            variant={row.original.tipo === 'zona' ? 'secondary' : 'outline'} 
+          <Badge
+            variant={row.original.tipo === 'zona' ? 'secondary' : 'outline'}
             appearance="light"
           >
             {row.original.tipo === 'zona' ? 'Zona' : 'Objeto'}
@@ -411,12 +411,12 @@ export default function RecursosPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {row.original.habilitado ? `¿Deshabilitar recurso &quot;${row.original.nombre}&quot;?` : `¿Habilitar recurso &quot;${row.original.nombre}&quot;?`}
+                        {row.original.habilitado ? `¿Deshabilitar recurso "${row.original.nombre}"?` : `¿Habilitar recurso "${row.original.nombre}"?`}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         {row.original.habilitado
-                          ? `El recurso &quot;${row.original.nombre}&quot; quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
-                          : `El recurso &quot;${row.original.nombre}&quot; quedará disponible para su uso.`}
+                          ? `El recurso "${row.original.nombre}" quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
+                          : `El recurso "${row.original.nombre}" quedará disponible para su uso.`}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -455,10 +455,10 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Poner recurso &quot;{row.original.nombre}&quot; en mantenimiento?
+                          ¿Poner recurso "{row.original.nombre}" en mantenimiento?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          El recurso &quot;{row.original.nombre}&quot; quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
+                          El recurso "{row.original.nombre}" quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -494,7 +494,7 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Deshabilitar recurso &ldquo;{row.original.nombre}&rdquo;?
+                          ¿Deshabilitar recurso "{row.original.nombre}"?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           El recurso dejará de estar disponible y saldrá del estado de mantenimiento.
@@ -537,8 +537,8 @@ export default function RecursosPage() {
     columns,
     data: filteredData,
     pageCount: Math.ceil((filteredData?.length || 0) / pagination.pageSize),
-  getRowId: (row: RecursoUI) => row.id,
-  getRowCanExpand: (row) => Boolean(row.original.descripcion),
+    getRowId: (row: RecursoUI) => row.id,
+    getRowCanExpand: (row) => Boolean(row.original.descripcion),
     state: {
       pagination,
       sorting,
@@ -777,13 +777,13 @@ export default function RecursosPage() {
                           <span className={cn(
                             'ms-0.5 size-1.5 rounded-full',
                             estadoFilter === 'disponible' ? 'bg-green-500' :
-                            estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
-                            'bg-red-500'
+                              estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
+                                'bg-red-500'
                           )}></span>
                           <span className="truncate">
                             {estadoFilter === 'disponible' ? 'Disponible' :
-                             estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
-                             'No disponible'}
+                              estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
+                                'No disponible'}
                           </span>
                         </span>
                       ) : (
@@ -866,11 +866,11 @@ export default function RecursosPage() {
                     className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -886,8 +886,8 @@ export default function RecursosPage() {
         </div>
       </div>
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
           style={{ width: '500px', maxWidth: 'none' }}
         >
@@ -901,10 +901,10 @@ export default function RecursosPage() {
           <form onSubmit={handleNuevoRecursoSubmit} className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto">
               <div className="space-y-6 px-4 pt-4">
-                <FormFieldWithTooltip 
-                  label="Nombre" 
-                  required 
-                  invalid={Boolean(errors.nombre)} 
+                <FormFieldWithTooltip
+                  label="Nombre"
+                  required
+                  invalid={Boolean(errors.nombre)}
                   error={errors.nombre}
                 >
                   <Input id="nombre" value={formNombre} onChange={(e) => {
@@ -915,9 +915,9 @@ export default function RecursosPage() {
                   }} placeholder="Ej. Salón Comunal" />
                 </FormFieldWithTooltip>
 
-                <FormFieldWithTooltip 
-                  label="Descripción" 
-                  invalid={Boolean(errors.descripcion)} 
+                <FormFieldWithTooltip
+                  label="Descripción"
+                  invalid={Boolean(errors.descripcion)}
                   error={errors.descripcion}
                 >
                   <textarea
@@ -934,10 +934,10 @@ export default function RecursosPage() {
                   />
                 </FormFieldWithTooltip>
 
-                <FormFieldWithTooltip 
-                  label="Tipo" 
-                  required 
-                  invalid={Boolean(errors.tipo)} 
+                <FormFieldWithTooltip
+                  label="Tipo"
+                  required
+                  invalid={Boolean(errors.tipo)}
                   error={errors.tipo || 'Selecciona el tipo de recurso.'}
                 >
                   <Select value={formTipo} onValueChange={(v) => {
