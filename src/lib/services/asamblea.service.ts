@@ -46,11 +46,17 @@ export const AsambleaService = {
     async getAsistentes(id: string): Promise<Asistente[]> {
         try {
             const response = await apiClient.get(`/asamblea/${id}`);
-            const propietarios = response.data.data.propietarios;
+            const propietarios = response.data.data?.propietarios || [];
+
+            if (!Array.isArray(propietarios) || propietarios.length === 0) {
+                console.warn(`No se encontraron propietarios para la asamblea ${id}`);
+                return [];
+            }
+
             return propietarios.map((p: Propietario) => ({
-                id: String(p.numeroCasa),
+                id: p.numeroCasa,
                 nombre: p.nombrePropietario,
-                asistio: p.asistio
+                asistio: p.asistio ?? false
             }));
         } catch (error) {
             console.error("No se pudo obtener la asistencia.", error);

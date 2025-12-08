@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +63,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { ButtonArrow } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 
 // Esquema de validación para nueva asamblea
@@ -91,10 +92,12 @@ export default function AsambleaPage() {
   const [yearFilter, setYearFilter] = useState<string>('todos');
   const [yearComboboxOpen, setYearComboboxOpen] = useState(false);
   const [attendanceSearch, setAttendanceSearch] = useState('');
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
 
   const selectedAttendance = useMemo(() => {
     if (!selectedAsamblea) return [];
-    return getAsistentesByAsamblea();
+    return getAsistentesByAsamblea(selectedAsamblea.id);
   }, [selectedAsamblea, getAsistentesByAsamblea]);
 
   const attendanceStats = useMemo(() => {
@@ -141,8 +144,38 @@ export default function AsambleaPage() {
   });
 
   useEffect(() => {
-    fetchAsambleas();
+    const loadInitialData = async () => {
+      await fetchAsambleas();
+      setInitialLoading(false);
+    };
+    loadInitialData();
   }, [fetchAsambleas]);
+
+  // Cargar asistentes de asambleas pasadas para mostrar métricas
+  const loadedAttendanceRef = React.useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const loadPastAssemblyAttendance = async () => {
+      const now = new Date();
+      const pastAsambleas = asambleas.filter(a => new Date(a.fecha) < now);
+
+      // Cargar asistentes de cada asamblea pasada que no se haya cargado
+      for (const asamblea of pastAsambleas) {
+        if (!loadedAttendanceRef.current.has(asamblea.id)) {
+          loadedAttendanceRef.current.add(asamblea.id);
+          try {
+            await fetchAsistentes(asamblea.id);
+          } catch {
+            // Silenciar errores individuales
+          }
+        }
+      }
+    };
+
+    if (asambleas.length > 0) {
+      loadPastAssemblyAttendance();
+    }
+  }, [asambleas, fetchAsistentes]);
 
   useEffect(() => {
     setShowFullDescription(false);
@@ -184,17 +217,38 @@ export default function AsambleaPage() {
     setSelectedAsamblea(asamblea);
     setIsAttendanceSheetOpen(true);
     setAttendanceSearch('');
-    try {
-      await fetchAsistentes(asamblea.id);
-    } catch {
-      toast.error('No se pudo cargar la asistencia');
+    // Solo cargar si no se ha cargado antes
+    if (!loadedAttendanceRef.current.has(asamblea.id)) {
+      setAttendanceLoading(true);
+      try {
+        loadedAttendanceRef.current.add(asamblea.id);
+        await fetchAsistentes(asamblea.id);
+      } catch {
+        loadedAttendanceRef.current.delete(asamblea.id);
+        toast.error('No se pudo cargar la asistencia');
+      } finally {
+        setAttendanceLoading(false);
+      }
     }
   };
 
-  const handleOpenDetailSheet = (asamblea: Asamblea) => {
+  const handleOpenDetailSheet = async (asamblea: Asamblea) => {
     setSelectedAsamblea(asamblea);
     setIsDetailSheetOpen(true);
     setAttendanceSearch('');
+    // Solo cargar si no se ha cargado antes
+    if (!loadedAttendanceRef.current.has(asamblea.id)) {
+      setAttendanceLoading(true);
+      try {
+        loadedAttendanceRef.current.add(asamblea.id);
+        await fetchAsistentes(asamblea.id);
+      } catch {
+        loadedAttendanceRef.current.delete(asamblea.id);
+        toast.error('No se pudo cargar la asistencia');
+      } finally {
+        setAttendanceLoading(false);
+      }
+    }
   };
 
   const handleOpenSheet = () => {
@@ -408,13 +462,10 @@ export default function AsambleaPage() {
     asamblea: Asamblea,
     options?: { showAttendance?: boolean; variant?: 'future' | 'past' }
   ) => {
-    const asambleaDate = new Date(`${asamblea.fecha}`);
-    const now = new Date();
-    const isFutureAssembly = asambleaDate >= now;
     const canEdit = true;
     const canDelete = true;
     const isPastCard = options?.variant === 'past';
-    const attendees = options?.showAttendance ? getAsistentesByAsamblea() : null;
+    const attendees = options?.showAttendance ? getAsistentesByAsamblea(asamblea.id) : null;
     const totalAttendees = attendees?.length ?? 0;
     const attendedCount = attendees ? attendees.filter((a) => a.asistio).length : 0;
     const attendanceRate = attendees && totalAttendees > 0
@@ -588,7 +639,42 @@ export default function AsambleaPage() {
                 label: 'Programadas',
                 content: (
                   <ScrollArea style={{ height: cardsScrollAreaHeight }} className="pr-2" viewportClassName="pr-1">
-                    {loading || filteredAsambleas.length > 0 ? (
+                    {initialLoading ? (
+                      /* Loading Skeleton */
+                      <div className="space-y-8 pt-2">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between px-1">
+                            <Skeleton className="h-4 w-16" />
+                            <div className="h-px flex-1 ml-4 bg-gray-200" />
+                          </div>
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
+                              <Card key={i} className="flex flex-col min-h-[320px] gap-1 py-3">
+                                <CardHeader className="pb-2 px-4">
+                                  <Skeleton className="h-6 w-24 mb-2" />
+                                  <Skeleton className="h-5 w-full mb-1" />
+                                  <Skeleton className="h-4 w-3/4" />
+                                </CardHeader>
+                                <CardContent className="flex-1 px-4 pt-0 space-y-2">
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-2/3" />
+                                  <div className="pt-4 space-y-2">
+                                    <Skeleton className="h-4 w-40" />
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-4 w-36" />
+                                  </div>
+                                </CardContent>
+                                <div className="px-4 pt-2 flex gap-2">
+                                  <Skeleton className="h-9 flex-1 rounded-lg" />
+                                  <Skeleton className="h-9 w-9 rounded-lg" />
+                                  <Skeleton className="h-9 w-9 rounded-lg" />
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : filteredAsambleas.length > 0 ? (
                       <div className="space-y-8 pt-2">
                         {groupAsambleasByYear(filteredAsambleas).map(({ year, list }) => (
                           <div key={`future-${year}`} className="space-y-4">
@@ -631,7 +717,42 @@ export default function AsambleaPage() {
                   <ScrollArea style={{ height: cardsScrollAreaHeight }} className="pr-2" viewportClassName="pr-1">
                     <div className="space-y-6 pt-2">
                       {/* Lista de asambleas pasadas */}
-                      {loading || filteredAsambleas.length > 0 ? (
+                      {initialLoading ? (
+                        /* Loading Skeleton */
+                        <div className="space-y-8">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                              <Skeleton className="h-4 w-16" />
+                              <div className="h-px flex-1 ml-4 bg-gray-200" />
+                            </div>
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                              {[1, 2, 3].map((i) => (
+                                <Card key={i} className="flex flex-col min-h-[320px] gap-1 py-3">
+                                  <CardHeader className="pb-2 px-4">
+                                    <Skeleton className="h-6 w-24 mb-2" />
+                                    <Skeleton className="h-5 w-full mb-1" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                  </CardHeader>
+                                  <CardContent className="flex-1 px-4 pt-0 space-y-2">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-2/3" />
+                                    <div className="pt-4 space-y-2">
+                                      <Skeleton className="h-4 w-40" />
+                                      <Skeleton className="h-4 w-32" />
+                                      <Skeleton className="h-4 w-36" />
+                                    </div>
+                                  </CardContent>
+                                  <div className="px-4 pt-2 flex gap-2">
+                                    <Skeleton className="h-9 flex-1 rounded-lg" />
+                                    <Skeleton className="h-9 w-9 rounded-lg" />
+                                    <Skeleton className="h-9 w-9 rounded-lg" />
+                                  </div>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : filteredAsambleas.length > 0 ? (
                         <div className="space-y-8">
                           {groupAsambleasByYear(filteredAsambleas).map(({ year, list }) => (
                             <div key={`past-${year}`} className="space-y-4">
@@ -1080,57 +1201,79 @@ export default function AsambleaPage() {
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 mb-4">Lista de Asistentes</h3>
                     <div className="space-y-2">
-                      {filteredAttendance.map((asistente) => {
-                        const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
-                        const switchId = `asistencia-${asistente.id}-${safeName}`;
-                        const itemKey = `${asistente.nombre}-${safeName}`;
-                        return (
-                          <div
-                            key={itemKey}
-                            className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {(asistente.nombre || '')
-                                  .split(' ')
-                                  .map(n => n[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
+                      {attendanceLoading ? (
+                        /* Loading Skeleton para asistentes */
+                        <>
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="w-11 h-11 rounded-xl" />
+                                <div>
+                                  <Skeleton className="h-4 w-32 mb-1" />
+                                  <Skeleton className="h-3 w-16" />
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
-                                <p className="text-xs text-gray-500">Casa {asistente.id}</p>
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-6 w-11 rounded-full" />
                               </div>
                             </div>
-                            <div className="inline-flex items-center gap-3 w-[160px] justify-end">
-                              <Label
-                                htmlFor={switchId}
-                                className={cn(
-                                  "text-sm font-medium whitespace-nowrap text-right",
-                                  asistente.asistio ? "text-gray-700" : "text-gray-400"
-                                )}
-                              >
-                                {asistente.asistio ? 'Asistió' : 'Ausente'}
-                              </Label>
-                              <Switch
-                                id={switchId}
-                                checked={asistente.asistio}
-                                onCheckedChange={(checked) => handleMarkAttendance(Number(selectedAsamblea.id), asistente.id, checked)}
-                                aria-label={`Cambiar asistencia de ${asistente.nombre}`}
-                              />
+                          ))}
+                        </>
+                      ) : filteredAttendance.length > 0 ? (
+                        filteredAttendance.map((asistente) => {
+                          const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
+                          const switchId = `asistencia-${asistente.id}-${safeName}`;
+                          const itemKey = `${asistente.nombre}-${safeName}`;
+                          return (
+                            <div
+                              key={itemKey}
+                              className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                  {(asistente.nombre || '')
+                                    .split(' ')
+                                    .map(n => n[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
+                                  <p className="text-xs text-gray-500">Casa {asistente.id}</p>
+                                </div>
+                              </div>
+                              <div className="inline-flex items-center gap-3 w-[160px] justify-end">
+                                <Label
+                                  htmlFor={switchId}
+                                  className={cn(
+                                    "text-sm font-medium whitespace-nowrap text-right",
+                                    asistente.asistio ? "text-gray-700" : "text-gray-400"
+                                  )}
+                                >
+                                  {asistente.asistio ? 'Asistió' : 'Ausente'}
+                                </Label>
+                                <Switch
+                                  id={switchId}
+                                  checked={asistente.asistio}
+                                  onCheckedChange={(checked) => handleMarkAttendance(Number(selectedAsamblea.id), asistente.id, checked)}
+                                  aria-label={`Cambiar asistencia de ${asistente.nombre}`}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                          <p>No se encontraron asistentes</p>
+                        </div>
+                      )}
                     </div>
-
-                    {filteredAttendance.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                        <p>No se encontraron asistentes</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
