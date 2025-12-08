@@ -103,13 +103,13 @@ export default function MovimientosPage() {
   const [filterCategoria, setFilterCategoria] = useState<string>('todas')
   const [categoriaComboboxOpen, setCategoriaComboboxOpen] = useState(false)
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Date>(new Date())
-  const { movimientos, loading: loadingMovimientos, metricas } = useMovimientosMes(periodoSeleccionado)
+  const { movimientos, loading: loadingMovimientos, metricas, recargar } = useMovimientosMes(periodoSeleccionado)
   const isLoading = loadingMovimientos
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMovimiento, setSelectedMovimiento] = useState<Movimiento | null>(null)
   const [isFormSheetOpen, setIsFormSheetOpen] = useState(false)
   const [registrarMenuOpen, setRegistrarMenuOpen] = useState(false)
-  const [formFecha, setFormFecha] = useState<Date | undefined>(new Date())
+  const [formFecha, setFormFecha] = useState<Date | undefined>(undefined)
   const [formTipo, setFormTipo] = useState<'ENTRADA' | 'SALIDA'>('ENTRADA')
   const [formDescripcion, setFormDescripcion] = useState('')
   const [formMonto, setFormMonto] = useState('')
@@ -508,6 +508,7 @@ export default function MovimientosPage() {
                             await eliminarMovimiento(row.original.id);
 
                             toast.success("Movimiento eliminado correctamente");
+                            recargar();
 
                           } catch (error) {
                             console.error("Error al eliminar:", error);
@@ -1107,9 +1108,10 @@ export default function MovimientosPage() {
 
                 toast.success("Movimiento registrado correctamente");
                 setIsFormSheetOpen(false);
+                recargar();
 
                 // Resetear formulario
-                setFormFecha(new Date());
+                setFormFecha(undefined);
                 setFormTipo("ENTRADA");
                 setFormDescripcion("");
                 setFormMonto("");
@@ -1182,7 +1184,16 @@ export default function MovimientosPage() {
                               <ScrollArea viewportClassName="max-h-[300px]">
                                 <CommandEmpty>No se encontró categoría.</CommandEmpty>
                                 <CommandGroup>
-                                  {categoriasOptions.filter(opt => opt.value !== 'todas').map((option) => (
+                                  {categoriasOptions.filter(opt => {
+                                    if (opt.value === 'todas') return false;
+                                    const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
+
+                                    if (formTipo === 'ENTRADA') {
+                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                    } else {
+                                      return !entradaKeys.includes(opt.value);
+                                    }
+                                  }).map((option) => (
                                     <CommandItem
                                       key={option.value}
                                       value={option.value}
@@ -1286,7 +1297,7 @@ export default function MovimientosPage() {
                 onClick={() => {
                   setIsFormSheetOpen(false)
                   // Limpiar formulario
-                  setFormFecha(new Date())
+                  setFormFecha(undefined)
                   setFormTipo('ENTRADA')
                   setFormDescripcion('')
                   setFormMonto('')
@@ -1366,6 +1377,7 @@ export default function MovimientosPage() {
 
                 setIsEditSheetOpen(false);
                 handleEditCancel();
+                recargar();
 
               } catch (error) {
                 console.error("Error al editar el movimiento:", error);
@@ -1435,7 +1447,16 @@ export default function MovimientosPage() {
                               <ScrollArea viewportClassName="max-h-[300px]">
                                 <CommandEmpty>No se encontró categoría.</CommandEmpty>
                                 <CommandGroup>
-                                  {categoriasOptions.filter(opt => opt.value !== 'todas').map((option) => (
+                                  {categoriasOptions.filter(opt => {
+                                    if (opt.value === 'todas') return false;
+                                    const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
+
+                                    if (editTipo === 'ENTRADA') {
+                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                    } else {
+                                      return !entradaKeys.includes(opt.value);
+                                    }
+                                  }).map((option) => (
                                     <CommandItem
                                       key={option.value}
                                       value={option.value}

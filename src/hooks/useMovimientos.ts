@@ -7,6 +7,10 @@ export function useMovimientosMes(periodo: Date) {
   const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [trigger, setTrigger] = useState(0);
+
+  const recargar = () => setTrigger(prev => prev + 1);
+
   useEffect(() => {
     const cargar = async () => {
       setLoading(true);
@@ -41,7 +45,7 @@ export function useMovimientosMes(periodo: Date) {
     };
 
     cargar();
-  }, [periodo]);
+  }, [periodo, trigger]);
 
-  return { movimientos, loading, metricas };
+  return { movimientos, loading, metricas, recargar };
 }
