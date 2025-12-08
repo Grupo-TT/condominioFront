@@ -1,12 +1,13 @@
 'use client'
 
 import { HugeiconsIcon } from '@hugeicons/react'
-import { 
-  MoneySendSquareIcon, 
+import {
+  MoneySendSquareIcon,
   MoneyReceiveSquareIcon,
   Calendar02Icon,
   Alert02Icon,
 } from '@hugeicons/core-free-icons'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface FinanzasCardsProps {
   saldoPendiente: number
@@ -104,3 +105,20 @@ export function FinanzasCards({
   )
 }
 
+
+export function FinanzasCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <Skeleton className="h-8 w-32 mb-1" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}
