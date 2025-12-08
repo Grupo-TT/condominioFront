@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { recursoService } from "@/services/recurso.service";
 import { RecursoUI, mapResponseToUI } from "@/services/propietario.recurso.adapter";
 
 export const useRecursoPropietario = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recurso, setRecurso] = useState<RecursoUI[]>([]);
 
-  const fetchRecursoPropietario = async () => {
+  const fetchRecursoPropietario = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -18,12 +18,12 @@ export const useRecursoPropietario = () => {
         r.disponibilidadRecurso === 'EN_MANTENIMIENTO'
       );
       setRecurso(filtrados);
-    } catch (error) {
+    } catch (_error) {
       setError("Error fetching recurso propietario");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   return { recurso, loading, error, fetchRecursoPropietario };
 }

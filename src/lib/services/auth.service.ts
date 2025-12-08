@@ -24,16 +24,16 @@ class AuthService {
         `${API_URL}/auth/login`,
         credentials
       );
-      
+
       if (response.data.token) {
         const rememberMe = credentials.rememberMe || false;
-        
+
         // Configurar cookies con flag Secure para HTTPS
         const cookieOptions = {
           sameSite: 'strict' as const,
           secure: process.env.NODE_ENV === 'production'  // Solo HTTPS en producción
         };
-        
+
         if (rememberMe) {
           // Con "Recordarme": guardar refreshToken con expiración de 7 días
           if (response.data.refreshToken) {
@@ -42,7 +42,7 @@ class AuthService {
               expires: 7  // 7 días
             });
           }
-          
+
           // También guardar el access_token con expiración para que persista
           Cookies.set('access_token', response.data.token, {
             ...cookieOptions,
@@ -62,14 +62,14 @@ class AuthService {
             idCasa: response.data.user.idCasa,
             idPersona: response.data.user.idPersona
           };
-          
+
           localStorage.setItem('user', JSON.stringify(userData));
-          
+
           // Guardar el rol en cookie con la misma configuración
           const roleOptions = rememberMe
             ? { ...cookieOptions, expires: 7 }
             : cookieOptions;
-          
+
           Cookies.set('user_role', userData.role, roleOptions);
         }
       }
@@ -77,9 +77,9 @@ class AuthService {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           `Error al iniciar sesión (${error.response?.status})`;
+        const errorMessage = error.response?.data?.message ||
+          error.response?.data?.error ||
+          `Error al iniciar sesión (${error.response?.status})`;
         throw new Error(errorMessage);
       }
       throw error;
@@ -126,7 +126,7 @@ class AuthService {
    * Decode the JWT payload and return it as an object.
    * Minimal base64url decode for the browser.
    */
-  private decodeTokenPayload(token: string): any | null {
+  private decodeTokenPayload(token: string): Record<string, unknown> | null {
     try {
       const parts = token.split('.')
       if (parts.length !== 3) return null
@@ -148,7 +148,7 @@ class AuthService {
         jsonPayload = Buffer.from(base64, 'base64').toString('utf-8')
       }
       return JSON.parse(jsonPayload)
-    } catch (err) {
+    } catch (err: unknown) {
       return null
     }
   }
@@ -161,7 +161,7 @@ class AuthService {
     if (!token) return undefined
     const payload = this.decodeTokenPayload(token)
     if (!payload) return undefined
-    const idCasa = payload.idCasa ?? payload.id_casa ?? payload['idCasa'] ?? payload['id_casa']
+    const idCasa = payload['idCasa'] ?? payload['id_casa']
     if (typeof idCasa === 'number') return idCasa
     if (typeof idCasa === 'string' && idCasa.trim() !== '') return Number(idCasa)
     return undefined

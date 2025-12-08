@@ -1,9 +1,15 @@
 import apiClient from "@/lib/config/axios.config";
-import { GetReservasPropResponse, ReservaPropSaveResponse, ReservaPropUpdateRequest, ReservaPropCreateRequest, ReservaPropietarioItem  } from "@/types/propietario.reservas.types";
+import { GetReservasPropResponse, GetMisReservasResponse, MisReservasItem, ReservaPropietarioItem, ReservaPropSaveResponse, ReservaPropUpdateRequest, ReservaPropCreateRequest } from "@/types/propietario.reservas.types";
 
 export const reservasService = {
+  // Para disponibilidad - obtiene TODAS las reservas
   async getReservasPropietario(): Promise<ReservaPropietarioItem[]> {
     const response = await apiClient.get<GetReservasPropResponse>(`/solicitud-recurso/all`);
+    return response.data.data;
+  },
+  // Para "Mis Reservas" - solo las del usuario (por casa)
+  async getMisReservas(idCasa: number): Promise<MisReservasItem[]> {
+    const response = await apiClient.get<GetMisReservasResponse>(`/solicitud-recurso/mis-reservas/${idCasa}`);
     return response.data.data;
   },
   async deleteReserva(id: number): Promise<{ message: string }> {

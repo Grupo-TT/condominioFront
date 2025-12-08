@@ -1,4 +1,5 @@
 import type { ReservaPropCreateRequest, ReservaPropUpdateRequest } from "@/types/propietario.reservas.types";
+import { normalizeHora } from "@/utils/hora-utils";
 
 export function adaptarReservaCreate(data: {
   idRecurso: number;
@@ -8,12 +9,6 @@ export function adaptarReservaCreate(data: {
   horaFinal: string;
   numeroInvitados: number;
 }): ReservaPropCreateRequest {
-
-  const normalizeHora = (h: string) => {
-    const [hour, minute] = h.split(":").map(Number);
-    return `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:00`;
-  };
-
   return {
     idRecurso: data.idRecurso,
     idSolicitante: data.idSolicitante,
@@ -32,12 +27,6 @@ export function adaptarReservaUpdate(data: {
   horaFin: string;      // "HH:mm"
   numeroInvitados: number;
 }): ReservaPropUpdateRequest {
-
-  const normalizeHora = (h: string) => {
-    const [hour, minute] = h.split(":").map(Number)
-    return `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:00`
-  }
-
   return {
     idSolicitud: data.idSolicitud,
     fechaSolicitud: data.fechaSolicitud,
@@ -46,4 +35,3 @@ export function adaptarReservaUpdate(data: {
     numeroInvitados: data.numeroInvitados
   }
 }
-

@@ -3,6 +3,27 @@ export interface GetReservasPropResponse {
   data: ReservaPropietarioItem[];
 }
 
+// Respuesta del endpoint GET /solicitud-recurso/mis-reservas/{id}
+export interface GetMisReservasResponse {
+  message: string;
+  data: MisReservasItem[];
+}
+
+// Item de la respuesta de mis-reservas (estructura plana)
+export interface MisReservasItem {
+  id: number;
+  fechaCreacion: string;
+  fechaReserva: string;
+  horaInicio: Hora;
+  horaFin: Hora;
+  numeroInvitados: number;
+  estadoSolicitud: "PENDIENTE" | "APROBADA" | "RECHAZADA" | "FINALIZADA";
+  idRecurso: number;
+  nombre: string;
+  descripcion: string;
+  tipoRecursoComun: "ZONA" | "OBJETO";
+}
+
 export interface ReservaPropietarioItem {
   id: number;
   fechaSolicitud: string;
@@ -16,7 +37,7 @@ export interface ReservaPropietarioItem {
 }
 
 export interface Casa {
-  id: number; 
+  id: number;
   numeroCasa: number;
 }
 
@@ -66,9 +87,10 @@ export interface ReservaAdaptada {
   idRecurso: number
   recursoNombre: string
   tipoRecurso: 'zona' | 'objeto'
-  estado: 'pendiente' | 'aprobada' | 'rechazada'
+  estado: 'pendiente' | 'aprobada' | 'rechazada' | 'finalizada'
   fechaInicio: Date
   fechaFin: Date
+  fechaCreacion?: Date
   horaInicio: string
   horaFin: string
   numeroInvitados: number
