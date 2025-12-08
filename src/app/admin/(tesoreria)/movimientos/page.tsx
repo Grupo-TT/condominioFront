@@ -137,7 +137,13 @@ export default function MovimientosPage() {
 
   const handleEdit = useCallback((movimiento: Movimiento) => {
     setEditingMovimiento(movimiento)
-    setEditFecha(new Date(movimiento.fecha))
+    // Fix: Create date using local components to avoid timezone shift
+    const dateStr = movimiento.fecha as string;
+    const [year, month, day] = dateStr.includes('T')
+      ? dateStr.split('T')[0].split('-').map(Number)
+      : dateStr.split('-').map(Number);
+    setEditFecha(new Date(year, month - 1, day));
+
     setEditTipo(movimiento.tipo)
     setEditDescripcion(movimiento.descripcion || movimiento.concepto || '')
     setEditMonto(movimiento.monto.toString())
@@ -316,7 +322,15 @@ export default function MovimientosPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          const fecha = new Date(row.original.fecha)
+          // Fix: Parse YYYY-MM-DD manually to prevent UTC timezone shift
+          const dateStr = row.original.fecha as string;
+          // Ensure we're dealing with a string date in YYYY-MM-DD format
+          const [year, month, day] = dateStr.includes('T')
+            ? dateStr.split('T')[0].split('-').map(Number)
+            : dateStr.split('-').map(Number);
+
+          const fecha = new Date(year, month - 1, day);
+
           return (
             <div className="text-sm text-gray-600">
               {fecha.toLocaleDateString('es-CO', {
@@ -958,11 +972,20 @@ export default function MovimientosPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Fecha:</div>
                       <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {new Date(selectedMovimiento.fecha).toLocaleDateString('es-CO', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                        {(() => {
+                          const dateStr = selectedMovimiento.fecha as string;
+                          const [year, month, day] = dateStr.includes('T')
+                            ? dateStr.split('T')[0].split('-').map(Number)
+                            : dateStr.split('-').map(Number);
+
+                          const fecha = new Date(year, month - 1, day);
+
+                          return fecha.toLocaleDateString('es-CO', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                        })()}
                       </div>
                     </div>
 
@@ -1065,7 +1088,13 @@ export default function MovimientosPage() {
               e.preventDefault();
 
               const payload = {
-                fecha: formFecha?.toISOString().split("T")[0],
+                fecha: (() => {
+                  if (!formFecha) return "";
+                  const year = formFecha.getFullYear();
+                  const month = String(formFecha.getMonth() + 1).padStart(2, '0');
+                  const day = String(formFecha.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                })(),
                 tipo: formTipo,
                 descripcion: formDescripcion,
                 monto: Number(formMonto),
@@ -1317,7 +1346,13 @@ export default function MovimientosPage() {
               }
 
               const payload = {
-                fecha: editFecha?.toISOString().split("T")[0],
+                fecha: (() => {
+                  if (!editFecha) return "";
+                  const year = editFecha.getFullYear();
+                  const month = String(editFecha.getMonth() + 1).padStart(2, '0');
+                  const day = String(editFecha.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                })(),
                 tipo: editTipo,
                 descripcion: editDescripcion,
                 monto: Number(editMonto),
