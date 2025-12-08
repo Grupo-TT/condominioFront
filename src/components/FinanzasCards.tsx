@@ -7,6 +7,7 @@ import {
   Calendar02Icon,
   Alert02Icon,
 } from '@hugeicons/core-free-icons'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface FinanzasCardsProps {
   saldoPendiente: number
@@ -35,6 +36,7 @@ const formatDate = (dateString: string): string => {
   }).format(date)
 }
 
+
 export function FinanzasCards({
   saldoPendiente,
   obligacionesPendientesCount,
@@ -61,7 +63,7 @@ export function FinanzasCards({
       <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
         <div className="flex items-center gap-2 mb-4">
           <HugeiconsIcon icon={MoneyReceiveSquareIcon} className="w-5 h-5" style={{ color: '#081534' }} />
-          <p className="text-sm font-medium text-gray-600">Obligaciones pendientes</p>
+          <p className="text-sm font-medium text-gray-600">Obligaciones pendientes y/o abonadas</p>
         </div>
         <div className="text-3xl font-bold mb-1 text-gray-900">
           {obligacionesPendientesCount}
@@ -102,3 +104,20 @@ export function FinanzasCards({
   )
 }
 
+
+export function FinanzasCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="w-5 h-5 rounded" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <Skeleton className="h-8 w-32 mb-1" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}

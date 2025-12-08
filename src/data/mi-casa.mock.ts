@@ -1,5 +1,7 @@
+import { MultaPropietario, ObligacionPendiente } from "@/types/casa.types"
+
 // Datos mock para la vista Mi Casa
-export const saldoPendiente = 450000
+export const valorPendiente = 450000
 export const obligacionesPendientesCount = 8
 export const cantidadMascotas = 3
 export const miembrosActivos = 4
@@ -20,124 +22,113 @@ export const mascotasMock: Mascotas = {
   otro: 0
 }
 
-// Mock datos para obligaciones pendientes
-export interface ObligacionPendiente {
-  id: string
-  titulo: string
-  valorTotal: number
-  saldoPendiente: number
-  abonado: number
-  estado: 'Pendiente' | 'Parcial' | 'Pagada'
-  año: number
-}
-
 export const obligacionesPendientesMock: ObligacionPendiente[] = [
   {
     id: '1',
     titulo: 'Cuota de Administración - Enero 2025',
     valorTotal: 150000,
-    saldoPendiente: 150000,
-    abonado: 0,
-    estado: 'Pagada',
+    valorPendiente: 150000,
+    montoPagado: 0,
+    estadoPago: 'CONDONADO',
     año: 2025
   },
   {
     id: '2',
     titulo: 'Cuota de Administración - Febrero 2025',
     valorTotal: 150000,
-    saldoPendiente: 150000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 150000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '3',
     titulo: 'Cuota de Administración - Marzo 2025',
     valorTotal: 150000,
-    saldoPendiente: 75000,
-    abonado: 75000,
-    estado: 'Parcial',
+    valorPendiente: 75000,
+    montoPagado: 75000,
+    estadoPago: 'POR_COBRAR',
     año: 2025
   },
   {
     id: '4',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '6',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '7',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '8',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '9',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '10',
     titulo: 'Multa por mascota sin correa',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '11',
     titulo: 'Multa por perro sin bozal',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '12',
     titulo: 'Multa por perro sin bozal',
     valorTotal: 50000,
-    saldoPendiente: 50000,
-    abonado: 0,
-    estado: 'Pendiente',
+    valorPendiente: 50000,
+    montoPagado: 0,
+    estadoPago: 'PENDIENTE',
     año: 2025
   },
   {
     id: '5',
     titulo: 'Cuota de Administración - Diciembre 2024',
     valorTotal: 150000,
-    saldoPendiente: 0,
-    abonado: 150000,
-    estado: 'Pagada',
+    valorPendiente: 0,
+    montoPagado: 150000,
+    estadoPago: 'CONDONADO',
     año: 2024
   },
 ]
@@ -186,25 +177,13 @@ export const miembrosHogarMock: MiembroHogar[] = [
   },
 ]
 
-// Mock datos para multas
-export interface MultaPropietario {
-  id: string
-  titulo: string
-  motivo: string
-  monto: number
-  fecha: string
-  estadoPago: 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'
-  tipoPago?: 'DINERO' | 'LABOR_SOCIAL'
-  año: number
-}
-
 export const multasPropietarioMock: MultaPropietario[] = [
   {
     id: '1',
     titulo: 'Multa por mascota sin correa',
     motivo: 'Se observó mascota sin correa en áreas comunes',
     monto: 50000,
-    fecha: '2025-01-15',
+    fechaGenerada: '2025-01-15',
     estadoPago: 'PENDIENTE',
     tipoPago: 'DINERO',
     año: 2025
@@ -214,7 +193,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por ruido excesivo',
     motivo: 'Ruido excesivo después de las 10 PM',
     monto: 75000,
-    fecha: '2025-01-20',
+    fechaGenerada: '2025-01-20',
     estadoPago: 'PENDIENTE',
     tipoPago: 'DINERO',
     año: 2025
@@ -224,7 +203,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por mal estacionamiento',
     motivo: 'Vehículo estacionado en área no permitida',
     monto: 100000,
-    fecha: '2024-12-10',
+    fechaGenerada: '2024-12-10',
     estadoPago: 'CONDONADO',
     tipoPago: 'DINERO',
     año: 2024
@@ -234,7 +213,7 @@ export const multasPropietarioMock: MultaPropietario[] = [
     titulo: 'Multa por basura fuera de horario',
     motivo: 'Basura depositada fuera del horario establecido',
     monto: 30000,
-    fecha: '2024-11-25',
+    fechaGenerada: '2024-11-25',
     estadoPago: 'POR_COBRAR',
     tipoPago: 'LABOR_SOCIAL',
     año: 2024

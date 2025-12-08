@@ -50,3 +50,34 @@ export interface MultaForm {
   motivo: string;
   tipoPago?: string | null;
 }
+
+export interface Movimiento {
+  id: string
+  fecha: string
+  tipo: 'ENTRADA' | 'SALIDA'
+  concepto: string
+  descripcion?: string
+  monto: number
+  categoria?: string
+  responsable?: string
+}
+
+export interface Metricas {
+  ingresos: number;
+  egresos: number;
+  balance: number;
+  saldoActual: number;
+};
+
+export interface CreateMovimiento {
+  fecha?: string
+  tipo: string
+  descripcion: string
+  monto: number
+  categoria: string
+  responsable: string
+}
+
+export interface UpdateMovimiento extends CreateMovimiento {
+  id: number | string
+}

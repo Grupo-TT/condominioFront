@@ -1,6 +1,8 @@
 'use client'
 
 import { Separator } from '@/components/ui/separator'
+
+import { useState, useEffect } from 'react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,15 +13,36 @@ import {
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { FinanzasSection } from '@/components/FinanzasSection'
-import { FinanzasCards } from '@/components/FinanzasCards'
-import {
-  saldoPendiente,
-  obligacionesPendientesCount,
-  fechaUltimoPago,
-  multasPendientesCount,
-} from '@/data/mi-casa.mock'
+import { FinanzasCards, FinanzasCardsSkeleton } from '@/components/FinanzasCards'
+import { useObligacionesCasa } from '@/hooks/useFinanzas'
 
 export default function FinanzasPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        setUser(JSON.parse(userStr));
+      }
+    } catch (e) {
+      console.error("Error parsing user from localStorage", e);
+    } finally {
+      setIsCheckingUser(false);
+    }
+  }, []);
+
+  const casaNumero = user?.idCasa;
+  const { data, loading, error } = useObligacionesCasa(casaNumero);
+
+  const showSkeleton = isCheckingUser || loading;
+
+  if (!casaNumero && !showSkeleton) return <p className="px-6 py-6 text-red-500">No se encontró información del usuario.</p>;
+  if (error) return <p className="px-6 py-6 text-red-500">{error}</p>;
+  if (!data && !showSkeleton) return <p className="px-6 py-6 text-red-500">No se pudo cargar la información.</p>;
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -61,18 +84,25 @@ export default function FinanzasPage() {
           </div>
 
           {/* Tarjetas de finanzas */}
-          <FinanzasCards
-            saldoPendiente={saldoPendiente}
-            obligacionesPendientesCount={obligacionesPendientesCount}
-            fechaUltimoPago={fechaUltimoPago}
-            multasPendientesCount={multasPendientesCount}
-          />
+          {showSkeleton ? (
+            <FinanzasCardsSkeleton />
+          ) : (
+            <FinanzasCards
+              saldoPendiente={data.saldoPendienteTotal}
+              obligacionesPendientesCount={data.obligacionesPendientesCount}
+              fechaUltimoPago={data.ultimoPago}
+              multasPendientesCount={data.multasPendientesCount}
+            />
+          )}
 
           {/* Sección de Finanzas */}
-          <FinanzasSection />
+          <FinanzasSection
+            obligaciones={data?.obligaciones}
+            multas={data?.multas}
+            loading={showSkeleton}
+          />
         </div>
       </div>
     </>
   )
 }
-

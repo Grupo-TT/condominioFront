@@ -52,9 +52,15 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
-import { multasPropietarioMock, type MultaPropietario } from '@/data/mi-casa.mock'
+import { MultaPropietario } from '@/types/casa.types'
 
-export function MultasTab() {
+interface MultasProps {
+  multas: MultaPropietario[]
+}
+
+export function MultasTab({
+  multas,
+}: MultasProps) {
   const añoSelectId = useId()
   const añoActual = new Date().getFullYear()
   const añosDisponibles = Array.from({ length: 4 }, (_, i) => añoActual - i)
@@ -72,9 +78,12 @@ export function MultasTab() {
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMulta, setSelectedMulta] = useState<MultaPropietario | null>(null)
 
+  const formatEstado = (e: string) => e === "POR_COBRAR" ? "Abonado" : e.toLowerCase().replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase());
+  const formatEstadoFilter = (e: string) => e === "POR_COBRAR" ? "Abonadas" : e === "CONDONADO" ? "Condonadas" : e === "PENDIENTE" ? "Pendientes" : "Todas";
+
   // Filtrar multas
   const multasFiltradas = useMemo(() => {
-    let filtradas = multasPropietarioMock
+    let filtradas = multas
 
     // Filtrar por año
     filtradas = filtradas.filter(m => m.año === parseInt(añoSeleccionado))
@@ -94,7 +103,7 @@ export function MultasTab() {
     }
 
     return filtradas
-  }, [searchTerm, estadoFilter, añoSeleccionado])
+  }, [searchTerm, estadoFilter, añoSeleccionado, multas])
 
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -169,7 +178,7 @@ export function MultasTab() {
       id: 'fecha',
       header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
       cell: ({ row }) => {
-        const fecha = new Date(row.original.fecha)
+        const fecha = new Date(row.original.fechaGenerada)
         return (
           <div className="text-sm text-gray-600">
             {fecha.toLocaleDateString('es-CO', {
@@ -188,23 +197,19 @@ export function MultasTab() {
       id: 'estado',
       header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
       cell: ({ row }) => {
-        const estado = row.original.estadoPago
+        const estado = formatEstado(row.original.estadoPago);
         return (
           <Badge
-            variant={estado === 'CONDONADO' ? 'success' : estado === 'POR_COBRAR' ? 'warning' : 'destructive'}
+            variant={estado === 'Condonado' ? 'success' : estado === 'Abonado' ? 'warning' : 'destructive'}
             appearance="outline"
             size="md"
             className="gap-1.5"
           >
             <span
-              className={`w-2 h-2 rounded-full ${estado === 'CONDONADO' ? 'bg-green-700' : estado === 'POR_COBRAR' ? 'bg-yellow-600' : 'bg-red-700'
+              className={`w-2 h-2 rounded-full ${estado === 'Condonado' ? 'bg-green-700' : estado === 'Abonado' ? 'bg-yellow-600' : 'bg-red-700'
                 }`}
             />
-            {estado === 'CONDONADO'
-              ? 'CONDONADO'
-              : estado === 'PENDIENTE'
-                ? 'PENDIENTE'
-                : 'ABONADO'}
+            {estado}
           </Badge>
         )
       },
@@ -320,9 +325,7 @@ export function MultasTab() {
                       'bg-green-700'
                     )}></span>
                     <span className="truncate">
-                      {estadoFilter === 'PENDIENTE' ? 'Pendientes' :
-                       estadoFilter === 'POR_COBRAR' ? 'Por Cobrar' :
-                       'Condonadas'}
+                    {formatEstadoFilter(estadoFilter)}
                     </span>
                   </span>
                 ) : (
@@ -372,7 +375,7 @@ export function MultasTab() {
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="ms-1 size-1.5 rounded-full bg-yellow-600"></span>
-                        <span className="truncate">Por Cobrar</span>
+                        <span className="truncate">Abonadas</span>
                       </span>
                       {estadoFilter === 'POR_COBRAR' && <CommandCheck />}
                     </CommandItem>
@@ -505,7 +508,7 @@ export function MultasTab() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Fecha:</div>
                       <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {new Date(selectedMulta.fecha).toLocaleDateString('es-CO', {
+                        {new Date(selectedMulta.fechaGenerada).toLocaleDateString('es-CO', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
@@ -522,10 +525,10 @@ export function MultasTab() {
                         size="sm"
                       >
                         {selectedMulta.estadoPago === 'CONDONADO'
-                          ? 'CONDONADO'
+                          ? 'Condonado'
                           : selectedMulta.estadoPago === 'PENDIENTE'
-                            ? 'PENDIENTE'
-                            : 'ABONADO'}
+                            ? 'Pendiente'
+                            : 'Abonado'}
                       </Badge>
                     </div>
                   </div>
