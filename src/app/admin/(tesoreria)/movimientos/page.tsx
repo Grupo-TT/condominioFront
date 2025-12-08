@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback, useEffect } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -74,162 +74,23 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Movimiento } from '@/types/cuotas.types'
+import { useMovimientosMes } from '@/hooks/useMovimientos'
+import { editarMovimiento, eliminarMovimiento, registrarMovimiento } from '@/lib/services/cuotas.service'
+import { toast } from 'sonner'
 
-// Tipo para los movimientos
-interface Movimiento {
-  id: string
-  fecha: string
-  tipo: 'ENTRADA' | 'SALIDA'
-  concepto: string
-  descripcion?: string
-  monto: number
-  categoria?: string
-  responsable?: string
+const categoriaLabels: Record<string, string> = {
+  ADMINISTRACION_CUOTAS: "Administración / Cuotas",
+  SERVICIOS_PUBLICOS: "Servicios Públicos",
+  ASEO_JARDINERIA: "Aseo y Jardinería",
+  MANTENIMIENTO_REPARACIONES: "Mantenimiento y Reparaciones",
+  PISCINA: "Piscina",
+  SEGURIDAD_ACCESO: "Seguridad / Acceso",
+  EVENTOS_DECORACION: "Eventos / Decoración",
+  PERSONAL_MANO_OBRA: "Personal / Mano de Obra",
+  MULTAS: "Multas",
+  OTROS: "Otros",
 }
-
-// Datos mock para la vista (se reemplazará con API más adelante)
-const MOVIMIENTOS_MOCK: Movimiento[] = [
-  {
-    id: '1',
-    fecha: '2024-01-15',
-    tipo: 'ENTRADA',
-    concepto: 'Pago de administración - Casa No.5',
-    descripcion: 'Pago mensual de administración - Casa No.5',
-    monto: 150000,
-    categoria: 'Administración / Cuotas',
-    responsable: 'Juan Pérez - Casa No.5',
-  },
-  {
-    id: '2',
-    fecha: '2024-01-14',
-    tipo: 'SALIDA',
-    concepto: 'Pago de servicios públicos',
-    descripcion: 'Pago de energía eléctrica y agua',
-    monto: 450000,
-    categoria: 'Servicios Públicos',
-    responsable: '',
-  },
-  {
-    id: '3',
-    fecha: '2024-01-13',
-    tipo: 'ENTRADA',
-    concepto: 'Multa - Casa No.12',
-    descripcion: 'Multa por ruido excesivo',
-    monto: 50000,
-    categoria: 'Multas',
-    responsable: 'Carlos Rodríguez',
-  },
-  {
-    id: '4',
-    fecha: '2024-01-12',
-    tipo: 'ENTRADA',
-    concepto: 'Pago de administración - Casa No.8',
-    descripcion: 'Pago mensual de administración - Casa No.8',
-    monto: 150000,
-    categoria: 'Administración / Cuotas',
-    responsable: 'Ana Martínez - Casa No.8',
-  },
-  {
-    id: '5',
-    fecha: '2024-01-11',
-    tipo: 'SALIDA',
-    concepto: 'Mantenimiento de áreas comunes',
-    descripcion: 'Reparación de ascensor',
-    monto: 320000,
-    categoria: 'Mantenimiento y Reparaciones',
-    responsable: '',
-  },
-  {
-    id: '6',
-    fecha: '2024-01-10',
-    tipo: 'SALIDA',
-    concepto: 'Servicio de aseo y jardinería',
-    descripcion: 'Pago mensual de servicio de limpieza y mantenimiento de jardines',
-    monto: 280000,
-    categoria: 'Aseo y Jardinería',
-    responsable: '',
-  },
-  {
-    id: '7',
-    fecha: '2024-01-09',
-    tipo: 'SALIDA',
-    concepto: 'Mantenimiento de piscina',
-    descripcion: 'Limpieza, químicos y mantenimiento de piscina',
-    monto: 180000,
-    categoria: 'Piscina',
-    responsable: '',
-  },
-  {
-    id: '8',
-    fecha: '2024-01-08',
-    tipo: 'SALIDA',
-    concepto: 'Servicio de seguridad',
-    descripcion: 'Pago mensual de servicio de seguridad y control de acceso',
-    monto: 550000,
-    categoria: 'Seguridad / Acceso',
-    responsable: '',
-  },
-  {
-    id: '9',
-    fecha: '2024-01-07',
-    tipo: 'SALIDA',
-    concepto: 'Decoración navideña',
-    descripcion: 'Compra e instalación de decoración navideña en áreas comunes',
-    monto: 420000,
-    categoria: 'Eventos / Decoración',
-    responsable: 'Carmen López',
-  },
-  {
-    id: '10',
-    fecha: '2024-01-06',
-    tipo: 'ENTRADA',
-    concepto: 'Pago de administración - Casa No.3',
-    descripcion: 'Pago mensual de administración - Casa No.3',
-    monto: 150000,
-    categoria: 'Administración / Cuotas',
-    responsable: 'Diego Morales - Casa No.3',
-  },
-  {
-    id: '11',
-    fecha: '2024-01-05',
-    tipo: 'SALIDA',
-    concepto: 'Reparación de portón eléctrico',
-    descripcion: 'Reparación y mantenimiento del portón de acceso principal',
-    monto: 380000,
-    categoria: 'Mantenimiento y Reparaciones',
-    responsable: 'Sofía Herrera',
-  },
-  {
-    id: '12',
-    fecha: '2024-01-04',
-    tipo: 'SALIDA',
-    concepto: 'Organización de evento de fin de año',
-    descripcion: 'Catering y decoración para evento de fin de año',
-    monto: 650000,
-    categoria: 'Eventos / Decoración',
-    responsable: 'Andrés Vargas',
-  },
-  {
-    id: '13',
-    fecha: '2024-01-16',
-    tipo: 'ENTRADA',
-    concepto: 'Multa - Casa No.7',
-    descripcion: 'Multa por estacionamiento en área no permitida',
-    monto: 75000,
-    categoria: 'Multas',
-    responsable: 'Patricia Gómez',
-  },
-  {
-    id: '14',
-    fecha: '2024-01-17',
-    tipo: 'ENTRADA',
-    concepto: 'Multa - Casa No.15',
-    descripcion: 'Multa por mascota sin correa en áreas comunes',
-    monto: 60000,
-    categoria: 'Multas',
-    responsable: 'Fernando Castro',
-  },
-]
 
 export default function MovimientosPage() {
   const [pagination, setPagination] = useState<PaginationState>({
@@ -242,18 +103,21 @@ export default function MovimientosPage() {
   const [filterCategoria, setFilterCategoria] = useState<string>('todas')
   const [categoriaComboboxOpen, setCategoriaComboboxOpen] = useState(false)
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<Date>(new Date())
-  const [isLoading, setIsLoading] = useState(true)
+  const { movimientos, loading: loadingMovimientos, metricas, recargar } = useMovimientosMes(periodoSeleccionado)
+  const isLoading = loadingMovimientos
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedMovimiento, setSelectedMovimiento] = useState<Movimiento | null>(null)
   const [isFormSheetOpen, setIsFormSheetOpen] = useState(false)
   const [registrarMenuOpen, setRegistrarMenuOpen] = useState(false)
-  const [formFecha, setFormFecha] = useState<Date | undefined>(new Date())
+  const [formFecha, setFormFecha] = useState<Date | undefined>(undefined)
   const [formTipo, setFormTipo] = useState<'ENTRADA' | 'SALIDA'>('ENTRADA')
   const [formDescripcion, setFormDescripcion] = useState('')
   const [formMonto, setFormMonto] = useState('')
   const [formCategoria, setFormCategoria] = useState('')
   const [formResponsable, setFormResponsable] = useState('')
   const [formCategoriaComboboxOpen, setFormCategoriaComboboxOpen] = useState(false)
+
+
 
   // Estados para el sheet de edición
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
@@ -266,17 +130,6 @@ export default function MovimientosPage() {
   const [editResponsable, setEditResponsable] = useState('')
   const [editCategoriaComboboxOpen, setEditCategoriaComboboxOpen] = useState(false)
 
-  // TODO: Reemplazar este useEffect con la llamada real a la API
-  // Cuando los datos estén cargados, llamar a setIsLoading(false)
-  useEffect(() => {
-    // Simular tiempo de carga
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500) // 1.5 segundos para ver el skeleton
-
-    return () => clearTimeout(timer)
-  }, [])
-
   const handleViewDetail = useCallback((movimiento: Movimiento) => {
     setSelectedMovimiento(movimiento)
     setIsDetailSheetOpen(true)
@@ -284,7 +137,13 @@ export default function MovimientosPage() {
 
   const handleEdit = useCallback((movimiento: Movimiento) => {
     setEditingMovimiento(movimiento)
-    setEditFecha(new Date(movimiento.fecha))
+    // Fix: Create date using local components to avoid timezone shift
+    const dateStr = movimiento.fecha as string;
+    const [year, month, day] = dateStr.includes('T')
+      ? dateStr.split('T')[0].split('-').map(Number)
+      : dateStr.split('-').map(Number);
+    setEditFecha(new Date(year, month - 1, day));
+
     setEditTipo(movimiento.tipo)
     setEditDescripcion(movimiento.descripcion || movimiento.concepto || '')
     setEditMonto(movimiento.monto.toString())
@@ -308,7 +167,7 @@ export default function MovimientosPage() {
   const filteredMovimientos = useMemo(() => {
     const searchLower = searchTerm.toLowerCase()
 
-    return MOVIMIENTOS_MOCK.filter((movimiento) => {
+    return movimientos.filter((movimiento) => {
       // Filtrar por tipo
       if (filterType === 'entradas' && movimiento.tipo !== 'ENTRADA') {
         return false
@@ -335,44 +194,10 @@ export default function MovimientosPage() {
 
       return true
     })
-  }, [searchTerm, filterType, filterCategoria])
+  }, [searchTerm, filterType, filterCategoria, movimientos])
 
   // Verificar si hay resultados
   const hasResults = filteredMovimientos.length > 0
-
-  // Calcular estadísticas del mes seleccionado
-  const estadisticasMes = useMemo(() => {
-    const mesSeleccionado = periodoSeleccionado.getMonth()
-    const añoSeleccionado = periodoSeleccionado.getFullYear()
-
-    const movimientosMes = MOVIMIENTOS_MOCK.filter((mov) => {
-      const fechaMov = new Date(mov.fecha)
-      return fechaMov.getMonth() === mesSeleccionado && fechaMov.getFullYear() === añoSeleccionado
-    })
-
-    const ingresos = movimientosMes
-      .filter((mov) => mov.tipo === 'ENTRADA')
-      .reduce((sum, mov) => sum + mov.monto, 0)
-
-    const egresos = movimientosMes
-      .filter((mov) => mov.tipo === 'SALIDA')
-      .reduce((sum, mov) => sum + mov.monto, 0)
-
-    const balance = ingresos - egresos
-
-    // Calcular saldo actual: suma acumulada de todos los movimientos hasta el final del mes seleccionado
-    const fechaFinMes = new Date(añoSeleccionado, mesSeleccionado + 1, 0, 23, 59, 59)
-    const movimientosHastaFinMes = MOVIMIENTOS_MOCK.filter((mov) => {
-      const fechaMov = new Date(mov.fecha)
-      return fechaMov <= fechaFinMes
-    })
-
-    const saldoActual = movimientosHastaFinMes.reduce((sum, mov) => {
-      return mov.tipo === 'ENTRADA' ? sum + mov.monto : sum - mov.monto
-    }, 0)
-
-    return { ingresos, egresos, balance, saldoActual }
-  }, [periodoSeleccionado])
 
   // Funciones para navegar entre períodos
   const handleMesAnterior = () => {
@@ -416,20 +241,13 @@ export default function MovimientosPage() {
     return periodoTexto.charAt(0).toUpperCase() + periodoTexto.slice(1)
   }, [periodoSeleccionado])
 
-  // Opciones de categorías para el filtro
   const categoriasOptions = [
-    { value: 'todas', label: 'Todas las categorías' },
-    { value: 'Administración / Cuotas', label: 'Administración / Cuotas' },
-    { value: 'Servicios Públicos', label: 'Servicios Públicos' },
-    { value: 'Aseo y Jardinería', label: 'Aseo y Jardinería' },
-    { value: 'Mantenimiento y Reparaciones', label: 'Mantenimiento y Reparaciones' },
-    { value: 'Piscina', label: 'Piscina' },
-    { value: 'Seguridad / Acceso', label: 'Seguridad / Acceso' },
-    { value: 'Eventos / Decoración', label: 'Eventos / Decoración' },
-    { value: 'Personal / Mano de Obra', label: 'Personal / Mano de Obra' },
-    { value: 'Multas', label: 'Multas' },
-    { value: 'Otros', label: 'Otros' },
-  ]
+    { value: "todas", label: "Todas las categorías" },
+    ...Object.entries(categoriaLabels).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
 
   // Función para obtener los colores de la categoría
   const getCategoriaColors = (categoria: string | undefined) => {
@@ -442,52 +260,52 @@ export default function MovimientosPage() {
     }
 
     const categoriaColors: Record<string, { bg: string; text: string; border: string }> = {
-      'Administración / Cuotas': {
+      'ADMINISTRACION_CUOTAS': {
         bg: '#F5F6FA', // Versión muy clara de #ADB2D4
         text: '#659287', // Verde azulado apagado
         border: '#ADB2D4', // Lavanda/periwinkle azul claro
       },
-      'Servicios Públicos': {
+      'SERVICIOS_PUBLICOS': {
         bg: '#F5E6D8', // Versión muy clara de #E2B59A
         text: '#957C62', // Verde oliva apagado/marrón grisáceo
         border: '#E2B59A', // Beige/durazno claro
       },
-      'Aseo y Jardinería': {
+      'ASEO_JARDINERIA': {
         bg: '#F0F4EC', // Versión muy clara de #B1C29E
         text: '#659287', // Verde azulado apagado
         border: '#B1C29E', // Verde salvia apagado
       },
-      'Mantenimiento y Reparaciones': {
+      'MANTENIMIENTO_REPARACIONES': {
         bg: '#F5E8E0', // Versión muy clara de #B77466
         text: '#957C62', // Verde oliva apagado/marrón grisáceo
         border: '#B77466', // Rojo terracota
       },
-      'Piscina': {
+      'PISCINA': {
         bg: '#E8F2EF', // Versión muy clara de #659287
         text: '#659287', // Verde azulado apagado
         border: '#659287', // Verde azulado apagado/teal
       },
-      'Seguridad / Acceso': {
+      'SEGURIDAD_ACCESO': {
         bg: '#F5F0E8', // Versión muy clara de #DEAA79
         text: '#957C62', // Verde oliva apagado/marrón grisáceo
         border: '#DEAA79', // Marrón arenoso claro
       },
-      'Eventos / Decoración': {
+      'EVENTOS_DECORACION': {
         bg: '#FFF9E6', // Versión muy clara de #FFE6A9
         text: '#957C62', // Verde oliva apagado/marrón grisáceo
         border: '#FFE6A9', // Amarillo muy pálido/crema
       },
-      'Personal / Mano de Obra': {
+      'PERSONAL_MANO_OBRA': {
         bg: '#F5F0F7', // Versión muy clara de #D4C5E8
         text: '#957C62', // Verde oliva apagado/marrón grisáceo
         border: '#D4C5E8', // Lila suave apagado
       },
-      'Multas': {
+      'MULTAS': {
         bg: '#F0F5F6', // Versión muy clara de #C7D9DD
         text: '#659287', // Verde azulado apagado
         border: '#C7D9DD', // Azul-verde muy claro/teal pálido
       },
-      'Otros': {
+      'OTROS': {
         bg: '#EEEEEE', // Gris muy claro
         text: '#777C6D', // Verde oliva apagado
         border: '#CBCBCB', // Gris medio
@@ -504,7 +322,15 @@ export default function MovimientosPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          const fecha = new Date(row.original.fecha)
+          // Fix: Parse YYYY-MM-DD manually to prevent UTC timezone shift
+          const dateStr = row.original.fecha as string;
+          // Ensure we're dealing with a string date in YYYY-MM-DD format
+          const [year, month, day] = dateStr.includes('T')
+            ? dateStr.split('T')[0].split('-').map(Number)
+            : dateStr.split('-').map(Number);
+
+          const fecha = new Date(year, month - 1, day);
+
           return (
             <div className="text-sm text-gray-600">
               {fecha.toLocaleDateString('es-CO', {
@@ -527,9 +353,10 @@ export default function MovimientosPage() {
         id: 'categoria',
         header: ({ column }) => <DataGridColumnHeader title="Categoría" column={column} />,
         cell: ({ row }) => {
-          const categoria = row.original.categoria || 'Sin categoría'
+          const categoria =
+            categoriaLabels[row.original.categoria ?? ''] || 'Sin categoría';
           const colors = getCategoriaColors(row.original.categoria)
-          
+
           return (
             <Badge
               className="border"
@@ -676,8 +503,17 @@ export default function MovimientosPage() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          console.log('Eliminar movimiento:', row.original.id)
+                        onClick={async () => {
+                          try {
+                            await eliminarMovimiento(row.original.id);
+
+                            toast.success("Movimiento eliminado correctamente");
+                            recargar();
+
+                          } catch (error) {
+                            console.error("Error al eliminar:", error);
+                            toast.error("No se pudo eliminar el movimiento");
+                          }
                         }}
                         className="bg-red-600 hover:bg-red-700"
                       >
@@ -756,107 +592,105 @@ export default function MovimientosPage() {
 
           {/* Tarjetas de estadísticas del mes */}
           <div className="-mt-2 -mb-2">
-          <div className="grid gap-4 md:grid-cols-4">
-            {isLoading ? (
-              <>
-                {/* Skeleton para las 4 tarjetas */}
-                {[1, 2, 3, 4].map((index) => (
-                  <div key={index} className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Skeleton className="w-5 h-5 rounded" />
-                      <Skeleton className="h-4 w-32" />
+            <div className="grid gap-4 md:grid-cols-4">
+              {isLoading ? (
+                <>
+                  {/* Skeleton para las 4 tarjetas */}
+                  {[1, 2, 3, 4].map((index) => (
+                    <div key={index} className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Skeleton className="w-5 h-5 rounded" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <Skeleton className="h-9 w-40 mb-1" />
+                      <Skeleton className="h-3 w-48 mt-2" />
                     </div>
-                    <Skeleton className="h-9 w-40 mb-1" />
-                    <Skeleton className="h-3 w-48 mt-2" />
+                  ))}
+                </>
+              ) : (
+                <>
+                  {/* Tarjeta de Ingresos */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <HugeiconsIcon icon={TradeUpIcon} className="w-5 h-5 text-emerald-600" />
+                      <p className="text-sm font-medium text-gray-600">Ingresos del mes</p>
+                    </div>
+                    <div className="text-3xl font-bold mb-1 text-gray-900">
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(metricas?.ingresos ?? 0)}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Total de entradas en {periodoTextoCapitalizado.toLowerCase()}
+                    </p>
                   </div>
-                ))}
-              </>
-            ) : (
-              <>
-                {/* Tarjeta de Ingresos */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
-                  <div className="flex items-center gap-2 mb-4">
-                    <HugeiconsIcon icon={TradeUpIcon} className="w-5 h-5 text-emerald-600" />
-                    <p className="text-sm font-medium text-gray-600">Ingresos del mes</p>
-                  </div>
-                  <div className="text-3xl font-bold mb-1 text-gray-900">
-                    {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(estadisticasMes.ingresos)}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Total de entradas en {periodoTextoCapitalizado.toLowerCase()}
-                  </p>
-                </div>
 
-                {/* Tarjeta de Egresos */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
-                  <div className="flex items-center gap-2 mb-4">
-                    <HugeiconsIcon icon={TradeDownIcon} className="w-5 h-5 text-rose-500" />
-                    <p className="text-sm font-medium text-gray-600">Egresos del mes</p>
+                  {/* Tarjeta de Egresos */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <HugeiconsIcon icon={TradeDownIcon} className="w-5 h-5 text-rose-500" />
+                      <p className="text-sm font-medium text-gray-600">Egresos del mes</p>
+                    </div>
+                    <div className="text-3xl font-bold mb-1 text-gray-900">
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(metricas?.egresos ?? 0)}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Total de salidas en {periodoTextoCapitalizado.toLowerCase()}
+                    </p>
                   </div>
-                  <div className="text-3xl font-bold mb-1 text-gray-900">
-                    {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(estadisticasMes.egresos)}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Total de salidas en {periodoTextoCapitalizado.toLowerCase()}
-                  </p>
-                </div>
 
-                {/* Tarjeta de Balance */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
-                  <div className="flex items-center gap-2 mb-4">
-                    <HugeiconsIcon icon={BalanceScaleIcon} className="w-5 h-5" style={{ color: '#081534' }} />
-                    <p className="text-sm font-medium text-gray-600">Balance del mes</p>
+                  {/* Tarjeta de Balance */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <HugeiconsIcon icon={BalanceScaleIcon} className="w-5 h-5" style={{ color: '#081534' }} />
+                      <p className="text-sm font-medium text-gray-600">Balance del mes</p>
+                    </div>
+                    <div className={`text-3xl font-bold mb-1 ${(metricas?.balance ?? 0) >= 0 ? 'text-gray-900' : 'text-rose-600'
+                      }`}>
+                      {(metricas?.balance ?? 0) < 0 ? '-' : ''}
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(Math.abs((metricas?.balance ?? 0)))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {(metricas?.balance ?? 0) >= 0 ? 'Balance positivo' : 'Balance negativo'}
+                    </p>
                   </div>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    estadisticasMes.balance >= 0 ? 'text-gray-900' : 'text-rose-600'
-                  }`}>
-                    {estadisticasMes.balance < 0 ? '-' : ''}
-                    {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(Math.abs(estadisticasMes.balance))}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    {estadisticasMes.balance >= 0 ? 'Balance positivo' : 'Balance negativo'}
-                  </p>
-                </div>
 
-                {/* Tarjeta de Saldo Actual */}
-                <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
-                  <div className="flex items-center gap-2 mb-4">
-                    <HugeiconsIcon icon={MoneyBag02Icon} className="w-5 h-5" style={{ color: '#081534' }} />
-                    <p className="text-sm font-medium text-gray-600">Saldo actual</p>
+                  {/* Tarjeta de Saldo Actual */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <HugeiconsIcon icon={MoneyBag02Icon} className="w-5 h-5" style={{ color: '#081534' }} />
+                      <p className="text-sm font-medium text-gray-600">Saldo actual</p>
+                    </div>
+                    <div className={`text-3xl font-bold mb-1 ${(metricas?.saldoActual ?? 0) >= 0 ? 'text-gray-900' : 'text-rose-600'
+                      }`}>
+                      {(metricas?.saldoActual ?? 0) < 0 ? '-' : ''}
+                      {new Intl.NumberFormat('es-CO', {
+                        style: 'currency',
+                        currency: 'COP',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(Math.abs((metricas?.saldoActual ?? 0)))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Saldo acumulado hasta {periodoTextoCapitalizado.toLowerCase()}
+                    </p>
                   </div>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    estadisticasMes.saldoActual >= 0 ? 'text-gray-900' : 'text-rose-600'
-                  }`}>
-                    {estadisticasMes.saldoActual < 0 ? '-' : ''}
-                    {new Intl.NumberFormat('es-CO', {
-                      style: 'currency',
-                      currency: 'COP',
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(Math.abs(estadisticasMes.saldoActual))}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Saldo acumulado hasta {periodoTextoCapitalizado.toLowerCase()}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Filtros y controles */}
@@ -928,7 +762,7 @@ export default function MovimientosPage() {
                       <ButtonArrow className="shrink-0 ml-2" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent 
+                  <PopoverContent
                     className="w-(--radix-popover-trigger-width) p-0"
                     onWheel={(e) => e.stopPropagation()}
                   >
@@ -1071,20 +905,18 @@ export default function MovimientosPage() {
                 </h3>
                 <p className="text-gray-500 text-sm">
                   {searchTerm
-                    ? `No hay ${
-                        filterType === 'entradas'
-                          ? 'entradas'
-                          : filterType === 'salidas'
-                          ? 'salidas'
-                          : 'movimientos'
-                      } que coincidan con "${searchTerm}"`
-                    : `No hay ${
-                        filterType === 'entradas'
-                          ? 'entradas'
-                          : filterType === 'salidas'
-                          ? 'salidas'
-                          : 'movimientos'
-                      } registrados`}
+                    ? `No hay ${filterType === 'entradas'
+                      ? 'entradas'
+                      : filterType === 'salidas'
+                        ? 'salidas'
+                        : 'movimientos'
+                    } que coincidan con "${searchTerm}"`
+                    : `No hay ${filterType === 'entradas'
+                      ? 'entradas'
+                      : filterType === 'salidas'
+                        ? 'salidas'
+                        : 'movimientos'
+                    } registrados`}
                 </p>
               </div>
             )}
@@ -1109,9 +941,8 @@ export default function MovimientosPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                    selectedMovimiento.tipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
-                  }`}>
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${selectedMovimiento.tipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
+                    }`}>
                     <HugeiconsIcon
                       icon={selectedMovimiento.tipo === 'ENTRADA' ? MoneyReceiveFlow01Icon : MoneySendFlow01Icon}
                       size={18}
@@ -1142,11 +973,20 @@ export default function MovimientosPage() {
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Fecha:</div>
                       <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {new Date(selectedMovimiento.fecha).toLocaleDateString('es-CO', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                        {(() => {
+                          const dateStr = selectedMovimiento.fecha as string;
+                          const [year, month, day] = dateStr.includes('T')
+                            ? dateStr.split('T')[0].split('-').map(Number)
+                            : dateStr.split('-').map(Number);
+
+                          const fecha = new Date(year, month - 1, day);
+
+                          return fecha.toLocaleDateString('es-CO', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          });
+                        })()}
                       </div>
                     </div>
 
@@ -1168,9 +1008,8 @@ export default function MovimientosPage() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <div className="text-xs text-gray-500">Monto:</div>
-                        <div className={`text-sm font-semibold ${
-                          selectedMovimiento.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'
-                        }`}>
+                        <div className={`text-sm font-semibold ${selectedMovimiento.tipo === 'ENTRADA' ? 'text-green-700' : 'text-red-700'
+                          }`}>
                           {selectedMovimiento.tipo === 'ENTRADA' ? '+' : '-'}{' '}
                           {new Intl.NumberFormat('es-CO', {
                             style: 'currency',
@@ -1181,7 +1020,11 @@ export default function MovimientosPage() {
                       {selectedMovimiento.categoria && (
                         <div className="flex justify-between">
                           <div className="text-xs text-gray-500">Categoría:</div>
-                          <div className="text-sm text-gray-900">{selectedMovimiento.categoria}</div>
+                          <div className="text-sm text-gray-900">
+                            {categoriaLabels[selectedMovimiento.categoria ?? ''] ??
+                              selectedMovimiento.categoria ??
+                              'Sin categoría'}
+                          </div>
                         </div>
                       )}
                       {selectedMovimiento.responsable && (
@@ -1220,9 +1063,8 @@ export default function MovimientosPage() {
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                formTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
-              }`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${formTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
+                }`}>
                 <HugeiconsIcon
                   icon={formTipo === 'ENTRADA' ? MoneyReceiveSquareIcon : MoneySendSquareIcon}
                   size={24}
@@ -1234,7 +1076,7 @@ export default function MovimientosPage() {
                   {formTipo === 'ENTRADA' ? 'Registrar Entrada' : 'Registrar Salida'}
                 </SheetTitle>
                 <SheetDescription className="text-sm text-gray-500">
-                  {formTipo === 'ENTRADA' 
+                  {formTipo === 'ENTRADA'
                     ? 'Registra una nueva entrada de dinero del condominio.'
                     : 'Registra una nueva salida de dinero del condominio.'}
                 </SheetDescription>
@@ -1244,24 +1086,40 @@ export default function MovimientosPage() {
 
           <form
             onSubmit={async (e) => {
-              e.preventDefault()
-              // Aquí se implementará la lógica de registro cuando se conecte la API
-              console.log('Registrar movimiento:', {
-                fecha: formFecha?.toISOString().split('T')[0],
+              e.preventDefault();
+
+              const payload = {
+                fecha: (() => {
+                  if (!formFecha) return "";
+                  const year = formFecha.getFullYear();
+                  const month = String(formFecha.getMonth() + 1).padStart(2, '0');
+                  const day = String(formFecha.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                })(),
                 tipo: formTipo,
                 descripcion: formDescripcion,
                 monto: Number(formMonto),
                 categoria: formCategoria,
                 responsable: formResponsable,
-              })
-              setIsFormSheetOpen(false)
-              // Limpiar formulario
-              setFormFecha(new Date())
-              setFormTipo('ENTRADA')
-              setFormDescripcion('')
-              setFormMonto('')
-              setFormCategoria('')
-              setFormResponsable('')
+              };
+
+              try {
+                await registrarMovimiento(payload);
+
+                toast.success("Movimiento registrado correctamente");
+                setIsFormSheetOpen(false);
+                recargar();
+
+                // Resetear formulario
+                setFormFecha(undefined);
+                setFormTipo("ENTRADA");
+                setFormDescripcion("");
+                setFormMonto("");
+                setFormCategoria("");
+                setFormResponsable("");
+              } catch {
+                toast.error("No se pudo registrar el movimiento");
+              }
             }}
             className="flex flex-col h-full"
           >
@@ -1316,7 +1174,7 @@ export default function MovimientosPage() {
                             <ButtonArrow className="shrink-0 ml-2" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent 
+                        <PopoverContent
                           className="w-(--radix-popover-trigger-width) p-0"
                           onWheel={(e) => e.stopPropagation()}
                         >
@@ -1326,7 +1184,16 @@ export default function MovimientosPage() {
                               <ScrollArea viewportClassName="max-h-[300px]">
                                 <CommandEmpty>No se encontró categoría.</CommandEmpty>
                                 <CommandGroup>
-                                  {categoriasOptions.filter(opt => opt.value !== 'todas').map((option) => (
+                                  {categoriasOptions.filter(opt => {
+                                    if (opt.value === 'todas') return false;
+                                    const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
+
+                                    if (formTipo === 'ENTRADA') {
+                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                    } else {
+                                      return !entradaKeys.includes(opt.value);
+                                    }
+                                  }).map((option) => (
                                     <CommandItem
                                       key={option.value}
                                       value={option.value}
@@ -1385,9 +1252,8 @@ export default function MovimientosPage() {
                         Monto (COP) <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative group">
-                        <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-medium transition-colors ${
-                          formMonto ? 'text-gray-700' : ''
-                        }`}>
+                        <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-medium transition-colors ${formMonto ? 'text-gray-700' : ''
+                          }`}>
                           $
                         </div>
                         <Input
@@ -1431,7 +1297,7 @@ export default function MovimientosPage() {
                 onClick={() => {
                   setIsFormSheetOpen(false)
                   // Limpiar formulario
-                  setFormFecha(new Date())
+                  setFormFecha(undefined)
                   setFormTipo('ENTRADA')
                   setFormDescripcion('')
                   setFormMonto('')
@@ -1462,9 +1328,8 @@ export default function MovimientosPage() {
         >
           <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
             <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                editTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
-              }`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${editTipo === 'ENTRADA' ? 'bg-green-50' : 'bg-red-50'
+                }`}>
                 <HugeiconsIcon
                   icon={editTipo === 'ENTRADA' ? MoneyReceiveSquareIcon : MoneySendSquareIcon}
                   size={24}
@@ -1484,19 +1349,40 @@ export default function MovimientosPage() {
 
           <form
             onSubmit={async (e) => {
-              e.preventDefault()
-              // Aquí se implementará la lógica de edición cuando se conecte la API
-              console.log('Editar movimiento:', {
-                id: editingMovimiento?.id,
-                fecha: editFecha?.toISOString().split('T')[0],
+              e.preventDefault();
+
+              if (!editingMovimiento?.id) {
+                console.error("No hay ID del movimiento a editar");
+                return;
+              }
+
+              const payload = {
+                fecha: (() => {
+                  if (!editFecha) return "";
+                  const year = editFecha.getFullYear();
+                  const month = String(editFecha.getMonth() + 1).padStart(2, '0');
+                  const day = String(editFecha.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                })(),
                 tipo: editTipo,
                 descripcion: editDescripcion,
                 monto: Number(editMonto),
                 categoria: editCategoria,
                 responsable: editResponsable,
-              })
-              setIsEditSheetOpen(false)
-              handleEditCancel()
+              };
+
+              try {
+                await editarMovimiento(editingMovimiento.id, payload);
+                toast.success("Movimiento actualizado correctamente");
+
+                setIsEditSheetOpen(false);
+                handleEditCancel();
+                recargar();
+
+              } catch (error) {
+                console.error("Error al editar el movimiento:", error);
+                toast.error("No se pudo editar el movimiento");
+              }
             }}
             className="flex flex-col h-full"
           >
@@ -1551,7 +1437,7 @@ export default function MovimientosPage() {
                             <ButtonArrow className="shrink-0 ml-2" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent 
+                        <PopoverContent
                           className="w-(--radix-popover-trigger-width) md:w-[calc(var(--radix-popover-trigger-width)-1rem)]"
                           onWheel={(e) => e.stopPropagation()}
                         >
@@ -1561,7 +1447,16 @@ export default function MovimientosPage() {
                               <ScrollArea viewportClassName="max-h-[300px]">
                                 <CommandEmpty>No se encontró categoría.</CommandEmpty>
                                 <CommandGroup>
-                                  {categoriasOptions.filter(opt => opt.value !== 'todas').map((option) => (
+                                  {categoriasOptions.filter(opt => {
+                                    if (opt.value === 'todas') return false;
+                                    const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
+
+                                    if (editTipo === 'ENTRADA') {
+                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                    } else {
+                                      return !entradaKeys.includes(opt.value);
+                                    }
+                                  }).map((option) => (
                                     <CommandItem
                                       key={option.value}
                                       value={option.value}
@@ -1620,9 +1515,8 @@ export default function MovimientosPage() {
                         Monto (COP) <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative group">
-                        <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-medium transition-colors ${
-                          editMonto ? 'text-gray-700' : ''
-                        }`}>
+                        <div className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg font-medium transition-colors ${editMonto ? 'text-gray-700' : ''
+                          }`}>
                           $
                         </div>
                         <Input
