@@ -387,11 +387,11 @@ export default function CuotasPage() {
       // Extraer mensaje de error usando axios.isAxiosError
       const errorMessage = axios.isAxiosError(error)
         ? (error.response?.data as { message?: string })?.message ||
-          error.message ||
-          'Error al registrar el pago. Por favor, inténtalo de nuevo.'
+        error.message ||
+        'Error al registrar el pago. Por favor, inténtalo de nuevo.'
         : error instanceof Error
-        ? error.message
-        : 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
+          ? error.message
+          : 'Error al registrar el pago. Por favor, inténtalo de nuevo.';
 
       // Mostrar toast de error
       toast.error(errorMessage, {
@@ -491,9 +491,8 @@ export default function CuotasPage() {
           const saldo = row.original.saldoPendiente;
           return (
             <div
-              className={`font-semibold ${
-                saldo > 0 ? 'text-red-600' : 'text-green-600'
-              }`}
+              className={`font-semibold ${saldo > 0 ? 'text-red-600' : 'text-green-600'
+                }`}
             >
               {new Intl.NumberFormat('es-CO', {
                 style: 'currency',
@@ -522,8 +521,8 @@ export default function CuotasPage() {
                 cantidad === 0
                   ? 'success'
                   : cantidad <= 2
-                  ? 'warning'
-                  : 'destructive'
+                    ? 'warning'
+                    : 'destructive'
               }
               appearance="outline"
               size="md"
@@ -545,14 +544,18 @@ export default function CuotasPage() {
           <DataGridColumnHeader title="Último Pago" column={column} />
         ),
         cell: ({ row }) => {
-          const fecha = new Date(row.original.ultimoPago);
+          // Agregar T12:00:00 para evitar desfase de zona horaria
+          const fechaStr = row.original.ultimoPago;
+          const fecha = fechaStr ? new Date(`${fechaStr}T12:00:00`) : null;
           return (
             <div className="text-sm text-gray-600">
-              {fecha.toLocaleDateString('es-CO', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {fecha && !isNaN(fecha.getTime())
+                ? fecha.toLocaleDateString('es-CO', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })
+                : 'Sin pagos'}
             </div>
           );
         },
@@ -605,9 +608,8 @@ export default function CuotasPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`gap-2 items-center justify-center ml-2 ${
-                          !canSendPazYSalvo ? 'opacity-50' : ''
-                        } ${isSendingPazYSalvo ? 'cursor-wait' : ''}`}
+                        className={`gap-2 items-center justify-center ml-2 ${!canSendPazYSalvo ? 'opacity-50' : ''
+                          } ${isSendingPazYSalvo ? 'cursor-wait' : ''}`}
                         disabled={isPazYSalvoDisabled}
                         aria-busy={isSendingPazYSalvo}
                         onClick={async () => {
@@ -624,12 +626,12 @@ export default function CuotasPage() {
                           } catch (err) {
                             const errorMessage = axios.isAxiosError(err)
                               ? (err.response?.data as { message?: string })
-                                  ?.message ||
-                                err.message ||
-                                'Error al enviar el paz y salvo'
+                                ?.message ||
+                              err.message ||
+                              'Error al enviar el paz y salvo'
                               : err instanceof Error
-                              ? err.message
-                              : 'Error al enviar el paz y salvo';
+                                ? err.message
+                                : 'Error al enviar el paz y salvo';
                             toast.error(errorMessage);
                           } finally {
                             setSendingPazYSalvoCasaId(null);
@@ -676,7 +678,7 @@ export default function CuotasPage() {
     getRowCanExpand: (row) =>
       Boolean(
         row.original.obligacionesPendientes &&
-          row.original.obligacionesPendientes.length > 0
+        row.original.obligacionesPendientes.length > 0
       ),
     state: {
       pagination,
@@ -1090,11 +1092,10 @@ export default function CuotasPage() {
                                 const value = e.target.value;
                                 field.onChange(value ? parseFloat(value) : 0);
                               }}
-                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${
-                                fieldState.invalid
+                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${fieldState.invalid
                                   ? 'border-red-500 focus:border-red-500'
                                   : ''
-                              }`}
+                                }`}
                             />
                           </div>
                         </FormFieldWithTooltip>

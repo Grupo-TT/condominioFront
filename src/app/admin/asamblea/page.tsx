@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,20 +63,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { ButtonArrow } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from "sonner";
 
 // Esquema de validación para nueva asamblea
 const asambleaSchema = z.object({
   titulo: z.string().min(1, "El título es requerido"),
   descripcion: z.string().min(1, "La descripción es requerida"),
   fecha: z.string().min(1, "La fecha es requerida"),
-  hora: z.string().min(1, "La hora es requerida"),
+  horaInicio: z.string().min(1, "La hora es requerida"),
   lugar: z.string().min(1, "El lugar es requerido"),
 });
 
 type AsambleaFormData = z.infer<typeof asambleaSchema>;
 
 export default function AsambleaPage() {
-  const { loading, asambleas, fetchAsambleas, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
+  const { loading, asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [selectedAsamblea, setSelectedAsamblea] = useState<Asamblea | null>(null);
@@ -90,6 +92,8 @@ export default function AsambleaPage() {
   const [yearFilter, setYearFilter] = useState<string>('todos');
   const [yearComboboxOpen, setYearComboboxOpen] = useState(false);
   const [attendanceSearch, setAttendanceSearch] = useState('');
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
 
   const selectedAttendance = useMemo(() => {
     if (!selectedAsamblea) return [];
@@ -105,11 +109,10 @@ export default function AsambleaPage() {
   }, [selectedAttendance]);
 
   const filteredAttendance = useMemo(() => {
-    if (!attendanceSearch) return selectedAttendance;
-    const term = attendanceSearch.toLowerCase();
+    const term = (attendanceSearch || '').toLowerCase();
     return selectedAttendance.filter((asistente) =>
-      asistente.nombre.toLowerCase().includes(term) ||
-      asistente.casaId.toLowerCase().includes(term)
+      (asistente.nombre || '').toLowerCase().includes(term) ||
+      String(asistente.id).includes(term)
     );
   }, [attendanceSearch, selectedAttendance]);
 
@@ -135,14 +138,44 @@ export default function AsambleaPage() {
       titulo: '',
       descripcion: '',
       fecha: '',
-      hora: '',
+      horaInicio: '',
       lugar: '',
     },
   });
 
   useEffect(() => {
-    fetchAsambleas();
+    const loadInitialData = async () => {
+      await fetchAsambleas();
+      setInitialLoading(false);
+    };
+    loadInitialData();
   }, [fetchAsambleas]);
+
+  // Cargar asistentes de asambleas pasadas para mostrar métricas
+  const loadedAttendanceRef = React.useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const loadPastAssemblyAttendance = async () => {
+      const now = new Date();
+      const pastAsambleas = asambleas.filter(a => new Date(a.fecha) < now);
+
+      // Cargar asistentes de cada asamblea pasada que no se haya cargado
+      for (const asamblea of pastAsambleas) {
+        if (!loadedAttendanceRef.current.has(asamblea.id)) {
+          loadedAttendanceRef.current.add(asamblea.id);
+          try {
+            await fetchAsistentes(asamblea.id);
+          } catch {
+            // Silenciar errores individuales
+          }
+        }
+      }
+    };
+
+    if (asambleas.length > 0) {
+      loadPastAssemblyAttendance();
+    }
+  }, [asambleas, fetchAsistentes]);
 
   useEffect(() => {
     setShowFullDescription(false);
@@ -152,7 +185,7 @@ export default function AsambleaPage() {
   const handleSubmit = async (data: AsambleaFormData) => {
     try {
       if (isEditing && selectedAsamblea) {
-        await updateAsamblea(selectedAsamblea.id, data);
+        await updateAsamblea(selectedAsamblea.id, { ...data, estado: selectedAsamblea.estado });
       } else {
         await createAsamblea(data);
       }
@@ -175,21 +208,47 @@ export default function AsambleaPage() {
       titulo: asamblea.titulo,
       descripcion: asamblea.descripcion,
       fecha: asamblea.fecha,
-      hora: asamblea.hora,
+      horaInicio: asamblea.horaInicio,
       lugar: asamblea.lugar,
     });
   };
 
-  const handleOpenAttendanceSheet = (asamblea: Asamblea) => {
+  const handleOpenAttendanceSheet = async (asamblea: Asamblea) => {
     setSelectedAsamblea(asamblea);
     setIsAttendanceSheetOpen(true);
     setAttendanceSearch('');
+    // Solo cargar si no se ha cargado antes
+    if (!loadedAttendanceRef.current.has(asamblea.id)) {
+      setAttendanceLoading(true);
+      try {
+        loadedAttendanceRef.current.add(asamblea.id);
+        await fetchAsistentes(asamblea.id);
+      } catch {
+        loadedAttendanceRef.current.delete(asamblea.id);
+        toast.error('No se pudo cargar la asistencia');
+      } finally {
+        setAttendanceLoading(false);
+      }
+    }
   };
 
-  const handleOpenDetailSheet = (asamblea: Asamblea) => {
+  const handleOpenDetailSheet = async (asamblea: Asamblea) => {
     setSelectedAsamblea(asamblea);
     setIsDetailSheetOpen(true);
     setAttendanceSearch('');
+    // Solo cargar si no se ha cargado antes
+    if (!loadedAttendanceRef.current.has(asamblea.id)) {
+      setAttendanceLoading(true);
+      try {
+        loadedAttendanceRef.current.add(asamblea.id);
+        await fetchAsistentes(asamblea.id);
+      } catch {
+        loadedAttendanceRef.current.delete(asamblea.id);
+        toast.error('No se pudo cargar la asistencia');
+      } finally {
+        setAttendanceLoading(false);
+      }
+    }
   };
 
   const handleOpenSheet = () => {
@@ -250,9 +309,9 @@ export default function AsambleaPage() {
     setSearchTerm('');
   };
 
-  const handleMarkAttendance = async (asistenteId: string, asistio: boolean) => {
+  const handleMarkAttendance = async (idAsamblea: number, numeroCasa: number, asistio: boolean) => {
     if (selectedAsamblea) {
-      await markAsistencia(asistenteId, asistio);
+      await markAsistencia(idAsamblea, numeroCasa, asistio);
     }
   };
 
@@ -271,26 +330,26 @@ export default function AsambleaPage() {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'programada': return 'bg-blue-100 text-blue-800';
-      case 'en_curso': return 'bg-green-100 text-green-800';
-      case 'finalizada': return 'bg-gray-100 text-gray-800';
-      case 'cancelada': return 'bg-red-100 text-red-800';
+      case 'PROGRAMADA': return 'bg-blue-100 text-blue-800';
+      case 'EN_CURSO': return 'bg-green-100 text-green-800';
+      case 'REALIZADA': return 'bg-gray-100 text-gray-800';
+      case 'CANCELADA': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getEstadoLabel = (estado: string) => {
     switch (estado) {
-      case 'programada': return 'Programada';
-      case 'en_curso': return 'En Curso';
-      case 'finalizada': return 'Finalizada';
-      case 'cancelada': return 'Cancelada';
+      case 'PROGRAMADA': return 'Programada';
+      case 'EN_CURSO': return 'En Curso';
+      case 'REALIZADA': return 'Realizada';
+      case 'CANCELADA': return 'Cancelada';
       default: return estado;
     }
   };
 
   const formatPrettyDate = (dateString: string) => {
-    const date = new Date(`${dateString}T00:00:00`);
+    const date = new Date(`${dateString}`);
     if (isNaN(date.getTime())) return dateString;
     const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
     const month = monthFormatter.format(date);
@@ -300,14 +359,30 @@ export default function AsambleaPage() {
     return `${capitalizedMonth} ${day}, ${year}`;
   };
 
-  const formatPrettyTime = (timeString: string) => {
-    const [hoursStr, minutesStr] = timeString.split(':');
-    const hours = Number(hoursStr);
-    const minutes = Number(minutesStr);
-    if (Number.isNaN(hours) || Number.isNaN(minutes)) return timeString;
-    const period = hours >= 12 ? 'PM' : 'AM';
+  const formatPrettyTime = (timeString?: string) => {
+    if (!timeString || typeof timeString !== "string") {
+      return "Hora no disponible";
+    }
+
+    const parts = timeString.split(":");
+
+    if (parts.length < 2) {
+      return timeString;
+    }
+
+    const hours = Number(parts[0]);
+    const minutes = Number(parts[1]);
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return timeString;
+    }
+
+    const period = hours >= 12 ? "PM" : "AM";
     const hour12 = hours % 12 || 12;
-    return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+
+    return `${hour12.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${period}`;
   };
 
   const renderAsambleaDetails = (
@@ -326,7 +401,7 @@ export default function AsambleaPage() {
       {
         icon: Clock,
         label: 'Hora de la asamblea',
-        value: formatPrettyTime(asamblea.hora),
+        value: formatPrettyTime(asamblea.horaInicio),
       },
       {
         icon: MapPin,
@@ -387,11 +462,8 @@ export default function AsambleaPage() {
     asamblea: Asamblea,
     options?: { showAttendance?: boolean; variant?: 'future' | 'past' }
   ) => {
-    const asambleaDate = new Date(`${asamblea.fecha}T23:59:59`);
-    const now = new Date();
-    const isFutureAssembly = asambleaDate >= now;
-    const canEdit = isFutureAssembly;
-    const canDelete = isFutureAssembly;
+    const canEdit = true;
+    const canDelete = true;
     const isPastCard = options?.variant === 'past';
     const attendees = options?.showAttendance ? getAsistentesByAsamblea(asamblea.id) : null;
     const totalAttendees = attendees?.length ?? 0;
@@ -490,9 +562,7 @@ export default function AsambleaPage() {
                     <HugeiconsIcon icon={PencilEdit02Icon} size={21} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {canEdit ? 'Editar asamblea' : 'Solo puedes editar asambleas futuras'}
-                </TooltipContent>
+                <TooltipContent side="top">Editar asamblea</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -510,9 +580,7 @@ export default function AsambleaPage() {
                     <HugeiconsIcon icon={Delete02Icon} size={21} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                  {canDelete ? 'Eliminar asamblea' : 'Solo puedes eliminar asambleas futuras'}
-                </TooltipContent>
+                <TooltipContent side="top">Eliminar asamblea</TooltipContent>
               </Tooltip>
             </div>
           </div>
@@ -571,7 +639,42 @@ export default function AsambleaPage() {
                 label: 'Programadas',
                 content: (
                   <ScrollArea style={{ height: cardsScrollAreaHeight }} className="pr-2" viewportClassName="pr-1">
-                    {loading || filteredAsambleas.length > 0 ? (
+                    {initialLoading ? (
+                      /* Loading Skeleton */
+                      <div className="space-y-8 pt-2">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between px-1">
+                            <Skeleton className="h-4 w-16" />
+                            <div className="h-px flex-1 ml-4 bg-gray-200" />
+                          </div>
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
+                              <Card key={i} className="flex flex-col min-h-[320px] gap-1 py-3">
+                                <CardHeader className="pb-2 px-4">
+                                  <Skeleton className="h-6 w-24 mb-2" />
+                                  <Skeleton className="h-5 w-full mb-1" />
+                                  <Skeleton className="h-4 w-3/4" />
+                                </CardHeader>
+                                <CardContent className="flex-1 px-4 pt-0 space-y-2">
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-2/3" />
+                                  <div className="pt-4 space-y-2">
+                                    <Skeleton className="h-4 w-40" />
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-4 w-36" />
+                                  </div>
+                                </CardContent>
+                                <div className="px-4 pt-2 flex gap-2">
+                                  <Skeleton className="h-9 flex-1 rounded-lg" />
+                                  <Skeleton className="h-9 w-9 rounded-lg" />
+                                  <Skeleton className="h-9 w-9 rounded-lg" />
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : filteredAsambleas.length > 0 ? (
                       <div className="space-y-8 pt-2">
                         {groupAsambleasByYear(filteredAsambleas).map(({ year, list }) => (
                           <div key={`future-${year}`} className="space-y-4">
@@ -614,7 +717,42 @@ export default function AsambleaPage() {
                   <ScrollArea style={{ height: cardsScrollAreaHeight }} className="pr-2" viewportClassName="pr-1">
                     <div className="space-y-6 pt-2">
                       {/* Lista de asambleas pasadas */}
-                      {loading || filteredAsambleas.length > 0 ? (
+                      {initialLoading ? (
+                        /* Loading Skeleton */
+                        <div className="space-y-8">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between px-1">
+                              <Skeleton className="h-4 w-16" />
+                              <div className="h-px flex-1 ml-4 bg-gray-200" />
+                            </div>
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                              {[1, 2, 3].map((i) => (
+                                <Card key={i} className="flex flex-col min-h-[320px] gap-1 py-3">
+                                  <CardHeader className="pb-2 px-4">
+                                    <Skeleton className="h-6 w-24 mb-2" />
+                                    <Skeleton className="h-5 w-full mb-1" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                  </CardHeader>
+                                  <CardContent className="flex-1 px-4 pt-0 space-y-2">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-2/3" />
+                                    <div className="pt-4 space-y-2">
+                                      <Skeleton className="h-4 w-40" />
+                                      <Skeleton className="h-4 w-32" />
+                                      <Skeleton className="h-4 w-36" />
+                                    </div>
+                                  </CardContent>
+                                  <div className="px-4 pt-2 flex gap-2">
+                                    <Skeleton className="h-9 flex-1 rounded-lg" />
+                                    <Skeleton className="h-9 w-9 rounded-lg" />
+                                    <Skeleton className="h-9 w-9 rounded-lg" />
+                                  </div>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ) : filteredAsambleas.length > 0 ? (
                         <div className="space-y-8">
                           {groupAsambleasByYear(filteredAsambleas).map(({ year, list }) => (
                             <div key={`past-${year}`} className="space-y-4">
@@ -870,13 +1008,13 @@ export default function AsambleaPage() {
                                   <span className="truncate">
                                     {field.value
                                       ? (() => {
-                                          const formatted = new Date(`${field.value}T00:00:00`).toLocaleDateString('es-ES', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric',
-                                          });
-                                          return formatted.replace(/^\p{L}/u, (char) => char.toUpperCase());
-                                        })()
+                                        const formatted = new Date(`${field.value}`).toLocaleDateString('es-ES', {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric',
+                                        });
+                                        return formatted.replace(/^\p{L}/u, (char) => char.toUpperCase());
+                                      })()
                                       : 'Selecciona una fecha'}
                                   </span>
                                 </span>
@@ -900,14 +1038,14 @@ export default function AsambleaPage() {
                     />
 
                     <Controller
-                      name="hora"
+                      name="horaInicio"
                       control={form.control}
                       render={({ field, fieldState }) => (
                         <FormFieldWithTooltip
                           label="Hora"
                           required
                           invalid={fieldState.invalid && showErrors}
-                          error={form.formState.errors.hora?.message}
+                          error={form.formState.errors.horaInicio?.message}
                         >
                           <TimeSelector
                             value={field.value}
@@ -1063,55 +1201,79 @@ export default function AsambleaPage() {
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 mb-4">Lista de Asistentes</h3>
                     <div className="space-y-2">
-                      {filteredAttendance.map((asistente) => {
-                        const switchId = `asistencia-${asistente.id}`;
-                        return (
-                          <div
-                            key={asistente.id}
-                            className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {asistente.nombre
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
+                      {attendanceLoading ? (
+                        /* Loading Skeleton para asistentes */
+                        <>
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="w-11 h-11 rounded-xl" />
+                                <div>
+                                  <Skeleton className="h-4 w-32 mb-1" />
+                                  <Skeleton className="h-3 w-16" />
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
-                                <p className="text-xs text-gray-500">Casa {asistente.casaId}</p>
+                              <div className="flex items-center gap-3">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-6 w-11 rounded-full" />
                               </div>
                             </div>
-                            <div className="inline-flex items-center gap-3 w-[160px] justify-end">
-                              <Label
-                                htmlFor={switchId}
-                                className={cn(
-                                  "text-sm font-medium whitespace-nowrap text-right",
-                                  asistente.asistio ? "text-gray-700" : "text-gray-400"
-                                )}
-                              >
-                                {asistente.asistio ? 'Asistió' : 'Ausente'}
-                              </Label>
-                              <Switch
-                                id={switchId}
-                                checked={asistente.asistio}
-                                onCheckedChange={(checked) => handleMarkAttendance(asistente.id, checked)}
-                                aria-label={`Cambiar asistencia de ${asistente.nombre}`}
-                              />
+                          ))}
+                        </>
+                      ) : filteredAttendance.length > 0 ? (
+                        filteredAttendance.map((asistente) => {
+                          const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
+                          const switchId = `asistencia-${asistente.id}-${safeName}`;
+                          const itemKey = `${asistente.nombre}-${safeName}`;
+                          return (
+                            <div
+                              key={itemKey}
+                              className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                  {(asistente.nombre || '')
+                                    .split(' ')
+                                    .map(n => n[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
+                                  <p className="text-xs text-gray-500">Casa {asistente.id}</p>
+                                </div>
+                              </div>
+                              <div className="inline-flex items-center gap-3 w-[160px] justify-end">
+                                <Label
+                                  htmlFor={switchId}
+                                  className={cn(
+                                    "text-sm font-medium whitespace-nowrap text-right",
+                                    asistente.asistio ? "text-gray-700" : "text-gray-400"
+                                  )}
+                                >
+                                  {asistente.asistio ? 'Asistió' : 'Ausente'}
+                                </Label>
+                                <Switch
+                                  id={switchId}
+                                  checked={asistente.asistio}
+                                  onCheckedChange={(checked) => handleMarkAttendance(Number(selectedAsamblea.id), asistente.id, checked)}
+                                  aria-label={`Cambiar asistencia de ${asistente.nombre}`}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                          <p>No se encontraron asistentes</p>
+                        </div>
+                      )}
                     </div>
-
-                    {filteredAttendance.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                        <p>No se encontraron asistentes</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1172,7 +1334,7 @@ export default function AsambleaPage() {
                         {
                           icon: Clock,
                           label: 'Hora de la asamblea',
-                          value: formatPrettyTime(selectedAsamblea.hora),
+                          value: formatPrettyTime(selectedAsamblea.horaInicio),
                         }].map(({ icon: Icon, label, value }) => (
                           <div key={label} className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-600">
@@ -1241,31 +1403,56 @@ export default function AsambleaPage() {
                         <h3 className="text-sm font-semibold text-gray-900">Asistentes presentes</h3>
                         <p className="text-xs text-gray-500">Solo se listan quienes marcaron asistencia</p>
                       </div>
-                      <Badge variant="outline" className="text-gray-600 border-gray-200">
-                        {presentAttendees.length} {presentAttendees.length === 1 ? 'asistente' : 'asistentes'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-gray-600 border-gray-200">
+                          {presentAttendees.length} {presentAttendees.length === 1 ? 'asistente' : 'asistentes'}
+                        </Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="w-8 h-8 rounded-md border-gray-200 shadow-sm"
+                              aria-label="Editar asistencia"
+                              onClick={() => {
+                                setIsDetailSheetOpen(false);
+                                if (selectedAsamblea) {
+                                  handleOpenAttendanceSheet(selectedAsamblea);
+                                }
+                              }}
+                            >
+                              <HugeiconsIcon icon={PencilEdit02Icon} size={16} strokeWidth={1.8} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Editar asistencia</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     {presentAttendees.length > 0 ? (
                       <div className="space-y-2">
-                        {presentAttendees.map((asistente) => (
-                          <div key={asistente.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
-                                {asistente.nombre
-                                  .split(' ')
-                                  .map((n) => n[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
+                        {presentAttendees.map((asistente) => {
+                          const safeName = (asistente.nombre || '').replace(/\s+/g, '-');
+                          const itemKey = `${asistente.id}-${safeName}`;
+                          return (
+                            <div key={itemKey} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                  {asistente.nombre
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
+                                  <p className="text-xs text-gray-500">Casa {asistente.id}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900">{asistente.nombre}</p>
-                                <p className="text-xs text-gray-500">Casa {asistente.casaId}</p>
-                              </div>
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Asistió</span>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">Asistió</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-gray-500 border border-dashed border-gray-200 rounded-xl">

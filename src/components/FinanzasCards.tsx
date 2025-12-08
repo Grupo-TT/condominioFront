@@ -26,10 +26,9 @@ const formatCurrency = (value: number): string => {
 }
 
 const formatDate = (dateString: string): string => {
-  const [year, month, day] = dateString.split('-').map(Number)
-
-  const date = new Date(year, month - 1, day)
-
+  // Agregar T12:00:00 para evitar desfase de zona horaria
+  const date = new Date(`${dateString}T12:00:00`)
+  if (isNaN(date.getTime())) return 'Sin fecha'
   return new Intl.DateTimeFormat('es-CO', {
     day: 'numeric',
     month: 'long',

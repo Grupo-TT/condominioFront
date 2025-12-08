@@ -5,29 +5,33 @@ export interface Asamblea {
   titulo: string;
   descripcion: string;
   fecha: string; // ISO date string
-  hora: string; // HH:MM format
+  horaInicio: string; // HH:MM format
   lugar: string;
-  estado: 'programada' | 'en_curso' | 'finalizada' | 'cancelada';
+  estado: 'PROGRAMADA' | 'EN_CURSO' | 'REALIZADA' | 'CANCELADA';
 }
 
 export interface Asistente {
-  id: string;
-  asambleaId: string;
-  usuarioId: string;
   nombre: string;
-  casaId: string;
-  asistio: boolean;
-  createdAt: string;
+  id: number;
+  asistio?: boolean;
+}
+
+export interface Propietario {
+  nombrePropietario: string;
+  numeroCasa: number;
+  asistio?: boolean;
 }
 
 export interface CreateAsambleaData {
   titulo: string;
   descripcion: string;
   fecha: string;
-  hora: string;
+  horaInicio: string;
   lugar: string;
+  estado?: Asamblea['estado'];
 }
 
 export interface UpdateAsambleaData extends Partial<CreateAsambleaData> {
+  id?: number;
   estado?: Asamblea['estado'];
 }
