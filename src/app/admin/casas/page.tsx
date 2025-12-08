@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Home07Icon, User03Icon } from '@hugeicons/core-free-icons'
+import { Home07Icon, User03Icon, Profile02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -33,7 +33,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
@@ -107,8 +106,9 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
   return (
     <div className="flex gap-1 flex-wrap">
-      {tipos.map(({ tipo, cantidad }, idx) =>
-        Array.from({ length: cantidad }).map((_, i) => {
+      {tipos
+      .filter(({ cantidad }) => cantidad > 0)
+      .map(({ tipo }, idx) => {
           // Colores personalizados para cada tipo
           const bgColor =
             tipo === 'perro'
@@ -129,7 +129,7 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 
           return (
             <div
-              key={`${idx}-${i}`}
+              key={`${idx}`}
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{ backgroundColor: bgColor }}
             >
@@ -137,14 +137,14 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
             </div>
           )
         })
-      )}
+      }
     </div>
   )
 }
 
 export default function CasasPage() {
   const router = useRouter()
-  const { casas, loading } = useCasas()
+  const { casas, loading, refetch: refetchCasas } = useCasas()
   const { setCasaInCache } = useCasaContext()
   
   const [pagination, setPagination] = useState<PaginationState>({
@@ -157,6 +157,10 @@ export default function CasasPage() {
   const [estadoFilter, setEstadoFilter] = useState<'todas' | 'al-dia' | 'en-mora'>('todas')
   const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [isReplaceDialogOpen, setIsReplaceDialogOpen] = useState(false)
+  const [pendingRegistroData, setPendingRegistroData] = useState<PropietarioFormData | null>(null)
+  const [replaceDialogMode, setReplaceDialogMode] = useState<'PROPIETARIO' | 'ARRENDATARIO' | null>(null)
+  const [replaceDialogInfo, setReplaceDialogInfo] = useState<{ casaNumero: string; persona?: string } | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleClearSearch = useCallback(() => {
@@ -167,7 +171,38 @@ export default function CasasPage() {
   }, [])
 
 
-  const handleCrearPropietario = async (data: PropietarioFormData) => {
+  const handleCrearPropietario = async (data: PropietarioFormData): Promise<boolean> => {
+    // Verificar si la casa seleccionada ya tiene un propietario
+    const casaId = parseInt(data.idCasa, 10)
+    const casaSeleccionada = casas?.find(casa => parseInt(casa.numeroCasa, 10) === casaId)
+    
+    // Verificar si la casa tiene propietario real (no los valores por defecto)
+    // El adaptador asigna 'Sin propietario' o 'Sin nombre' cuando no hay propietario
+    const nombrePropietario = casaSeleccionada?.propietario?.nombreCompleto?.trim() || ''
+    const tienePropietarioReal = nombrePropietario !== '' && 
+                                 nombrePropietario !== 'Sin propietario' && 
+                                 nombrePropietario !== 'Sin nombre'
+    const tieneArrendatarioReal = tienePropietarioReal && casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA'
+    const rolSeleccionado = data.rolEnCasa
+    
+    // Solo mostrar el diálogo si hay un propietario/arrendatario real según corresponda
+    if ((rolSeleccionado === 'PROPIETARIO' && tienePropietarioReal) || (rolSeleccionado === 'ARRENDATARIO' && tieneArrendatarioReal)) {
+      setPendingRegistroData(data)
+      setReplaceDialogMode(rolSeleccionado)
+      setReplaceDialogInfo({
+        casaNumero: casaSeleccionada?.numeroCasa ?? data.idCasa,
+        persona: rolSeleccionado === 'PROPIETARIO' ? nombrePropietario : undefined
+      })
+      setIsReplaceDialogOpen(true)
+      return false // Retornar false para indicar que no se debe resetear el formulario
+    }
+
+    // Si no hay propietario real o el rol no es PROPIETARIO, proceder directamente
+    await crearPropietario(data)
+    return true // Retornar true para indicar que se puede resetear el formulario
+  }
+
+  const crearPropietario = async (data: PropietarioFormData) => {
     try {
       await propietarioService.create(data)
 
@@ -178,8 +213,11 @@ export default function CasasPage() {
 
       // Cerrar el sheet
       setIsSheetOpen(false)
+      // Refrescar la lista de casas para mostrar el cambio
+      refetchCasas()
       // Recargar la lista de casas si es necesario
       // fetchCasas()
+      return true
     } catch (err) {
       // Extraer mensaje de error usando axios.isAxiosError
       const errorMessage = axios.isAxiosError(err)
@@ -190,6 +228,20 @@ export default function CasasPage() {
       toast.error(errorMessage, {
         duration: 5000,
       })
+      return false
+    }
+  }
+
+  const handleConfirmReplace = async () => {
+    if (pendingRegistroData) {
+      const success = await crearPropietario(pendingRegistroData)
+      if (success) {
+        // Si fue exitoso, resetear el formulario
+        setPendingRegistroData(null)
+        setReplaceDialogMode(null)
+        setIsReplaceDialogOpen(false)
+        setReplaceDialogInfo(null)
+      }
     }
   }
 
@@ -249,8 +301,8 @@ export default function CasasPage() {
         id: 'propietario',
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
         cell: ({ row }) => {
-          const esArrendada = row.original.usoCasa.toUpperCase() === 'ARRENDADA'
-          const rol = esArrendada ? 'Arrendatario' : 'Propietario'
+          const nombrePropietario = row.original.propietario.nombreCompleto
+          const sinPropietario = nombrePropietario === 'Sin propietario' || nombrePropietario === 'Sin nombre'
           
           return (
             <div className="flex items-center gap-3">
@@ -270,12 +322,15 @@ export default function CasasPage() {
                     setCasaInCache(row.original.numeroCasa, row.original)
                     router.push(`/admin/casas/${row.original.numeroCasa}`)
                   }}
-                  className="font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full"
+                  className={cn(
+                    "font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 hover:after:w-full",
+                    sinPropietario && "opacity-50"
+                  )}
                 >
-                  {row.original.propietario.nombreCompleto}
+                  {nombrePropietario}
                 </button>
                 <div className="text-sm text-gray-500">
-                  <span className="font-medium">{rol}</span> · Casa No.{row.original.numeroCasa}
+                  <span className="font-medium">Casa No.{row.original.numeroCasa}</span>
                 </div>
               </div>
             </div>
@@ -761,28 +816,95 @@ export default function CasasPage() {
                   <SheetTrigger asChild>
                     <Button className="gap-2">
                       <Plus className="w-4 h-4" />
-                      Nuevo Propietario
+                      Registrar persona
                     </Button>
                   </SheetTrigger>
                   <SheetContent
                     side="right"
-                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-                    style={{ width: '650px', maxWidth: 'none' }}
+                    className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+                    style={{ 
+                      width: '650px', 
+                      maxWidth: 'none'
+                    }}
                   >
-                    <SheetHeader>
-                      <SheetTitle>Nuevo Propietario</SheetTitle>
-                      <SheetDescription>
-                        Registra un nuevo propietario en el sistema con toda su información personal y de contacto.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="flex flex-col h-full">
-                      <PropietarioForm
-                        onSubmit={handleCrearPropietario}
-                        onCancel={() => setIsSheetOpen(false)}
-                      />
+                    <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-50 to-indigo-50 flex items-center justify-center shrink-0 shadow-sm">
+                          <HugeiconsIcon icon={Profile02Icon} size={28} style={{ color: '#4C6C5A' }} />
+                        </div>
+                        <div className="flex-1">
+                          <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                            Registrar persona
+                          </SheetTitle>
+                          <SheetDescription className="text-sm text-gray-500">
+                            Registra un propietario o arrendatario con toda su información personal.
+                          </SheetDescription>
+                        </div>
+                      </div>
                     </div>
+
+                    <PropietarioForm
+                      onSubmit={handleCrearPropietario}
+                      onCancel={() => setIsSheetOpen(false)}
+                    />
                   </SheetContent>
                 </Sheet>
+
+                {/* Dialog de confirmación para reemplazar propietario */}
+                <AlertDialog open={isReplaceDialogOpen} onOpenChange={(open) => {
+                  if (!open) {
+                    // Solo limpiar los datos pendientes si se cierra sin confirmar
+                    // No resetear el formulario, solo cerrar el diálogo
+                    setPendingRegistroData(null)
+                    setReplaceDialogMode(null)
+                    setReplaceDialogInfo(null)
+                  }
+                  setIsReplaceDialogOpen(open)
+                }}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {replaceDialogMode === 'ARRENDATARIO'
+                          ? '¿Reemplazar arrendatario actual?'
+                          : '¿Reemplazar propietario actual?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {replaceDialogMode === 'ARRENDATARIO'
+                          ? 'La casa seleccionada ya tiene un arrendatario asociado. Toda la información del arrendatario actual será reemplazada con el nuevo que estás creando.'
+                          : 'La casa seleccionada ya tiene un propietario asociado. Toda la información del propietario actual será reemplazada con el nuevo propietario que estás creando.'}
+                        {replaceDialogInfo && (
+                          <>
+                            <br />
+                            <br />
+                            <span className="inline-flex flex-col gap-1 text-sm text-gray-600">
+                              <span>
+                                <strong>Casa:</strong> No. {replaceDialogInfo.casaNumero}
+                              </span>
+                              {replaceDialogInfo.persona && (
+                                <span>
+                                  <strong>{replaceDialogMode === 'ARRENDATARIO' ? 'Arrendatario actual' : 'Propietario actual'}:</strong> {replaceDialogInfo.persona}
+                                </span>
+                              )}
+                            </span>
+                          </>
+                        )}
+                        <br /><br />
+                        ¿Deseas continuar?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>
+                        Cancelar
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleConfirmReplace}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Continuar y Reemplazar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             }
           />

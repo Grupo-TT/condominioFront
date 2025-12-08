@@ -99,7 +99,6 @@ export default function MultasPage() {
   const [editDescripcion, setEditDescripcion] = useState('')
   const [editValor, setEditValor] = useState('')
   const [editTipoPago, setEditTipoPago] = useState<'DINERO' | 'LABOR_SOCIAL'>('DINERO')
-
   const { multasData, loading, error, refreshMultas, nuevaMulta, modificarMulta } = useMultas()
 
   const handleViewDetail = useCallback((multa: Multa) => {
@@ -675,7 +674,7 @@ export default function MultasPage() {
               {/* Título y descripción */}
               <div className="px-6 pt-3 pb-4 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
                     }`}>
                     <HugeiconsIcon
                       icon={FileCorruptIcon}
@@ -897,8 +896,6 @@ export default function MultasPage() {
                     value={formDescripcion}
                     onChange={(e) => setFormDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>
@@ -1005,8 +1002,6 @@ export default function MultasPage() {
                     value={editDescripcion}
                     onChange={(e) => setEditDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>

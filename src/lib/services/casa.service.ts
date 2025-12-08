@@ -1,26 +1,32 @@
-import { apiClient } from '../config/axios.config'
+import {
+  CreateMiembroHogar,
+  MascotasCasa,
+  MiembroCasa,
+  UpdateMiembroHogar,
+} from "@/types/casa.types";
+import { apiClient } from "../config/axios.config";
 
 interface CasaFromAPI {
-  numeroCasa: number
+  numeroCasa: number;
   propietario: {
-    nombreCompleto: string
-    telefono: number
-    correo: string
-  }
-  cantidadMiembros: number
-  cantidadMascotas: number
+    nombreCompleto: string;
+    telefono: number;
+    correo: string;
+  };
+  cantidadMiembros: number;
+  cantidadMascotas: number;
   mascotas: {
-    "TipoMascota.PERRO"?: number
-    "TipoMascota.GATO"?: number
-    "TipoMascota.OTRO"?: number
-  }
-  estadoFinancieroCasa: string
-  usoCasa: string
+    "TipoMascota.PERRO"?: number;
+    "TipoMascota.GATO"?: number;
+    "TipoMascota.OTRO"?: number;
+  };
+  estadoFinancieroCasa: string;
+  usoCasa: string;
 }
 
 interface CasasApiResponse {
-  message: string
-  data: CasaFromAPI[]
+  message: string;
+  data: CasaFromAPI[];
 }
 
 export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
@@ -30,59 +36,152 @@ export function adaptCasaFromAPI(casaApi: CasaFromAPI) {
     perro: casaApi.mascotas?.["TipoMascota.PERRO"] ?? 0,
     gato: casaApi.mascotas?.["TipoMascota.GATO"] ?? 0,
     otro: casaApi.mascotas?.["TipoMascota.OTRO"] ?? 0,
-  }
+  };
 
   return {
     numeroCasa: String(casaApi.numeroCasa),
     propietario: casaApi.propietario
-    ?{
-      nombreCompleto: casaApi.propietario.nombreCompleto?.trim() || 'Sin nombre',
-      telefono: casaApi.propietario.telefono || 0,
-      correo: casaApi.propietario.correo?.trim() || '',
-    } : {
-      nombreCompleto: 'Sin propietario',
-      telefono: 0,
-      correo: '',
-    },
+      ? {
+          nombreCompleto:
+            casaApi.propietario.nombreCompleto?.trim() || "Sin nombre",
+          telefono: casaApi.propietario.telefono || 0,
+          correo: casaApi.propietario.correo?.trim() || "",
+        }
+      : {
+          nombreCompleto: "Sin propietario",
+          telefono: 0,
+          correo: "",
+        },
     cantidadMiembros: casaApi.cantidadMiembros || 0,
     cantidadMascotas: casaApi.cantidadMascotas || 0,
     mascotas,
     // Usar replaceAll para reemplazar TODAS las ocurrencias de guión bajo
-    estadoFinancieroCasa: (casaApi.estadoFinancieroCasa ?? 'AL_DIA').replaceAll('_', ' '),
-    usoCasa: (casaApi.usoCasa ?? 'RESIDENCIAL').replaceAll('_', ' ')
-  }
+    estadoFinancieroCasa: (casaApi.estadoFinancieroCasa ?? "AL_DIA").replaceAll(
+      "_",
+      " "
+    ),
+    usoCasa: (casaApi.usoCasa ?? "RESIDENCIAL").replaceAll("_", " "),
+  };
 }
 
 export const casaService = {
   async getAll() {
     try {
-      const response = await apiClient.get<CasasApiResponse>('/casa/all')
-      return response.data.data || []
+      const response = await apiClient.get<CasasApiResponse>("/casa/all");
+      return response.data.data || [];
     } catch (error) {
-      console.error('Error al obtener las casas:', error)
-      throw error
+      console.error("Error al obtener las casas:", error);
+      throw error;
     }
   },
   async getMembersByCasa(numeroCasa: number | string) {
     try {
-      const res = await apiClient.get<MiembrosApiResponse>(`/miembros/view-members/${numeroCasa}`)
-      return res.data.data || []
+      const res = await apiClient.get<MiembrosApiResponse>(
+        `/miembros/view-members/${numeroCasa}`
+      );
+      return res.data.data || [];
     } catch (error) {
-      console.error('Error al obtener los miembros:', error)
-      throw error
+      console.error("Error al obtener los miembros:", error);
+      throw error;
     }
-  }
-}
+  },
+  async getObligacionesByCasa(idCasa: number | string) {
+    try {
+      const res = await apiClient.get(
+        `/obligacion/all/${idCasa}`
+      );
+      return res.data.data || [];
+    } catch (error) {
+      console.error("Error al obtener los pagos y multas de la casa:", error);
+      throw error;
+    }
+  },
+};
 
-interface MiembroCasa {
-  nombreCompleto: string
-  tipoMiembro: 'PROPIETARIO' | 'ARRENDATARIO' | 'FAMILIAR' | 'OTRO' | string
-  numeroDocumento: number | string
-  telefono: number | string
-  email?: string
-}
+export const miembrosService = {
+  async getMembers() {
+    try {
+      const res = await apiClient.get(`/miembros/all-casa-members`);
+      return res.data || [];
+    } catch (error) {
+      console.error("Error al obtener los miembros:", error);
+      throw error;
+    }
+  },
+
+  async createMember(data: CreateMiembroHogar) {
+    try {
+      const response = await apiClient.post("/miembros/create", data);
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo crear el miembro.", error);
+      throw error;
+    }
+  },
+
+  async updateMember(id: number, data: UpdateMiembroHogar) {
+    try {
+      const { id, ...updateData } = data;
+      const response = await apiClient.put(`/miembros/${id}/edit`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo modificar el miembro.", error);
+      throw error;
+    }
+  },
+
+  async editMemberStastus(id: number) {
+    try {
+      const response = await apiClient.patch(`/miembros/${id}/edit-estado`);
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo modificar el estado del miembro", error);
+      throw error;
+    }
+  },
+};
 
 interface MiembrosApiResponse {
-  message: string
-  data: MiembroCasa[]
+  message: string;
+  data: MiembroCasa[];
 }
+
+interface MascotasApiResponse {
+  message: string;
+  data: MascotasCasa[];
+}
+
+export const mascotasService = {
+
+  async getMascotasByCasa(id: number) {
+    try {
+      const res = await apiClient.get<MascotasApiResponse>(
+        `/mascota/casa/${id}`
+      );
+      return res.data.data || [];
+    } catch (error) {
+      console.error("Error al obtener las mascotas:", error);
+      throw error;
+    }
+  },
+
+  async updateMascotaByCasa(idCasa: number, tipoMascota: string, cantidad: number) {
+    try {
+      const response = await apiClient.put(`/mascota/subtract`, { idCasa, tipoMascota, cantidad });
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo modificar las mascotas.", error);
+      throw error;
+    }
+  },
+
+  async createMascotaByCasa(idCasa: number, tipoMascota: string, cantidad: number) {
+    try {
+      const response = await apiClient.post(`/mascota/add`, { idCasa, tipoMascota, cantidad });
+      return response.data;
+    } catch (error) {
+      console.error("No se pudo crear las mascotas.", error);
+      throw error;
+    }
+  },
+};

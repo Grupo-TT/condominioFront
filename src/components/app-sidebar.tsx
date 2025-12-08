@@ -38,9 +38,19 @@ const data = {
       isActive: true,
     },
     {
-      title: "Casas",
-      url: "/casas",
+      title: "Mi Casa",
+      url: "/mi-casa",
       icon: Building2,
+      items: [
+        {
+          title: "Pagos y Multas",
+          url: "/mi-casa/pagos-y-multas",
+        },
+        {
+          title: "Miembros y Mascotas",
+          url: "/mi-casa/miembros-hogar",
+        },
+      ],
     },
   ],
   // Sección: Finanzas
@@ -126,4 +136,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
+
 

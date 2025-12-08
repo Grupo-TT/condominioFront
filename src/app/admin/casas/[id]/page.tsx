@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, NotificationSquareIcon, Door01Icon, UserGroupIcon, User03Icon } from '@hugeicons/core-free-icons'
-import { ArrowLeft, Edit, Trash2, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
+import { ArrowLeft, Edit, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,17 +18,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMiembros } from '@/hooks/useCasa'
@@ -69,7 +58,7 @@ export default function CasaDetailPage() {
   const miembrosFiltrados = useMemo(() => {
     return miembros.filter(miembro => {
       const tipo = miembro.tipoMiembro.toUpperCase()
-      return tipo !== 'PROPIETARIO' && tipo !== 'ARRENDATARIO'
+      return tipo !== 'PROPIETARIO'
     })
   }, [miembros])
 
@@ -94,15 +83,10 @@ export default function CasaDetailPage() {
     return 'neutro'
   }
 
-  const handleDelete = () => {
-    // Aquí agregarías la lógica para eliminar la casa
-    router.push('/admin/casas')
-  } 
-
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -124,7 +108,7 @@ export default function CasaDetailPage() {
   if (!casaSeleccionada) {
     return (
       <div className="flex flex-col h-full">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -180,7 +164,7 @@ export default function CasaDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
@@ -235,33 +219,6 @@ export default function CasaDetailPage() {
                 <Edit className="w-4 h-4" />
                 Editar
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="text-red-600 hover:text-red-700 gap-2">
-                    <Trash2 className="w-4 h-4" />
-                    Remover
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Remover Propietario?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se removera permanentemente el propietario{' '}
-                        <strong>{casaSeleccionada?.propietario.nombreCompleto}</strong> de la casa{' '}
-                        <strong>{casaSeleccionada?.numeroCasa}</strong> y toda su información asociada.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
         </div>
@@ -314,25 +271,29 @@ export default function CasaDetailPage() {
                   <HugeiconsIcon
                     icon={NotificationSquareIcon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
-                  <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.estadoFinancieroCasa}</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {casaSeleccionada?.estadoFinancieroCasa
+                    ?.toLowerCase()
+                    ?.replace(/\b\w/g, (c) => c.toUpperCase())}
+                </p>
                 </div>
               </div>
 
-              {/* ROL */}
+              {/* TIPO DE USO */}
               <div className="space-y-2 min-w-0">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  ROL
+                  TIPO DE USO
                 </label>
                 <div className="flex items-center gap-2 min-w-0">
                   <HugeiconsIcon
                     icon={Door01Icon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
-                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendatario' : 'Propietario'}
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Propia'}
                   </p>
                 </div>
               </div>
@@ -346,7 +307,7 @@ export default function CasaDetailPage() {
                   <HugeiconsIcon
                     icon={UserGroupIcon}
                     size={18}
-                    className="text-gray-500 flex-shrink-0"
+                    className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">{casaSeleccionada?.cantidadMiembros}</p>
                 </div>
@@ -358,7 +319,7 @@ export default function CasaDetailPage() {
                   MASCOTAS
                 </label>
                 <div className="flex items-center gap-2 min-w-0">
-                  <PawPrint className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <PawPrint className="w-5 h-5 text-gray-500 shrink-0" />
                   <p className="text-lg font-bold text-gray-900">
                     {totalMascotas}
                   </p>
@@ -433,7 +394,9 @@ export default function CasaDetailPage() {
                                     <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
                                     <div className="flex items-center gap-2 mt-1">
                                       <Badge variant="secondary" className="text-xs">
-                                        {miembro.tipoMiembro}
+                                        {miembro.tipoMiembro
+                                          ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
+                                          : ""}
                                       </Badge>
                                     </div>
                                   </div>
@@ -453,11 +416,12 @@ export default function CasaDetailPage() {
                                       <p className="text-sm text-gray-900">{miembro.telefono}</p>
                                     </div>
                                   </div>
-                                  <div>
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                    <p className="text-sm text-gray-900 truncate" title={miembro.email || 'Información no disponible'}>
-                                      {miembro.email || 'Información no disponible'}
-                                    </p>
+                                  <div> 
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span> 
+                                    <p className="text-sm text-gray-900 truncate" 
+                                    title={miembro.email || 'Información no disponible'}>
+                                    {miembro.email || 'Información no disponible'} 
+                                    </p> 
                                   </div>
                                 </div>
                               </div>
