@@ -49,6 +49,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -1055,12 +1056,29 @@ export default function ReservasPropietarioPage() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
-          style={{ width: '500px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle className="text-xl font-semibold">Nueva Reserva</SheetTitle>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRecurso?.tipo === 'zona' ? 'bg-amber-50' : 'bg-slate-100'}`}>
+                {selectedRecurso?.tipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  Nueva Reserva
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {selectedRecurso ? `Reservar ${selectedRecurso.nombre}` : 'Selecciona un recurso para reservar'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           {selectedRecurso && (
             <div className="flex flex-col flex-1 min-h-0">
@@ -1247,19 +1265,19 @@ export default function ReservasPropietarioPage() {
               </div>
 
               {/* Footer con botones */}
-              <div className="border-t px-6 py-4 bg-gray-50">
+              <div className="border-t border-gray-100 px-6 py-5 bg-gray-50/50 rounded-b-lg">
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setIsSheetOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={() => setOpenDialogConfirmacion(true)}
                     disabled={!selectedDate || !horaInicial || !horaFinal}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Confirmar Reserva
                   </Button>
@@ -1285,12 +1303,29 @@ export default function ReservasPropietarioPage() {
       }}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
-          style={{ width: '500px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle className="text-xl font-semibold">Editar Reserva</SheetTitle>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRecurso?.tipo === 'zona' ? 'bg-amber-50' : 'bg-slate-100'}`}>
+                {selectedRecurso?.tipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  Editar Reserva
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {selectedRecurso ? `Modificar reserva de ${selectedRecurso.nombre}` : 'Editar reserva'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           {selectedRecurso && reservaEditando && (
             <div className="flex flex-col flex-1 min-h-0">
@@ -1477,12 +1512,12 @@ export default function ReservasPropietarioPage() {
               </div>
 
               {/* Footer con botones */}
-              <div className="border-t px-6 py-4 bg-gray-50">
+              <div className="border-t border-gray-100 px-6 py-5 bg-gray-50/50 rounded-b-lg">
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setIsEditSheetOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Cancelar
                   </Button>
@@ -1490,7 +1525,7 @@ export default function ReservasPropietarioPage() {
                     <AlertDialogTrigger asChild>
                       <Button
                         disabled={!editDate || !editHoraInicial || !editHoraFinal}
-                        className="flex-1"
+                        className="flex-1 h-10 font-medium"
                       >
                         Guardar Cambios
                       </Button>

@@ -35,6 +35,7 @@ import {
   MoneyReceiveFlow01Icon,
   Home01Icon,
   FileDollarIcon,
+  WalletAdd01Icon,
 } from '@hugeicons/core-free-icons';
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types';
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation';
@@ -965,22 +966,29 @@ export default function CuotasPage() {
         </div>
       </div>
 
-      {/* Sheet para registrar pagos */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: '500px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
           <TooltipProvider>
-            <SheetHeader className="border-b pb-4">
-              <SheetTitle className="text-xl font-semibold">
-                Registrar Pago
-              </SheetTitle>
-              <SheetDescription className="text-gray-600">
-                Registra un nuevo pago para la casa seleccionada.
-              </SheetDescription>
-            </SheetHeader>
+            {/* Header con icono */}
+            <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-green-50">
+                  <HugeiconsIcon icon={WalletAdd01Icon} size={24} className="text-green-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                    Registrar Pago
+                  </SheetTitle>
+                  <SheetDescription className="text-sm text-gray-500">
+                    Registra un nuevo pago para la casa seleccionada.
+                  </SheetDescription>
+                </div>
+              </div>
+            </div>
 
             <form
               id="pago-form"
@@ -1093,8 +1101,8 @@ export default function CuotasPage() {
                                 field.onChange(value ? parseFloat(value) : 0);
                               }}
                               className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${fieldState.invalid
-                                  ? 'border-red-500 focus:border-red-500'
-                                  : ''
+                                ? 'border-red-500 focus:border-red-500'
+                                : ''
                                 }`}
                             />
                           </div>
@@ -1116,12 +1124,12 @@ export default function CuotasPage() {
               </div>
             </form>
 
-            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
               <SheetClose asChild>
                 <Button
                   variant="outline"
                   onClick={handleCancelar}
-                  className="flex-1"
+                  className="flex-1 h-10 font-medium"
                   type="button"
                 >
                   Cancelar
@@ -1133,7 +1141,7 @@ export default function CuotasPage() {
                 onClick={() => {
                   setShowAllErrors(true);
                 }}
-                className="flex-1"
+                className="flex-1 h-10 font-medium"
               >
                 Registrar Pago
               </Button>

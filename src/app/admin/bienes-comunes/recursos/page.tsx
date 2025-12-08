@@ -88,7 +88,7 @@ import { useRecursos } from '@/hooks/useRecursos'
 
 export default function RecursosPage() {
   const { recursos: recursosLista, loading, refetch } = useRecursos()
-  const { crearRecurso, editarRecurso, habilitarRecurso, deshabilitarRecurso, cambiarEstadoMantenimiento } = useRecurso(refetch)
+  const { crearRecurso, editarRecurso } = useRecurso(refetch)
   const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
@@ -107,7 +107,7 @@ export default function RecursosPage() {
   const { cambiarDisponibilidad } = useRecurso()
 
   const syncRecurso = useCallback((updated: RecursoResponse) => {
-    setRecursosResponse((prev) => {
+    setRecursosResponse((prev: RecursoResponse[]) => {
       if (!updated?.id) return prev
       const exists = prev.some((resp) => resp.id === updated.id)
       const next = exists
@@ -115,11 +115,9 @@ export default function RecursosPage() {
         : [...prev, updated]
       return next
     })
-    if (!updated?.id) return
-    setRecursos((prev) =>
-      prev.map((r) => (r.id === updated.id!.toString() ? mapResponseToUI(updated) : r))
-    )
-  }, [])
+    // Refetch to update the list from useRecursos
+    refetch()
+  }, [refetch])
 
   const handleAvailabilityChange = useCallback(
     async (id: number, disponibilidad: DisponibilidadRecurso) => {
@@ -888,19 +886,35 @@ export default function RecursosPage() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: '500px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="border-b pb-4">
-            <SheetTitle className="text-xl font-semibold">{isEditMode ? 'Editar Recurso' : 'Agregar Recurso'}</SheetTitle>
-            <SheetDescription className="text-gray-600">
-              {isEditMode ? 'Modifica la información del recurso seleccionado.' : 'Agrega un recurso de bienes comunes.'}
-            </SheetDescription>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${formTipo === 'zona' ? 'bg-amber-50' : formTipo === 'objeto' ? 'bg-slate-100' : 'bg-gray-100'}`}>
+                {formTipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : formTipo === 'objeto' ? (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                ) : (
+                  <Package className="w-6 h-6 text-gray-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  {isEditMode ? 'Editar Recurso' : 'Agregar Recurso'}
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {isEditMode ? 'Modifica la información del recurso seleccionado.' : 'Agrega un recurso de bienes comunes.'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           <form onSubmit={handleNuevoRecursoSubmit} className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto">
-              <div className="space-y-6 px-4 pt-4">
+              <div className="space-y-6 px-6 py-6">
                 <FormFieldWithTooltip
                   label="Nombre"
                   required
@@ -970,11 +984,11 @@ export default function RecursosPage() {
               </div>
             </div>
 
-            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
               <SheetClose asChild>
-                <Button variant="outline" type="button" className="flex-1">Cancelar</Button>
+                <Button variant="outline" type="button" className="flex-1 h-10 font-medium">Cancelar</Button>
               </SheetClose>
-              <Button type="submit" className="flex-1">{isEditMode ? 'Guardar cambios' : 'Agregar recurso'}</Button>
+              <Button type="submit" className="flex-1 h-10 font-medium">{isEditMode ? 'Guardar cambios' : 'Agregar recurso'}</Button>
             </SheetFooter>
           </form>
         </SheetContent>
