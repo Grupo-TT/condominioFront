@@ -2,18 +2,18 @@ import { useState } from 'react'
 import { recursoService } from '@/services/recurso.service'
 import { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 
-export const useRecurso = () => {
+export const useRecurso = (onSuccess?: () => void) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [recurso, setRecurso] = useState<RecursoResponse | null>(null)
 
-  const crearRecurso = async (
-    data: RecursoRequest) => {
+  const crearRecurso = async (data: RecursoRequest) => {
     try {
       setLoading(true)
       setError(null)
       const response = await recursoService.postRecurso(data)
       setRecurso(response)
+      onSuccess?.()
     } catch (err: unknown) {
       const errorMessage = err instanceof Error 
         ? err.message 

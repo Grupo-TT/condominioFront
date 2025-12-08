@@ -81,14 +81,15 @@ import {
 } from '@tanstack/react-table'
 import { RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
 import { recursoService } from '@/services/recurso.service'
-import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import { mapFormToRequest, mapResponseToUI } from '@/services/admin.recurso.adapter'
+import type { RecursoUI } from '@/services/admin.recurso.adapter'
 import { useRecurso } from '@/hooks/useRecurso'
+import { useRecursos } from '@/hooks/useRecursos'
 
 export default function RecursosPage() {
-  const [recursos, setRecursos] = useState<RecursoUI[]>([])
+  const { recursos: recursosLista, loading, refetch } = useRecursos()
+  const { crearRecurso, editarRecurso, habilitarRecurso, deshabilitarRecurso, cambiarEstadoMantenimiento } = useRecurso(refetch)
   const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
-  const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -133,36 +134,15 @@ export default function RecursosPage() {
     [cambiarDisponibilidad, syncRecurso]
   )
 
-  useEffect(() => {
-    let mounted = true
-    async function loadRecursos() {
-      try {
-        setLoading(true)
-        const list = await recursoService.getRecurso()
-        if (!mounted) return
-        // El servicio ya devuelve un array normalizado
-        console.debug('[recursos] raw response:', list)
-        const items = Array.isArray(list) ? list : []
-
-        setRecursosResponse(items)
-        setRecursos(items.map(mapResponseToUI))
-      } catch (err) {
-        console.error('Error cargando recursos:', err)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    }
-    loadRecursos()
-    return () => { mounted = false }
-  }, [])
-
   const handleClearSearch = () => setSearchTerm('')
+
+  const zonas = useMemo(() => recursosLista?.filter(r => r.tipo === 'zona' && r.habilitado) || [], [recursosLista])
+  const objetos = useMemo(() => recursosLista?.filter(r => r.tipo === 'objeto' && r.habilitado) || [], [recursosLista])
+
 
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
-    return recursos.filter((r) => {
+    return recursosLista.filter((r) => {
       // Filtrar por tipo
       if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
       if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
@@ -181,7 +161,7 @@ export default function RecursosPage() {
         r.descripcion.toLowerCase().includes(term)
       )
     })
-  }, [searchTerm, filterType, estadoFilter, recursos])
+  }, [searchTerm, filterType, estadoFilter, recursosLista])
 
   const validateForm = () => {
     const nextErrors: { nombre?: string; descripcion?: string; tipo?: string } = {}
@@ -221,48 +201,27 @@ export default function RecursosPage() {
       const existing = recursosResponse.find(r => r.id === idNum)
       const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo }, existing?.disponibilidadRecurso)
 
-      try {
-        const updated = await recursoService.putRecurso(idNum, payload)
+      await editarRecurso(idNum, payload)
 
-        setRecursosResponse((prev) => prev.map((resp) => resp.id === idNum ? updated : resp))
-
-        setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? mapResponseToUI(updated) : r))
-
-        setIsSheetOpen(false)
-        setFormNombre('')
-        setFormDescripcion('')
-        setFormTipo('')
-        setIsEditMode(false)
-        setSelectedRecursoId(null)
-      } catch (err) {
-        console.error('Error actualizando recurso:', err)
-        setErrors((prev) => ({ ...prev, nombre: 'Error al actualizar el recurso. Intenta de nuevo.' }))
-      }
+      setIsSheetOpen(false)
+      setFormNombre('')
+      setFormDescripcion('')
+      setFormTipo('')
+      setIsEditMode(false)
+      setSelectedRecursoId(null)
 
     } else {
       // Create new recurso via API
       const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo })
 
-      try {
-        const created = await recursoService.postRecurso(payload)
+      await crearRecurso(payload)
 
-        setRecursosResponse((prev) => [...prev, created])
-
-        setRecursos((prev) => [
-          ...prev,
-          mapResponseToUI(created),
-        ])
-
-        setIsSheetOpen(false)
-        setFormNombre('')
-        setFormDescripcion('')
-        setFormTipo('')
-        setIsEditMode(false)
-        setSelectedRecursoId(null)
-      } catch (err) {
-        console.error('Error creando recurso:', err)
-        setErrors((prev) => ({ ...prev, nombre: 'Error al crear el recurso. Intenta de nuevo.' }))
-      }
+      setIsSheetOpen(false)
+      setFormNombre('')
+      setFormDescripcion('')
+      setFormTipo('')
+      setIsEditMode(false)
+      setSelectedRecursoId(null)
     }
   }
 

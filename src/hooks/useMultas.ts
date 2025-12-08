@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Multa } from '@/types/cuotas.types'
-import { MultaForm } from '@/types/cuotas.types' // donde tengas tu interface
+import { MultaForm } from '@/types/cuotas.types'
 import { getMultas, createMulta, updateMulta } from '@/lib/services/multas.service'
 
 interface UseMultasReturn {

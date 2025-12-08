@@ -12,3 +12,5 @@ export interface RecursoResponse extends RecursoRequest {
   id?: number
 } 
 
+export type RecursoAdminResponse = RecursoResponse
+export type RecursoPropietarioResponse = RecursoResponse
