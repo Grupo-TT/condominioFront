@@ -78,7 +78,7 @@ const asambleaSchema = z.object({
 type AsambleaFormData = z.infer<typeof asambleaSchema>;
 
 export default function AsambleaPage() {
-  const { loading, asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
+  const { loading: _loading, asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [selectedAsamblea, setSelectedAsamblea] = useState<Asamblea | null>(null);

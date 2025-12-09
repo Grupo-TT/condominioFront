@@ -8,7 +8,7 @@ import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Plus, Search, X, MoreVertical, Pencil, Trash2, Eye, ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, FileText, DollarSign, User } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { MoneyReceiveFlow01Icon, MoneySendFlow01Icon, TradeUpIcon, TradeDownIcon, BalanceScaleIcon, MoneyBag02Icon, MoneyReceiveSquareIcon, MoneySendSquareIcon } from '@hugeicons/core-free-icons'
+import { TradeUpIcon, TradeDownIcon, BalanceScaleIcon, MoneyBag02Icon, MoneyReceiveSquareIcon, MoneySendSquareIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -31,7 +31,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
+
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
@@ -533,7 +533,7 @@ export default function MovimientosPage() {
         },
       },
     ],
-    [handleEdit, handleViewDetail]
+    [handleEdit, handleViewDetail, recargar]
   )
 
   const table = useReactTable({

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
@@ -18,7 +18,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
+
   SheetTitle,
 } from '@/components/ui/sheet'
 import {
@@ -80,8 +80,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
-import { recursoService } from '@/services/recurso.service'
-import { mapFormToRequest, mapResponseToUI } from '@/services/admin.recurso.adapter'
+import { mapFormToRequest } from '@/services/admin.recurso.adapter'
 import type { RecursoUI } from '@/services/admin.recurso.adapter'
 import { useRecurso } from '@/hooks/useRecurso'
 import { useRecursos } from '@/hooks/useRecursos'
@@ -134,8 +133,7 @@ export default function RecursosPage() {
 
   const handleClearSearch = () => setSearchTerm('')
 
-  const zonas = useMemo(() => recursosLista?.filter(r => r.tipo === 'zona' && r.habilitado) || [], [recursosLista])
-  const objetos = useMemo(() => recursosLista?.filter(r => r.tipo === 'objeto' && r.habilitado) || [], [recursosLista])
+
 
 
   const filteredData = useMemo(() => {
@@ -453,10 +451,10 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Poner recurso "{row.original.nombre}" en mantenimiento?
+                          ¿Poner recurso &quot;{row.original.nombre}&quot; en mantenimiento?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                          El recurso "{row.original.nombre}" quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
+                          El recurso &quot;{row.original.nombre}&quot; quedará en mantenimiento y no estará disponible para reservas o uso hasta que cambies su estado.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -492,7 +490,7 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Deshabilitar recurso "{row.original.nombre}"?
+                          ¿Deshabilitar recurso &quot;{row.original.nombre}&quot;?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           El recurso dejará de estar disponible y saldrá del estado de mantenimiento.

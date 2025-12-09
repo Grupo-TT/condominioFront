@@ -1,5 +1,5 @@
-import React, { useRef, FormEvent, ChangeEvent } from 'react'
-import { Mail, Send, X, Paperclip, FileText } from 'lucide-react'
+import React, { useRef, FormEvent } from 'react'
+import { Mail, Send, X, Paperclip } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon } from '@hugeicons/core-free-icons'
