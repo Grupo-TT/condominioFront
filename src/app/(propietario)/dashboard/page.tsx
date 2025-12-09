@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -48,6 +51,20 @@ const membersData = [
 
 export default function PropietarioDashboard() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Detectar si fue redirigido por falta de permisos
+  useEffect(() => {
+    const accessDenied = searchParams.get('access_denied');
+    if (accessDenied === 'admin') {
+      toast.warning('Acceso denegado', {
+        description: 'No tienes permisos para acceder a las páginas de administrador.',
+      });
+      // Limpiar el parámetro de la URL sin recargar
+      router.replace('/dashboard', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   return (
     <>

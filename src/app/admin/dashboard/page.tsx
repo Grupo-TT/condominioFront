@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,6 +25,20 @@ import {
 export default function Page() {
   const [selectedYear, setSelectedYear] = useState<number>(2024)
   const monthlyData = monthlyDataByYear[selectedYear]
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Detectar si fue redirigido por falta de permisos
+  useEffect(() => {
+    const accessDenied = searchParams.get('access_denied')
+    if (accessDenied === 'owner') {
+      toast.warning('Acceso denegado', {
+        description: 'Las páginas de propietarios no están disponibles para administradores.',
+      })
+      // Limpiar el parámetro de la URL sin recargar
+      router.replace('/admin/dashboard', { scroll: false })
+    }
+  }, [searchParams, router])
 
   return (
     <>
