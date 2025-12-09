@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -85,7 +86,7 @@ export default function SolicitudesPage() {
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
   const [selectedSolicitud, setSelectedSolicitud] = useState<Solicitud | null>(null)
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>(solicitudesData)
-  
+
   // Estados para los diálogos de confirmación
   const [showAprobarDialog, setShowAprobarDialog] = useState(false)
   const [showRechazarDialog, setShowRechazarDialog] = useState(false)
@@ -106,7 +107,7 @@ export default function SolicitudesPage() {
 
   // Función auxiliar para actualizar una solicitud
   const updateSolicitud = useCallback((id: string, estado: 'aprobada' | 'rechazada' | 'revisada') => {
-    setSolicitudes(prev => prev.map(s => 
+    setSolicitudes(prev => prev.map(s =>
       s.id === id ? { ...s, estado } : s
     ))
     // Si la solicitud está abierta en el sheet, actualizarla también
@@ -187,7 +188,7 @@ export default function SolicitudesPage() {
   // Filtrar datos basándose en el término de búsqueda, tipo y estado
   const filteredSolicitudes = useMemo(() => {
     const searchLower = searchTerm.toLowerCase()
-    
+
     return solicitudes.filter(solicitud => {
       // Filtrar por tipo (siempre aplica)
       if (filterType !== 'todas' && solicitud.tipo !== filterType) {
@@ -275,15 +276,15 @@ export default function SolicitudesPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{
                 backgroundColor: getTipoColor(row.original.tipo).bg
               }}
             >
-              <HugeiconsIcon 
-                icon={getTipoIcono(row.original.tipo)} 
-                size={18} 
+              <HugeiconsIcon
+                icon={getTipoIcono(row.original.tipo)}
+                size={18}
                 style={{ color: getTipoColor(row.original.tipo).text }}
                 strokeWidth={1.5}
               />
@@ -312,7 +313,7 @@ export default function SolicitudesPage() {
         cell: ({ row }) => {
           const tipo = row.original.tipo
           const tipoNombre = getTipoNombre(tipo)
-          
+
           // Colores distintivos para cada tipo (mismos que los iconos de mascotas)
           const tipoColors: Record<Solicitud['tipo'], { bg: string; text: string; border: string }> = {
             'reparacion-locativa': {
@@ -336,9 +337,9 @@ export default function SolicitudesPage() {
               border: '#4C6C5A'
             }
           }
-          
+
           const colors = tipoColors[tipo]
-          
+
           return (
             <Badge
               className="border"
@@ -381,9 +382,9 @@ export default function SolicitudesPage() {
         header: ({ column }) => <DataGridColumnHeader title="Propietario / Casa" column={column} />,
         cell: ({ row }) => (
           <div className="flex items-center gap-2.5">
-            <HugeiconsIcon 
-              icon={Home07Icon} 
-              size={14} 
+            <HugeiconsIcon
+              icon={Home07Icon}
+              size={14}
               className="text-gray-400"
             />
             <div>
@@ -401,13 +402,13 @@ export default function SolicitudesPage() {
         header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
         cell: ({ row }) => {
           const estado = row.original.estado
-          
+
           // Mostrar el estado tal cual viene del backend
           let badgeVariant: 'success' | 'destructive' | 'warning' = 'warning'
           let dotColor = 'bg-yellow-500'
           let estadoTexto = 'Pendiente'
           let badgeClassName = 'gap-1.5'
-          
+
           if (estado === 'aprobada') {
             badgeVariant = 'success'
             dotColor = 'bg-green-500'
@@ -427,7 +428,7 @@ export default function SolicitudesPage() {
             dotColor = 'bg-yellow-500'
             estadoTexto = 'Pendiente'
           }
-          
+
           return (
             <Badge
               variant={badgeVariant}
@@ -452,11 +453,11 @@ export default function SolicitudesPage() {
           const estado = solicitud.estado
           const isReparacionLocativa = tipo === 'reparacion-locativa'
           const isQuejaPeticionSugerencia = tipo === 'queja' || tipo === 'peticion' || tipo === 'sugerencia'
-          
+
           // Botones solo aparecen cuando estado es 'pendiente'
           const mostrarAprobarRechazar = estado === 'pendiente' && isReparacionLocativa
           const mostrarRevisada = estado === 'pendiente' && isQuejaPeticionSugerencia
-          
+
           return (
             <div className="flex justify-end">
               <DropdownMenu>
@@ -472,14 +473,14 @@ export default function SolicitudesPage() {
                   </DropdownMenuItem>
                   {mostrarAprobarRechazar && (
                     <>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => handleAprobarSolicitud(solicitud)}
                         className="hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700"
                       >
                         <Check className="mr-2 h-4 w-4" />
                         Aprobar
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => handleRechazarSolicitud(solicitud)}
                         className="hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700"
                       >
@@ -489,7 +490,7 @@ export default function SolicitudesPage() {
                     </>
                   )}
                   {mostrarRevisada && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleMarcarRevisadaSolicitud(solicitud)}
                       className="hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700"
                     >
@@ -559,7 +560,7 @@ export default function SolicitudesPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Gestión de Solicitudes PQRS</h1>
               <p className="text-gray-500 mt-1">
-              Administra y da seguimiento a las peticiones, quejas, sugerencias y solicitudes de reparación enviadas por los propietarios.
+                Administra y da seguimiento a las peticiones, quejas, sugerencias y solicitudes de reparación enviadas por los propietarios.
               </p>
             </div>
           </div>
@@ -590,15 +591,15 @@ export default function SolicitudesPage() {
                           <span className={cn(
                             'ms-0.5 size-1.5 rounded-full',
                             estadoFilter === 'pendiente' ? 'bg-yellow-500' :
-                            estadoFilter === 'aprobada' ? 'bg-green-500' :
-                            estadoFilter === 'rechazada' ? 'bg-red-500' :
-                            'bg-blue-500'
+                              estadoFilter === 'aprobada' ? 'bg-green-500' :
+                                estadoFilter === 'rechazada' ? 'bg-red-500' :
+                                  'bg-blue-500'
                           )}></span>
                           <span className="truncate">
                             {estadoFilter === 'pendiente' ? 'Pendientes' :
-                             estadoFilter === 'aprobada' ? 'Aprobadas' :
-                             estadoFilter === 'rechazada' ? 'Rechazadas' :
-                             'Revisadas'}
+                              estadoFilter === 'aprobada' ? 'Aprobadas' :
+                                estadoFilter === 'rechazada' ? 'Rechazadas' :
+                                  'Revisadas'}
                           </span>
                         </span>
                       ) : (
@@ -695,11 +696,11 @@ export default function SolicitudesPage() {
                     ref={searchInputRef}
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -744,7 +745,7 @@ export default function SolicitudesPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay solicitudes que coincidan con "${searchTerm}"`
                       : 'No hay solicitudes registradas'
                     }
@@ -789,7 +790,7 @@ export default function SolicitudesPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay solicitudes de reparación locativa que coincidan con "${searchTerm}"`
                       : 'No hay solicitudes de reparación locativa'
                     }
@@ -834,7 +835,7 @@ export default function SolicitudesPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay quejas que coincidan con "${searchTerm}"`
                       : 'No hay quejas registradas'
                     }
@@ -879,7 +880,7 @@ export default function SolicitudesPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay peticiones que coincidan con "${searchTerm}"`
                       : 'No hay peticiones registradas'
                     }
@@ -924,7 +925,7 @@ export default function SolicitudesPage() {
                     No se encontraron resultados
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {searchTerm 
+                    {searchTerm
                       ? `No hay sugerencias que coincidan con "${searchTerm}"`
                       : 'No hay sugerencias registradas'
                     }
@@ -938,86 +939,54 @@ export default function SolicitudesPage() {
 
       {/* Sheet de detalle */}
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
-        <SheetContent 
-          side="right" 
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 p-0 flex flex-col"
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
           style={{ width: '600px', maxWidth: 'none' }}
         >
           {selectedSolicitud && (
             <>
-              {/* Header */}
-              <SheetHeader className="px-6 py-4 border-b border-gray-200">
-                <SheetTitle className="text-base font-semibold text-gray-900">Detalles de Solicitud</SheetTitle>
-              </SheetHeader>
-
-              {/* Título y descripción */}
-              <div className="px-6 pt-3 pb-4 border-b border-gray-200">
-                <div className="flex items-start gap-3 mb-2">
-                  <div 
-                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              {/* Header con icono */}
+              <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                     style={{
-                      backgroundColor: selectedSolicitud.tipo === 'reparacion-locativa' 
-                        ? '#E3E4EA' 
+                      backgroundColor: selectedSolicitud.tipo === 'reparacion-locativa'
+                        ? '#E3E4EA'
                         : selectedSolicitud.tipo === 'queja'
-                        ? '#F1E8D6'
-                        : '#E6EFEA'
+                          ? '#F1E8D6'
+                          : '#E6EFEA'
                     }}
                   >
-                    <HugeiconsIcon 
-                      icon={getTipoIcono(selectedSolicitud.tipo)} 
-                      size={18} 
+                    <HugeiconsIcon
+                      icon={getTipoIcono(selectedSolicitud.tipo)}
+                      size={24}
                       style={{
-                        color: selectedSolicitud.tipo === 'reparacion-locativa' 
-                          ? '#595D75' 
+                        color: selectedSolicitud.tipo === 'reparacion-locativa'
+                          ? '#595D75'
                           : selectedSolicitud.tipo === 'queja'
-                          ? '#A39170'
-                          : '#4C6C5A'
+                            ? '#A39170'
+                            : '#4C6C5A'
                       }}
                     />
                   </div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="flex items-center justify-between gap-3">
-                      <h3 className="text-lg font-bold text-gray-900">{selectedSolicitud.titulo}</h3>
-                      {/* Estado */}
-                      <div className="flex items-center gap-1.5">
-                        {(() => {
-                          const estado = selectedSolicitud.estado
-                          // Mostrar el estado tal cual viene del backend
-                          let dotColor = 'bg-yellow-500'
-                          let estadoTexto = 'Pendiente'
-                          
-                          if (estado === 'aprobada') {
-                            dotColor = 'bg-green-500'
-                            estadoTexto = 'Aprobada'
-                          } else if (estado === 'rechazada') {
-                            dotColor = 'bg-red-500'
-                            estadoTexto = 'Rechazada'
-                          } else if (estado === 'revisada') {
-                            dotColor = 'bg-blue-500'
-                            estadoTexto = 'Revisada'
-                          } else {
-                            // pendiente
-                            dotColor = 'bg-yellow-500'
-                            estadoTexto = 'Pendiente'
-                          }
-                          
-                          return (
-                            <>
-                              <span className={`w-2 h-2 rounded-full ${dotColor} opacity-80`} />
-                              <span className="text-sm font-medium text-gray-900 opacity-60">{estadoTexto}</span>
-                            </>
-                          )
-                        })()}
-                      </div>
-                    </div>
-                    {/* Propietario */}
-                    <div className="text-sm text-gray-600 mt-1">
-                      De: <span className="font-medium text-gray-800">{selectedSolicitud.propietario}</span> (Casa No. {selectedSolicitud.numeroCasa})
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                      Detalles de Solicitud
+                    </SheetTitle>
+                    <SheetDescription className="text-sm text-gray-500">
+                      {getTipoNombre(selectedSolicitud.tipo)} de {selectedSolicitud.propietario} (Casa No. {selectedSolicitud.numeroCasa})
+                    </SheetDescription>
                   </div>
                 </div>
+              </div>
+
+              {/* Título y descripción */}
+              <div className="px-6 pt-4 pb-4 border-b border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{selectedSolicitud.titulo}</h3>
                 {selectedSolicitud.descripcion && (
-                  <div className="max-h-80 overflow-y-auto mt-3">
+                  <div className="max-h-60 overflow-y-auto">
                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedSolicitud.descripcion}</p>
                   </div>
                 )}
@@ -1026,8 +995,8 @@ export default function SolicitudesPage() {
               {/* Contenido */}
               <div className="flex-1 overflow-y-auto px-6 pt-2 pb-4">
                 <div className="space-y-4">
-                  {/* Grid 3 columnas: ID, Fecha, Tipo */}
-                  <div className="grid grid-cols-[auto_auto_auto] gap-4">
+                  {/* Grid 4 columnas: ID, Fecha, Tipo, Estado */}
+                  <div className="grid grid-cols-[auto_auto_auto_auto] gap-4">
                     {/* ID Solicitud */}
                     <div>
                       <div className="text-xs text-gray-500 mb-1">ID Solicitud</div>
@@ -1053,26 +1022,67 @@ export default function SolicitudesPage() {
                         <Badge
                           className="border"
                           style={{
-                            backgroundColor: selectedSolicitud.tipo === 'reparacion-locativa' 
-                              ? '#E3E4EA' 
+                            backgroundColor: selectedSolicitud.tipo === 'reparacion-locativa'
+                              ? '#E3E4EA'
                               : selectedSolicitud.tipo === 'queja'
-                              ? '#F1E8D6'
-                              : '#E6EFEA',
-                            color: selectedSolicitud.tipo === 'reparacion-locativa' 
-                              ? '#595D75' 
+                                ? '#F1E8D6'
+                                : '#E6EFEA',
+                            color: selectedSolicitud.tipo === 'reparacion-locativa'
+                              ? '#595D75'
                               : selectedSolicitud.tipo === 'queja'
-                              ? '#A39170'
-                              : '#4C6C5A',
-                            borderColor: selectedSolicitud.tipo === 'reparacion-locativa' 
-                              ? '#595D75' 
+                                ? '#A39170'
+                                : '#4C6C5A',
+                            borderColor: selectedSolicitud.tipo === 'reparacion-locativa'
+                              ? '#595D75'
                               : selectedSolicitud.tipo === 'queja'
-                              ? '#A39170'
-                              : '#4C6C5A'
+                                ? '#A39170'
+                                : '#4C6C5A'
                           }}
                           size="sm"
                         >
                           {getTipoNombre(selectedSolicitud.tipo)}
                         </Badge>
+                      </div>
+                    </div>
+
+                    {/* Estado */}
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Estado:</div>
+                      <div className="flex items-center h-5">
+                        {(() => {
+                          const estado = selectedSolicitud.estado
+                          let badgeVariant: 'success' | 'destructive' | 'warning' = 'warning'
+                          let dotColor = 'bg-yellow-500'
+                          let estadoTexto = 'Pendiente'
+                          let badgeClassName = 'gap-1.5'
+
+                          if (estado === 'aprobada') {
+                            badgeVariant = 'success'
+                            dotColor = 'bg-green-500'
+                            estadoTexto = 'Aprobada'
+                          } else if (estado === 'rechazada') {
+                            badgeVariant = 'destructive'
+                            dotColor = 'bg-red-500'
+                            estadoTexto = 'Rechazada'
+                          } else if (estado === 'revisada') {
+                            badgeVariant = 'warning'
+                            dotColor = 'bg-blue-500'
+                            estadoTexto = 'Revisada'
+                            badgeClassName = 'gap-1.5 text-blue-700 bg-blue-50 border-blue-200'
+                          }
+
+                          return (
+                            <Badge
+                              variant={badgeVariant}
+                              appearance="outline"
+                              size="sm"
+                              className={badgeClassName}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${dotColor}`} />
+                              {estadoTexto}
+                            </Badge>
+                          )
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1155,15 +1165,15 @@ export default function SolicitudesPage() {
                 const estado = selectedSolicitud.estado
                 const isReparacionLocativa = tipo === 'reparacion-locativa'
                 const isQuejaPeticionSugerencia = tipo === 'queja' || tipo === 'peticion' || tipo === 'sugerencia'
-                
+
                 // Botones solo aparecen cuando estado es 'pendiente'
                 const mostrarAprobarRechazar = estado === 'pendiente' && isReparacionLocativa
                 const mostrarRevisada = estado === 'pendiente' && isQuejaPeticionSugerencia
-                
+
                 if (!mostrarAprobarRechazar && !mostrarRevisada) {
                   return null
                 }
-                
+
                 return (
                   <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-4 border-t border-gray-200">
                     {mostrarAprobarRechazar && (
@@ -1203,8 +1213,8 @@ export default function SolicitudesPage() {
       </Sheet>
 
       {/* Diálogos de confirmación */}
-      <AlertDialog 
-        open={showAprobarDialog} 
+      <AlertDialog
+        open={showAprobarDialog}
         onOpenChange={(open) => {
           setShowAprobarDialog(open)
           if (!open) {
@@ -1231,8 +1241,8 @@ export default function SolicitudesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog 
-        open={showRechazarDialog} 
+      <AlertDialog
+        open={showRechazarDialog}
         onOpenChange={(open) => {
           setShowRechazarDialog(open)
           if (!open) {
@@ -1259,8 +1269,8 @@ export default function SolicitudesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog 
-        open={showRevisadaDialog} 
+      <AlertDialog
+        open={showRevisadaDialog}
         onOpenChange={(open) => {
           setShowRevisadaDialog(open)
           if (!open) {
