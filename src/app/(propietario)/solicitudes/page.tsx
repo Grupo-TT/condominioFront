@@ -166,18 +166,6 @@ export default function SolicitudesPropietarioPage() {
     const [newTrabajadorDocumento, setNewTrabajadorDocumento] = useState('')
     const [newTrabajadorArl, setNewTrabajadorArl] = useState('')
 
-    // Validation states
-    const [showErrors, setShowErrors] = useState(false)
-    const [formErrors, setFormErrors] = useState<{
-        titulo?: string
-        descripcion?: string
-        tipoObra?: string
-        tipoObraOtra?: string
-        fechaInicio?: string
-        fechaFinalizacion?: string
-        trabajadores?: string
-    }>({})
-
     // Data state
     const [solicitudes, setSolicitudes] = useState<Solicitud[]>(misSolicitudesData)
 
@@ -201,9 +189,6 @@ export default function SolicitudesPropietarioPage() {
         setNewTrabajadorNombre('')
         setNewTrabajadorDocumento('')
         setNewTrabajadorArl('')
-        // Reset validation
-        setShowErrors(false)
-        setFormErrors({})
         setIsCreateSheetOpen(true)
     }, [])
 
