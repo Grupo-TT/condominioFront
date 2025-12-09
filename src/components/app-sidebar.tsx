@@ -1,15 +1,15 @@
 "use client"
 
 import * as React from "react"
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Building2,
-  Home,
-  Wallet,
-  Package,
-  Users,
-  FileText,
-  Megaphone,
-} from "lucide-react"
+  DashboardSquare02Icon,
+  House01Icon,
+  Package01Icon,
+  PresentationLineChart02Icon,
+  File02Icon,
+  Building06Icon,
+} from '@hugeicons/core-free-icons'
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -24,23 +24,18 @@ import {
 } from "@/components/ui/sidebar"
 
 const data = {
-  user: {
-    name: "Propietario",
-    email: "propietario@flordigital.com",
-    avatar: "",
-  },
   // Sección: Inicio
   navInicio: [
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: Home,
+      icon: <HugeiconsIcon icon={DashboardSquare02Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
       isActive: true,
     },
     {
       title: "Mi Casa",
       url: "/mi-casa",
-      icon: Building2,
+      icon: <HugeiconsIcon icon={House01Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
       items: [
         {
           title: "Pagos y Multas",
@@ -53,49 +48,22 @@ const data = {
       ],
     },
   ],
-  // Sección: Finanzas
-  navFinanzas: [
-    {
-      title: "Tesorería",
-      url: "/tesoreria",
-      icon: Wallet,
-      items: [
-        {
-          title: "Cuotas",
-          url: "/tesoreria/cuotas",
-        },
-        {
-          title: "Movimientos",
-          url: "/tesoreria/movimientos",
-        },
-        {
-          title: "Multas",
-          url: "/tesoreria/multas",
-        },
-      ],
-    },
-  ],
   // Sección: Comunidad
   navComunidad: [
     {
-      title: "Bienes Comunes",
-      url: "/bienes-comunes",
-      icon: Package,
+      title: "Reservas",
+      url: "/reservas",
+      icon: <HugeiconsIcon icon={Package01Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
     },
     {
       title: "Asamblea",
       url: "/asamblea",
-      icon: Users,
+      icon: <HugeiconsIcon icon={PresentationLineChart02Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
     },
     {
       title: "Solicitudes",
       url: "/solicitudes",
-      icon: FileText,
-    },
-    {
-      title: "Comunicados",
-      url: "/comunicados",
-      icon: Megaphone,
+      icon: <HugeiconsIcon icon={File02Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
     },
   ],
 }
@@ -109,7 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Building2 className="size-4" />
+                  <HugeiconsIcon icon={Building06Icon} className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Flor Digital</span>
@@ -123,15 +91,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {/* Sección: Inicio */}
         <NavMain items={data.navInicio} label="Inicio" />
-        
-        {/* Sección: Finanzas */}
-        <NavMain items={data.navFinanzas} label="Finanzas" />
-        
+
         {/* Sección: Comunidad */}
         <NavMain items={data.navComunidad} label="Comunidad" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )
