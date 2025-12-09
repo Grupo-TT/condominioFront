@@ -36,6 +36,7 @@ import {
   Home01Icon,
   FileDollarIcon,
   WalletAdd01Icon,
+  InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types';
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation';
@@ -181,30 +182,60 @@ function ObligacionesSubTable({
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 items-center justify-center border-primary bg-primary/10 text-primary hover:bg-primary/20"
-            onClick={() => onObligacionClick(casa, row.original)}
-          >
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={MoneyReceiveFlow01Icon}
-                size={20}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  paddingBottom: '2px',
-                  color: '#4C6C5B',
-                }}
-              />
-              <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>
-                Registrar
-              </span>
-            </div>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 items-center justify-center border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                  onClick={() => onObligacionClick(casa, row.original)}
+                >
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon
+                      icon={MoneyReceiveFlow01Icon}
+                      size={20}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        paddingBottom: '2px',
+                        color: '#4C6C5B',
+                      }}
+                    />
+                    <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>
+                      Registrar
+                    </span>
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Registrar pago
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  mode="icon"
+                  className="h-8 w-8 border-gray-400"
+                  onClick={() => onViewDetail(row.original, casa)}
+                >
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    size={20}
+                    strokeWidth={2}
+                    className="text-gray-600"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Ver detalles
+              </TooltipContent>
+            </Tooltip>
+          </div>
         ),
-        size: 120,
+        size: 180,
         enableSorting: false,
       },
     ],
@@ -645,27 +676,34 @@ export default function CuotasPage() {
         cell: ({ row }) => (
           <>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="primary"
-                className="gap-2 items-center justify-center"
-                onClick={() => handleCasaClick(row.original)}
-              >
-                <div className="flex items-center gap-2">
-                  <HugeiconsIcon
-                    icon={MoneyReceiveFlow01Icon}
-                    size={20}
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      paddingBottom: '2px',
-                    }}
-                  />
-                  <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
-                    Registrar
-                  </span>
-                </div>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    className="gap-2 items-center justify-center"
+                    onClick={() => handleCasaClick(row.original)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon
+                        icon={MoneyReceiveFlow01Icon}
+                        size={20}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          paddingBottom: '2px',
+                        }}
+                      />
+                      <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
+                        Registrar
+                      </span>
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Registrar pago
+                </TooltipContent>
+              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
