@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,11 +19,31 @@ import {
   HousesStatusChart,
   UpcomingAssemblies
 } from "@/components/admin-dashboard"
+import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
 
 export default function Page() {
-  const [selectedYear, setSelectedYear] = useState<number>(2024)
+    const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes } = useDashboardAdmin()
+  const [selectedYear, setSelectedYear] = useState<number>(2025)
   const monthlyData = monthlyDataByYear[selectedYear]
+  const [monthlyData2, setMonthlyData] = useState<any[]>([])
+  const [monthSummary, setMonthSummary] = useState<any>({})
 
+  useEffect(() => {
+    const load = async () => {
+        const yearData = await fetchResumenFinancieroAnio(selectedYear)
+        const monthData = await fetchResumenFinancieroMes()
+
+        console.log('Por Año:', yearData)
+        console.log('Mes Actual:', monthData)
+
+        setMonthlyData(yearData)
+        setMonthSummary(monthData)
+        console.log("🚀 ~ load ~ monthData:", monthData)
+    }
+
+    load()
+}, [selectedYear])
+  
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -70,9 +90,9 @@ export default function Page() {
             <MonthlyFinanceChart
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
-              monthlyData={monthlyData}
+              monthlyData={monthlyData2}
             />
-            <MetricsCardsGrid summary={dashboardSummary} />
+            <MetricsCardsGrid summary={monthSummary} />
           </div>
 
           {/* Houses Status Section */}
