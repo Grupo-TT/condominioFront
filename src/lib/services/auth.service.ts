@@ -148,7 +148,7 @@ class AuthService {
         jsonPayload = Buffer.from(base64, 'base64').toString('utf-8')
       }
       return JSON.parse(jsonPayload)
-    } catch (err: unknown) {
+    } catch {
       return null
     }
   }

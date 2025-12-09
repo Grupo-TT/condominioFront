@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { recursoService } from '@/services/recurso.service'
-import { RecursoRequest, RecursoResponse } from '@/types/recursos.types'
 import { mapResponseToUI, RecursoUI } from '@/services/admin.recurso.adapter'
 
 export const useRecursos = () => {
@@ -16,7 +15,7 @@ export const useRecursos = () => {
             const list = await recursoService.getRecurso()
             const adaptados = list.map(mapResponseToUI)
             setRecursos(adaptados)
-        } catch (e) {
+        } catch (_e) {
             setError('Error cargando recursos')
         } finally {
             setLoading(false)

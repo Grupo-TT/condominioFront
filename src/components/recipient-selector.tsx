@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Search, Users, ChevronDown } from 'lucide-react'
+import { Search, Users, ChevronDown, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,22 +12,24 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 
-interface PropietarioSeleccionable {
+interface PersonaSeleccionable {
   id: string
-  nombre: string
-  email: string
-  numeroCasa: string
-  tipo: 'propietario' | 'arrendatario'
+  nombreCompleto: string
+  correo: string
+  telefono: number
+  roles: string[]
+  idCasa: number
 }
 
 interface RecipientSelectorProps {
-  propietariosDisponibles: PropietarioSeleccionable[]
-  selectedPropietarios: PropietarioSeleccionable[]
+  propietariosDisponibles: PersonaSeleccionable[]
+  selectedPropietarios: PersonaSeleccionable[]
   searchPropietarios: string
   onSearchChange: (search: string) => void
-  onTogglePropietario: (propietario: PropietarioSeleccionable) => void
+  onTogglePropietario: (propietario: PersonaSeleccionable) => void
   onSelectAll: () => void
-  onSelectTipo: (tipo: 'propietario' | 'arrendatario') => void
+  onSelectByRole: (role: string) => void
+  loading?: boolean
 }
 
 // Función para obtener las iniciales del nombre
@@ -40,6 +42,28 @@ function getInitials(nombre: string) {
     .slice(0, 2)
 }
 
+// Helper to get unique roles from all personas (excluding ADMIN)
+function getUniqueRoles(personas: PersonaSeleccionable[]): string[] {
+  const rolesSet = new Set<string>()
+  personas.forEach(p => (p.roles || []).forEach(r => {
+    if (r.toUpperCase() !== 'ADMIN') {
+      rolesSet.add(r)
+    }
+  }))
+  return Array.from(rolesSet).sort()
+}
+
+// Helper to get primary role for badge display
+function getPrimaryRole(roles: string[] | undefined): string {
+  if (!roles || roles.length === 0) return 'RESIDENTE'
+  // Prioritize certain roles for display
+  const priorityOrder = ['ADMIN', 'PROPIETARIO', 'ARRENDATARIO', 'RESIDENTE']
+  for (const priority of priorityOrder) {
+    if (roles.includes(priority)) return priority
+  }
+  return roles[0] || 'RESIDENTE'
+}
+
 export function RecipientSelector({
   propietariosDisponibles,
   selectedPropietarios,
@@ -47,19 +71,37 @@ export function RecipientSelector({
   onSearchChange,
   onTogglePropietario,
   onSelectAll,
-  onSelectTipo,
+  onSelectByRole,
+  loading = false,
 }: RecipientSelectorProps) {
-  // Filtrar propietarios por búsqueda
+  // Filtrar propietarios por búsqueda y excluir admins
   const propietariosFiltrados = useMemo(() => {
-    if (!searchPropietarios) return propietariosDisponibles
+    // First, filter out admins
+    const nonAdmins = propietariosDisponibles.filter(
+      p => !(p.roles || []).some(r => r.toUpperCase() === 'ADMIN')
+    )
+
+    if (!searchPropietarios) return nonAdmins
     const term = searchPropietarios.toLowerCase()
-    return propietariosDisponibles.filter(
-      p => p.nombre.toLowerCase().includes(term) ||
-           p.email.toLowerCase().includes(term) ||
-           p.numeroCasa.toLowerCase().includes(term) ||
-           p.tipo.toLowerCase().includes(term)
+    return nonAdmins.filter(
+      p => p.nombreCompleto?.toLowerCase().includes(term) ||
+        p.correo?.toLowerCase().includes(term) ||
+        (p.idCasa != null && p.idCasa.toString().includes(term)) ||
+        (p.roles || []).some(r => r.toLowerCase().includes(term))
     )
   }, [propietariosDisponibles, searchPropietarios])
+
+  // Get unique roles for the dropdown
+  const uniqueRoles = useMemo(() => getUniqueRoles(propietariosDisponibles), [propietariosDisponibles])
+
+  // Check if all personas with a specific role are selected
+  const isRoleFullySelected = (role: string) => {
+    const personasWithRole = propietariosDisponibles.filter(p => (p.roles || []).includes(role))
+    return personasWithRole.length > 0 && personasWithRole.every(p => selectedPropietarios.some(s => s.id === p.id))
+  }
+
+  // Count personas with a specific role
+  const countByRole = (role: string) => propietariosDisponibles.filter(p => (p.roles || []).includes(role)).length
 
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -100,30 +142,21 @@ export function RecipientSelector({
                 <span className="text-sm font-medium text-gray-700">Todos</span>
                 <span className="text-xs text-gray-400 ml-auto">{propietariosDisponibles.length}</span>
               </label>
-              <label
-                className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Checkbox
-                  checked={propietariosDisponibles.filter(p => p.tipo === 'propietario').every(p => selectedPropietarios.some(s => s.id === p.id))}
-                  onCheckedChange={() => onSelectTipo('propietario')}
-                  className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
-                />
-                <span className="text-sm font-medium text-gray-700">Propietarios</span>
-                <span className="text-xs text-gray-400 ml-auto">{propietariosDisponibles.filter(p => p.tipo === 'propietario').length}</span>
-              </label>
-              <label
-                className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Checkbox
-                  checked={propietariosDisponibles.filter(p => p.tipo === 'arrendatario').every(p => selectedPropietarios.some(s => s.id === p.id))}
-                  onCheckedChange={() => onSelectTipo('arrendatario')}
-                  className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
-                />
-                <span className="text-sm font-medium text-gray-700">Arrendatarios</span>
-                <span className="text-xs text-gray-400 ml-auto">{propietariosDisponibles.filter(p => p.tipo === 'arrendatario').length}</span>
-              </label>
+              {uniqueRoles.map((role) => (
+                <label
+                  key={role}
+                  className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Checkbox
+                    checked={isRoleFullySelected(role)}
+                    onCheckedChange={() => onSelectByRole(role)}
+                    className="data-[state=checked]:bg-gray-900 data-[state=checked]:border-gray-900"
+                  />
+                  <span className="text-sm font-medium text-gray-700 capitalize">{role.toLowerCase()}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{countByRole(role)}</span>
+                </label>
+              ))}
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -136,7 +169,7 @@ export function RecipientSelector({
             <Search className="h-4 w-4 text-gray-400" />
           </div>
           <Input
-            placeholder="Buscar propietario..."
+            placeholder="Buscar por nombre, correo o casa..."
             value={searchPropietarios}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-11 h-11 text-sm bg-gray-50 border-0 rounded-xl focus-visible:ring-1 focus-visible:ring-gray-200 placeholder:text-gray-400"
@@ -147,18 +180,24 @@ export function RecipientSelector({
       {/* Lista de propietarios */}
       <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
         <div className="space-y-2">
-          {propietariosFiltrados.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <Loader2 className="w-8 h-8 text-gray-400 mb-2 animate-spin" />
+              <p className="text-sm text-gray-400">Cargando destinatarios...</p>
+            </div>
+          ) : propietariosFiltrados.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
               <Users className="w-10 h-10 text-gray-300 mb-2" />
               <p className="text-sm text-gray-400">
                 {searchPropietarios
-                  ? 'No se encontraron propietarios'
-                  : 'No hay propietarios disponibles'}
+                  ? 'No se encontraron destinatarios'
+                  : 'No hay destinatarios disponibles'}
               </p>
             </div>
           ) : (
             propietariosFiltrados.map((propietario) => {
               const isSelected = selectedPropietarios.some(p => p.id === propietario.id)
+              const primaryRole = getPrimaryRole(propietario.roles)
               return (
                 <div
                   key={propietario.id}
@@ -175,7 +214,7 @@ export function RecipientSelector({
                       "rounded-xl text-xs font-semibold",
                       isSelected ? "bg-gray-700 text-white" : "bg-white text-gray-700 border border-gray-200"
                     )}>
-                      {getInitials(propietario.nombre)}
+                      {getInitials(propietario.nombreCompleto)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -183,18 +222,18 @@ export function RecipientSelector({
                       "text-sm font-medium truncate",
                       isSelected ? "text-white" : "text-gray-900"
                     )}>
-                      {propietario.nombre}
+                      {propietario.nombreCompleto}
                     </p>
                     <p className={cn(
                       "text-xs truncate",
                       isSelected ? "text-gray-300" : "text-gray-400"
                     )}>
-                      Casa {propietario.numeroCasa} · {propietario.email}
+                      {propietario.idCasa != null ? `Casa ${propietario.idCasa} · ` : ''}{propietario.correo || ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge
-                      variant={propietario.tipo === 'propietario' ? 'outline' : 'secondary'}
+                      variant="outline"
                       appearance="light"
                       size="sm"
                       className={cn(
@@ -202,7 +241,7 @@ export function RecipientSelector({
                         isSelected && "bg-white/20 text-white border-white/30"
                       )}
                     >
-                      {propietario.tipo}
+                      {primaryRole.toLowerCase()}
                     </Badge>
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
