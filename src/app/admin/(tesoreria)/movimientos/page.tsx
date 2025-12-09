@@ -895,7 +895,7 @@ export default function MovimientosPage() {
                 />
               </div>
             </DataGrid>
-            {!hasResults && (
+            {!isLoading && !hasResults && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-gray-400 mb-2">
                   <Search className="w-12 h-12 mx-auto" />
