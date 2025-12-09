@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
-import { 
-  startOfMonth, 
-  endOfMonth, 
-  eachDayOfInterval, 
-  format, 
+import {
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  format,
   isSameMonth,
   isSameDay
 } from 'date-fns'
@@ -32,11 +32,11 @@ export default function ReservasPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // ==================== Datos de Reservas ====================
-  const { 
-    reservasAprobadas, 
-    reservasRechazadas, 
-    reservasPendientes, 
-    loading, 
+  const {
+    reservasAprobadas,
+    reservasRechazadas,
+    reservasPendientes,
+    loading,
     error,
     aprobarReserva,
     rechazarReserva,
@@ -114,12 +114,12 @@ export default function ReservasPage() {
   // ==================== Handlers ====================
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
-    
+
     // Si el día no está en el mes actual, cambiar el mes
     if (!isSameMonth(date, selectedMonth)) {
       setSelectedMonth(date)
     }
-    
+
     // Hacer scroll al día seleccionado
     const dateKey = format(date, 'yyyy-MM-dd')
     setTimeout(() => {
@@ -148,8 +148,8 @@ export default function ReservasPage() {
         <div className="flex-1 flex flex-col min-w-0 min-h-0 border-r border-gray-100">
           {/* Selector de meses con filtros */}
           <div className="shrink-0">
-            <MonthSelector 
-              selectedMonth={selectedMonth} 
+            <MonthSelector
+              selectedMonth={selectedMonth}
               onMonthChange={setSelectedMonth}
               tipoRecursoFilter={tipoRecursoFilter}
               estadoFilter={estadoFilter}
@@ -162,7 +162,7 @@ export default function ReservasPage() {
           </div>
 
           {/* Lista de días con scroll */}
-          <div 
+          <div
             ref={scrollContainerRef}
             className="flex-1 min-h-0 overflow-y-auto px-4 py-4"
           >
@@ -206,9 +206,17 @@ export default function ReservasPage() {
             />
           </div>
 
+          {/* Header */}
+
+          <div className="flex items-center justify-between p-5 pt-1 pb-1">
+            <h3 className="text-base font-semibold text-gray-900">
+              Reservas pendientes
+            </h3>
+          </div>
+
           {/* Próximas reservas */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <ProximasReservas 
+            <ProximasReservas
               reservas={reservasFiltradas}
               onAprobar={handleAprobar}
               onRechazar={handleRechazar}

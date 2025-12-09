@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import type { IEventExtended } from '@/types/reservas-calendar.types'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/admin.recurso.adapter'
 import { RECURSOS_MOCK } from '@/data/recursos-mock'
 
 interface EditReservaSheetProps {
@@ -59,7 +59,7 @@ export function EditReservaSheet({
   // Generar opciones de hora en formato 12 horas (7:00 AM a 11:00 PM)
   const horas = useMemo(() => {
     const horasArray: Array<{ value: string; label: string; hora24: number }> = []
-    
+
     // Generar horas de 7:00 AM (07:00) a 11:59 PM (23:59)
     for (let i = 7; i < 24; i++) {
       const hora12 = i === 0 ? 12 : i > 12 ? i - 12 : i
@@ -67,10 +67,10 @@ export function EditReservaSheet({
       const hora24 = i
       const value = `${i.toString().padStart(2, '0')}:00`
       const label = `${hora12}:00 ${ampm}`
-      
+
       horasArray.push({ value, label, hora24 })
     }
-    
+
     return horasArray
   }, [])
 
@@ -78,10 +78,10 @@ export function EditReservaSheet({
   useEffect(() => {
     if (reserva) {
       // Buscar el recurso en RECURSOS_MOCK por nombre
-      const recurso = RECURSOS_MOCK.find(r => 
+      const recurso = RECURSOS_MOCK.find(r =>
         r.nombre.toLowerCase() === reserva.title.toLowerCase()
       )
-      
+
       if (recurso) {
         setSelectedRecurso(recurso)
       } else {
@@ -102,16 +102,16 @@ export function EditReservaSheet({
       // Inicializar los valores del formulario desde la reserva
       const fechaInicio = new Date(reserva.startDate)
       setEditDate(fechaInicio)
-      
+
       // Extraer hora de startDate (formato HH:mm)
       const horaInicio = `${fechaInicio.getHours().toString().padStart(2, '0')}:00`
       setEditHoraInicial(horaInicio)
-      
+
       // Extraer hora de endDate (formato HH:mm)
       const fechaFin = new Date(reserva.endDate)
       const horaFin = `${fechaFin.getHours().toString().padStart(2, '0')}:00`
       setEditHoraFinal(horaFin)
-      
+
       setEditNumeroInvitados(reserva.numeroInvitados || 1)
     }
   }, [reserva])
@@ -132,49 +132,49 @@ export function EditReservaSheet({
     if (!selectedRecurso || !editDate) {
       return new Set<string>()
     }
-    
+
     const ocupadas = new Set<string>()
-    
+
     // Filtrar reservas que coincidan con el recurso y la fecha (excluyendo la reserva que se está editando)
     const reservasDelDia = todasLasReservas.filter(r => {
       // Excluir la reserva que se está editando
       if (reserva && r.id === reserva.id) {
         return false
       }
-      
+
       // Comparar nombre del recurso
       if (r.title.toLowerCase() !== selectedRecurso.nombre.toLowerCase()) {
         return false
       }
-      
+
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(r.startDate)
       fechaReserva.setHours(0, 0, 0, 0)
       const fechaSeleccionada = new Date(editDate)
       fechaSeleccionada.setHours(0, 0, 0, 0)
-      
+
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
       const mismoDia = fechaReserva.getDate() === fechaSeleccionada.getDate()
       const mismoMes = fechaReserva.getMonth() === fechaSeleccionada.getMonth()
       const mismoAnio = fechaReserva.getFullYear() === fechaSeleccionada.getFullYear()
-      
+
       const fechaCoincide = mismoDia && mismoMes && mismoAnio
-      
+
       if (!fechaCoincide) {
         return false
       }
-      
+
       // Solo considerar reservas aprobadas o pendientes (no rechazadas)
       return r.estado === 'aprobada' || r.estado === 'pendiente'
     })
-    
+
     // Marcar todas las horas ocupadas por las reservas
     reservasDelDia.forEach(r => {
       const fechaInicio = new Date(r.startDate)
       const fechaFin = new Date(r.endDate)
       const horaInicio = fechaInicio.getHours()
       const horaFin = fechaFin.getHours()
-      
+
       // Marcar todas las horas que están dentro del rango de la reserva
       for (let hora = horaInicio; hora < horaFin; hora++) {
         if (hora >= 7 && hora < 24) {
@@ -183,7 +183,7 @@ export function EditReservaSheet({
         }
       }
     })
-    
+
     return ocupadas
   }, [selectedRecurso, editDate, todasLasReservas, reserva])
 
@@ -193,12 +193,12 @@ export function EditReservaSheet({
       // Si no hay hora inicial seleccionada, mostrar todas las horas no ocupadas
       return horas.filter(h => !horasOcupadasEdit.has(h.value))
     }
-    
+
     const horaInicialObj = horas.find(h => h.value === editHoraInicial)
     if (!horaInicialObj) return horas.filter(h => !horasOcupadasEdit.has(h.value))
-    
+
     // Filtrar horas posteriores a la inicial y que no estén ocupadas
-    return horas.filter(h => 
+    return horas.filter(h =>
       h.hora24 > horaInicialObj.hora24 && !horasOcupadasEdit.has(h.value)
     )
   }, [editHoraInicial, horas, horasOcupadasEdit])
@@ -216,11 +216,11 @@ export function EditReservaSheet({
     if (editHoraInicial && editHoraFinal) {
       const horaInicialObj = horas.find(h => h.value === editHoraInicial)
       const horaFinalObj = horas.find(h => h.value === editHoraFinal)
-      
+
       if (horaInicialObj && horaFinalObj && horaFinalObj.hora24 <= horaInicialObj.hora24) {
         setEditHoraFinal('')
       }
-      
+
       // También resetear si la hora final está ocupada
       if (horasOcupadasEdit.has(editHoraFinal)) {
         setEditHoraFinal('')
@@ -230,7 +230,7 @@ export function EditReservaSheet({
 
   const handleSave = () => {
     if (!reserva || !editDate || !editHoraInicial || !editHoraFinal) return
-    
+
     onSave(reserva, {
       fecha: editDate,
       horaInicial: editHoraInicial,
@@ -243,8 +243,8 @@ export function EditReservaSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="right" 
+      <SheetContent
+        side="right"
         className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
         style={{ width: '500px', maxWidth: 'none' }}
       >
@@ -258,7 +258,7 @@ export function EditReservaSheet({
             <Card className="border border-gray-200 bg-white p-3 rounded-2xl">
               <div className="flex flex-row gap-4">
                 {/* Contenedor izquierdo con círculos concéntricos */}
-                <div 
+                <div
                   className="flex-shrink-0 w-20 flex items-center justify-center relative rounded-xl"
                   style={{
                     background: selectedRecurso.tipo === 'zona'
@@ -291,9 +291,9 @@ export function EditReservaSheet({
                 <div className="flex-1 flex flex-col justify-center">
                   <div className="flex items-start justify-between mb-1.5">
                     <h3 className="font-bold text-lg text-gray-900 leading-tight">{selectedRecurso.nombre}</h3>
-                    <span 
+                    <span
                       className="inline-block text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2"
-                      style={{ 
+                      style={{
                         backgroundColor: selectedRecurso.tipo === 'zona' ? '#F1E8D6' : '#E3E4EA',
                         color: selectedRecurso.tipo === 'zona' ? '#A39170' : '#595D75'
                       }}
@@ -307,11 +307,11 @@ export function EditReservaSheet({
                       <div className="flex items-center gap-2">
                         <CalendarIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
                         <p className="text-sm text-gray-700 font-medium">
-                          {editDate.toLocaleDateString('es-ES', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
+                          {editDate.toLocaleDateString('es-ES', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                           }).replace(/^\w/, c => c.toUpperCase())}
                         </p>
                       </div>
@@ -438,8 +438,8 @@ export function EditReservaSheet({
           {/* Footer con botones */}
           <div className="border-t px-6 py-4 bg-gray-50">
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 className="flex-1"
               >
@@ -447,7 +447,7 @@ export function EditReservaSheet({
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
+                  <Button
                     disabled={!editDate || !editHoraInicial || !editHoraFinal}
                     className="flex-1"
                   >
@@ -461,7 +461,7 @@ export function EditReservaSheet({
                       Por favor, revisa los detalles actualizados de la reserva antes de confirmar.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  
+
                   {selectedRecurso && editDate && editHoraInicial && editHoraFinal && (
                     <div className="space-y-4 py-4">
                       {/* Información del Recurso */}
@@ -484,11 +484,11 @@ export function EditReservaSheet({
                         <CalendarIcon className="w-5 h-5 text-gray-600 flex-shrink-0" />
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            {editDate.toLocaleDateString('es-ES', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
+                            {editDate.toLocaleDateString('es-ES', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
                             }).replace(/^\w/, c => c.toUpperCase())}
                           </p>
                         </div>

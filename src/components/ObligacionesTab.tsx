@@ -40,7 +40,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
-import { obligacionesPendientesMock, type ObligacionPendiente } from '@/data/mi-casa.mock'
+import { ObligacionPendiente } from '@/types/casa.types'
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('es-CO', {
@@ -51,7 +51,13 @@ const formatCurrency = (value: number): string => {
   }).format(value)
 }
 
-export function ObligacionesTab() {
+interface ObligacionesProps {
+  obligaciones: ObligacionPendiente[]
+}
+
+export function ObligacionesTab({
+  obligaciones,
+}: ObligacionesProps) {
   const añoSelectId = useId()
   const añoActual = new Date().getFullYear()
   const añosDisponibles = Array.from({ length: 4 }, (_, i) => añoActual - i)
@@ -62,21 +68,24 @@ export function ObligacionesTab() {
   })
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'Pendiente' | 'Parcial' | 'Pagada'>('todas')
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'PENDIENTE' | 'POR_COBRAR' | 'CONDONADO'>('todas')
   const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const [añoSeleccionado, setAñoSeleccionado] = useState(añoActual.toString())
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
+  const formatEstado = (e: string) => e === "POR_COBRAR" ? "Abonado" : e.toLowerCase().replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase());
+  const formatEstadoFilter = (e: string) => e === "POR_COBRAR" ? "Abonadas" : e === "CONDONADO" ? "Condonadas" : e === "PENDIENTE" ? "Pendientes" : "Todas";
+
   // Filtrar obligaciones
   const obligacionesFiltradas = useMemo(() => {
-    let filtradas = obligacionesPendientesMock
+    let filtradas = obligaciones
 
     // Filtrar por año
     filtradas = filtradas.filter(o => o.año === parseInt(añoSeleccionado))
 
     // Filtrar por estado
     if (estadoFilter !== 'todas') {
-      filtradas = filtradas.filter(o => o.estado === estadoFilter)
+      filtradas = filtradas.filter(o => o.estadoPago === estadoFilter)
     }
 
     // Filtrar por término de búsqueda
@@ -88,7 +97,7 @@ export function ObligacionesTab() {
     }
 
     return filtradas
-  }, [searchTerm, estadoFilter, añoSeleccionado])
+  }, [searchTerm, estadoFilter, añoSeleccionado, obligaciones])
 
   const handleClearSearch = () => {
     setSearchTerm('')
@@ -149,7 +158,7 @@ export function ObligacionesTab() {
       header: ({ column }) => <DataGridColumnHeader title="Saldo Pendiente" column={column} />,
       cell: ({ row }) => (
         <div className="font-semibold text-red-600">
-          {formatCurrency(row.original.saldoPendiente)}
+          {formatCurrency(row.original.valorPendiente)}
         </div>
       ),
       enableSorting: true,
@@ -161,7 +170,7 @@ export function ObligacionesTab() {
       header: ({ column }) => <DataGridColumnHeader title="Abonado" column={column} />,
       cell: ({ row }) => (
         <div className="font-semibold text-green-600">
-          {formatCurrency(row.original.abonado)}
+          {formatCurrency(row.original.montoPagado)}
         </div>
       ),
       enableSorting: true,
@@ -172,15 +181,13 @@ export function ObligacionesTab() {
       id: 'estado',
       header: ({ column }) => <DataGridColumnHeader title="Estado" column={column} />,
       cell: ({ row }) => {
-        const estado = row.original.estado
         let badgeVariant: 'success' | 'destructive' | 'warning' = 'warning'
         let dotColor = 'bg-yellow-500'
-        const estadoTexto = estado
-        
-        if (estado === 'Pagada') {
+        const estado = formatEstado(row.original.estadoPago);
+        if (estado === 'Condonado') {
           badgeVariant = 'success'
           dotColor = 'bg-green-500'
-        } else if (estado === 'Parcial') {
+        } else if (estado === 'Abonado') {
           badgeVariant = 'warning'
           dotColor = 'bg-yellow-500'
         } else {
@@ -196,7 +203,7 @@ export function ObligacionesTab() {
             className="gap-1.5"
           >
             <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-            {estadoTexto}
+            {estado}
           </Badge>
         )
       },
@@ -263,12 +270,12 @@ export function ObligacionesTab() {
                   <span className="flex items-center gap-2.5">
                     <span className={cn(
                       'ms-0.5 size-1.5 rounded-full',
-                      estadoFilter === 'Pendiente' ? 'bg-red-500' :
-                      estadoFilter === 'Parcial' ? 'bg-yellow-500' :
+                      estadoFilter === 'PENDIENTE' ? 'bg-red-500' :
+                      estadoFilter === 'POR_COBRAR' ? 'bg-yellow-500' :
                       'bg-green-500'
                     )}></span>
                     <span className="truncate">
-                      {estadoFilter}
+                      {formatEstadoFilter(estadoFilter)}
                     </span>
                   </span>
                 ) : (
@@ -299,7 +306,7 @@ export function ObligacionesTab() {
                     <CommandItem
                       value="Pendiente"
                       onSelect={() => {
-                        setEstadoFilter('Pendiente')
+                        setEstadoFilter('PENDIENTE')
                         setEstadoComboboxOpen(false)
                       }}
                     >
@@ -307,33 +314,33 @@ export function ObligacionesTab() {
                         <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
                         <span className="truncate">Pendientes</span>
                       </span>
-                      {estadoFilter === 'Pendiente' && <CommandCheck />}
+                      {estadoFilter === 'PENDIENTE' && <CommandCheck />}
                     </CommandItem>
                     <CommandItem
-                      value="Parcial"
+                      value="Abonado"
                       onSelect={() => {
-                        setEstadoFilter('Parcial')
+                        setEstadoFilter('POR_COBRAR')
                         setEstadoComboboxOpen(false)
                       }}
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="ms-1 size-1.5 rounded-full bg-yellow-500"></span>
-                        <span className="truncate">Parciales</span>
+                        <span className="truncate">Abonadas</span>
                       </span>
-                      {estadoFilter === 'Parcial' && <CommandCheck />}
+                      {estadoFilter === 'POR_COBRAR' && <CommandCheck />}
                     </CommandItem>
                     <CommandItem
                       value="Pagada"
                       onSelect={() => {
-                        setEstadoFilter('Pagada')
+                        setEstadoFilter('CONDONADO')
                         setEstadoComboboxOpen(false)
                       }}
                     >
                       <span className="flex items-center gap-2.5">
                         <span className="ms-1 size-1.5 rounded-full bg-green-500"></span>
-                        <span className="truncate">Pagadas</span>
+                        <span className="truncate">Condonadas</span>
                       </span>
-                      {estadoFilter === 'Pagada' && <CommandCheck />}
+                      {estadoFilter === 'CONDONADO' && <CommandCheck />}
                     </CommandItem>
                   </CommandGroup>
                 </CommandList>

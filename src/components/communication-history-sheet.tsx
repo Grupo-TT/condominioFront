@@ -1,8 +1,7 @@
-import { useRef } from 'react'
-import { Search, Mail, X } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Search, Mail, X, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import {
   Sheet,
   SheetContent,
@@ -12,24 +11,38 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MailSearch02Icon } from '@hugeicons/core-free-icons'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
-interface Comunicado {
+interface ComunicadoUI {
   id: string
   asunto: string
   mensaje: string
   fechaEnvio: string
-  destinatarios: number
+  destinatarios: string
   estado: 'enviado' | 'pendiente' | 'error'
 }
 
 interface CommunicationHistorySheetProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  comunicados: Comunicado[]
+  comunicados: ComunicadoUI[]
   searchTerm: string
   onSearchChange: (term: string) => void
-  onSelectComunicado: (comunicado: Comunicado) => void
+  onSelectComunicado: (comunicado: ComunicadoUI) => void
   onOpenDetails: () => void
+  onDelete: (id: string) => Promise<boolean>
+  deletingId: string | null
+  loading?: boolean
 }
 
 export function CommunicationHistorySheet({
@@ -40,8 +53,12 @@ export function CommunicationHistorySheet({
   onSearchChange,
   onSelectComunicado,
   onOpenDetails,
+  onDelete,
+  deletingId,
+  loading = false,
 }: CommunicationHistorySheetProps) {
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [openDialogId, setOpenDialogId] = useState<string | null>(null)
 
   const handleClearSearch = () => {
     onSearchChange('')
@@ -57,6 +74,11 @@ export function CommunicationHistorySheet({
       c.mensaje.toLowerCase().includes(term)
     )
   })
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    await onDelete(id)
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -112,7 +134,12 @@ export function CommunicationHistorySheet({
           {/* Lista de comunicados */}
           <ScrollArea className="flex-1">
             <div className="px-6 py-4 space-y-3">
-              {filteredComunicados.length === 0 ? (
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Loader2 className="w-8 h-8 text-gray-400 mb-4 animate-spin" />
+                  <p className="text-sm text-gray-500">Cargando comunicados...</p>
+                </div>
+              ) : filteredComunicados.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
                     <Mail className="w-7 h-7 text-gray-400" />
@@ -127,48 +154,81 @@ export function CommunicationHistorySheet({
                   </p>
                 </div>
               ) : (
-                filteredComunicados.map((comunicado) => (
-                  <div
-                    key={comunicado.id}
-                    className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer"
-                    onClick={() => {
-                      onSelectComunicado(comunicado)
-                      onOpenDetails()
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200">
-                        <Mail className="w-5 h-5 text-gray-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-medium text-gray-900 truncate">{comunicado.asunto}</h4>
-                          <Badge
-                            variant={comunicado.estado === 'enviado' ? 'success' : comunicado.estado === 'pendiente' ? 'warning' : 'destructive'}
-                            appearance="outline"
-                            className="shrink-0"
-                          >
-                            {comunicado.estado === 'enviado' ? 'Enviado' : comunicado.estado === 'pendiente' ? 'Pendiente' : 'Error'}
-                          </Badge>
+                filteredComunicados.map((comunicado) => {
+                  const isDeleting = deletingId === comunicado.id
+                  return (
+                    <div
+                      key={comunicado.id}
+                      className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer relative group"
+                      onClick={() => {
+                        if (openDialogId) return // Prevent click when dialog is open
+                        onSelectComunicado(comunicado)
+                        onOpenDetails()
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200">
+                          <Mail className="w-5 h-5 text-gray-600" />
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">{comunicado.mensaje}</p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>
-                            {new Date(comunicado.fechaEnvio).toLocaleDateString('es-ES', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          <span>•</span>
-                          <span>{comunicado.destinatarios} destinatarios</span>
+                        <div className="flex-1 min-w-0 pr-10">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium text-gray-900 truncate">{comunicado.asunto}</h4>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">{comunicado.mensaje.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}</p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>
+                              {new Date(comunicado.fechaEnvio + 'Z').toLocaleDateString('es-ES', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true,
+                              })}
+                            </span>
+                            <span>•</span>
+                            <span>{comunicado.destinatarios}</span>
+                          </div>
                         </div>
+                        {/* Delete button */}
+                        <AlertDialog open={openDialogId === comunicado.id} onOpenChange={(open) => setOpenDialogId(open ? comunicado.id : null)}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-3 right-3 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              onClick={(e) => e.stopPropagation()}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar comunicado?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. El comunicado &ldquo;{comunicado.asunto}&rdquo; será eliminado permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={(e) => handleDelete(e, comunicado.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </ScrollArea>

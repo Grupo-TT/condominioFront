@@ -1,7 +1,11 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import { useRecursoPropietario } from '@/hooks/useRecursoPropietario'
+import { toast } from 'sonner'
+import { authService } from '@/lib/services/auth.service'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,7 +21,6 @@ import { Carousel } from '@/components/ui/apple-cards-carousel'
 import { MapPin, Package, User, Minus, Plus, Calendar as CalendarIcon, Clock, Pencil, Trash2 } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Calendar02Icon } from '@hugeicons/core-free-icons'
-import { RECURSOS_MOCK } from '@/data/recursos-mock'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,89 +45,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
+  SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Calendar } from '@/components/ui/calendar'
 import { HoraCombobox } from '@/components/hora-combobox'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import type { RecursoUI } from '@/services/propietario.recurso.adapter'
+import { useReservasPropietario } from '@/hooks/useReservasPropietario'
+import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
+import type { ReservaAdaptada } from '@/types/propietario.reservas.types'
 
-// Tipo para las reservas del usuario
-interface ReservaUsuario {
-  id: string
-  recursoId: string
-  recursoNombre: string
-  tipoRecurso: 'zona' | 'objeto'
-  estado: 'pendiente' | 'aprobada' | 'rechazada'
-  fechaInicio: Date
-  fechaFin: Date
-  horaInicio: string
-  horaFin: string
-  numeroInvitados: number
-  fechaCreacion: Date
-}
-
-// Datos mock de reservas
-// Fechas fijas para facilitar pruebas - DICIEMBRE 2025 (válidas desde 9 de noviembre 2025)
-const RESERVAS_MOCK: ReservaUsuario[] = [
-  {
-    id: '1',
-    recursoId: '1', // Salón de Eventos
-    recursoNombre: 'Salón de Eventos',
-    tipoRecurso: 'zona',
-    estado: 'aprobada',
-    fechaInicio: new Date(2025, 11, 15), // 15 de diciembre 2025
-    fechaFin: new Date(2025, 11, 15),
-    horaInicio: '14:00',
-    horaFin: '18:00', // Ocupa: 14:00, 15:00, 16:00, 17:00
-    numeroInvitados: 25,
-    fechaCreacion: new Date(2025, 10, 10),
-  },
-  {
-    id: '2',
-    recursoId: '1', // Salón de Eventos (mismo recurso, diferente día)
-    recursoNombre: 'Salón de Eventos',
-    tipoRecurso: 'zona',
-    estado: 'pendiente',
-    fechaInicio: new Date(2025, 11, 17), // 17 de diciembre 2025
-    fechaFin: new Date(2025, 11, 17),
-    horaInicio: '10:00',
-    horaFin: '12:00', // Ocupa: 10:00, 11:00
-    numeroInvitados: 10,
-    fechaCreacion: new Date(2025, 10, 12),
-  },
-  {
-    id: '3',
-    recursoId: '2', // Piscina
-    recursoNombre: 'Piscina',
-    tipoRecurso: 'zona',
-    estado: 'aprobada',
-    fechaInicio: new Date(2025, 11, 16), // 16 de diciembre 2025
-    fechaFin: new Date(2025, 11, 16),
-    horaInicio: '15:00',
-    horaFin: '17:00', // Ocupa: 15:00, 16:00
-    numeroInvitados: 8,
-    fechaCreacion: new Date(2025, 10, 11),
-  },
-  {
-    id: '4',
-    recursoId: '4', // Sillas Plegables
-    recursoNombre: 'Sillas Plegables',
-    tipoRecurso: 'objeto',
-    estado: 'rechazada', // Esta NO debería bloquear horas (estado rechazada)
-    fechaInicio: new Date(2025, 11, 15),
-    fechaFin: new Date(2025, 11, 15),
-    horaInicio: '19:00',
-    horaFin: '21:00',
-    numeroInvitados: 5,
-    fechaCreacion: new Date(2025, 10, 10),
-  },
-]
 
 export default function ReservasPropietarioPage() {
   const [activeTab, setActiveTab] = useState<string>('recursos')
@@ -135,23 +70,23 @@ export default function ReservasPropietarioPage() {
   const [horaInicial, setHoraInicial] = useState<string>('')
   const [horaFinal, setHoraFinal] = useState<string>('')
   const [numeroInvitados, setNumeroInvitados] = useState<number>(1)
-  const [reservas, setReservas] = useState<ReservaUsuario[]>(RESERVAS_MOCK)
+  const { reservas, misReservas, loadingMisReservas, error, fetchReservasPropietario, fetchMisReservas, eliminarReserva, postReservasPropietario, updateReserva } = useReservasPropietario();
   const [openDialogConfirmacion, setOpenDialogConfirmacion] = useState(false)
-  const [reservaEditando, setReservaEditando] = useState<ReservaUsuario | null>(null)
-  // Estados para el formulario de edición
+  const [reservaEditando, setReservaEditando] = useState<ReservaAdaptada | null>(null)
+  const [missingIdCasa, setMissingIdCasa] = useState(false)
+
   const [editDate, setEditDate] = useState<Date | undefined>(undefined)
   const [editHoraInicial, setEditHoraInicial] = useState<string>('')
   const [editHoraFinal, setEditHoraFinal] = useState<string>('')
   const [editNumeroInvitados, setEditNumeroInvitados] = useState<number>(1)
+  const { recurso, loading: loadingRecursos, error: errorRecursos, fetchRecursoPropietario } = useRecursoPropietario()
 
-  // Separar recursos por tipo
-  const zonas = useMemo(() => RECURSOS_MOCK.filter(r => r.tipo === 'zona' && r.habilitado), [])
-  const objetos = useMemo(() => RECURSOS_MOCK.filter(r => r.tipo === 'objeto' && r.habilitado), [])
-
+  const zonas = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'zona') || [], [recurso])
+  const objetos = useMemo(() => recurso?.filter((r: RecursoUI) => r.tipo === 'objeto') || [], [recurso])
   // Generar opciones de hora en formato 12 horas (7:00 AM a 11:00 PM)
   const horas = useMemo(() => {
     const horasArray: Array<{ value: string; label: string; hora24: number }> = []
-    
+
     // Generar horas de 7:00 AM (07:00) a 11:59 PM (23:59)
     for (let i = 7; i < 24; i++) {
       const hora12 = i === 0 ? 12 : i > 12 ? i - 12 : i
@@ -159,54 +94,219 @@ export default function ReservasPropietarioPage() {
       const hora24 = i
       const value = `${i.toString().padStart(2, '0')}:00`
       const label = `${hora12}:00 ${ampm}`
-      
+
       horasArray.push({ value, label, hora24 })
     }
-    
+
     return horasArray
   }, [])
+
+  useEffect(() => {
+    fetchRecursoPropietario()
+  }, [fetchRecursoPropietario])
+
+  useEffect(() => {
+    const idCasa = authService.getIdCasa()
+    if (idCasa && !Number.isNaN(Number(idCasa))) {
+      fetchReservasPropietario()
+      setMissingIdCasa(false)
+    } else {
+      setMissingIdCasa(true)
+    }
+  }, [fetchReservasPropietario])
+
+  // Cargar "Mis Reservas" usando el endpoint específico
+  useEffect(() => {
+    const idCasa = authService.getIdCasa();
+    if (idCasa) {
+      fetchMisReservas(Number(idCasa));
+    }
+  }, [fetchMisReservas]);
+
+
+  useEffect(() => {
+    if (errorRecursos) {
+      toast.error(errorRecursos)
+    }
+  }, [errorRecursos])
+
+  useEffect(() => {
+    if (missingIdCasa) {
+      toast.error('Ocurrio un error al obtener las reservas.')
+    }
+  }, [missingIdCasa])
+
+  useEffect(() => {
+    if (error && !missingIdCasa) {
+      toast.error(error)
+    }
+  }, [error, missingIdCasa])
+
+  const handleCreateReserva = async () => {
+    if (!selectedRecurso || !selectedDate || !horaInicial || !horaFinal) {
+      toast.error("Por favor selecciona recurso, fecha e intervalo de horas para la reserva.");
+      return;
+    }
+
+
+
+    try {
+      const idCasa = authService.getIdCasa();
+      if (!idCasa) {
+        toast.error("No se pudo crear la reserva.");
+        return;
+      }
+
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser?.idPersona) {
+        toast.error("No se pudo identificar al solicitante.");
+        return;
+      }
+
+      const payload = adaptarReservaCreate({
+        idRecurso: Number(selectedRecurso.id),
+        idSolicitante: Number(currentUser.idPersona),
+        fecha: selectedDate,
+        horaInicial,
+        horaFinal,
+        numeroInvitados
+      });
+
+      await postReservasPropietario(payload);
+
+      toast.success("Reserva creada correctamente");
+
+      setOpenDialogConfirmacion(false);
+      setIsSheetOpen(false);
+
+      // Refetch ambos: disponibilidad y mis reservas
+      fetchReservasPropietario();
+      // idCasa ya está declarado arriba
+      if (idCasa) {
+        fetchMisReservas(Number(idCasa));
+      }
+
+    } catch (err: unknown) {
+      let msg = "Ocurrió un error creando la reserva";
+      if (err instanceof Error) {
+        msg = err.message;
+      }
+
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      if (axiosError?.response?.data?.message) {
+        msg = axiosError.response.data.message;
+      }
+
+      toast.error(msg);
+    }
+  };
+
+  const handleUpdateReserva = async () => {
+    if (!reservaEditando || !editDate || !editHoraInicial || !editHoraFinal) {
+      toast.error("Faltan datos para actualizar la reserva.");
+      return;
+    }
+
+    try {
+      const idCasa = authService.getIdCasa();
+      if (!idCasa) {
+        toast.error("No se pudo actualizar la reserva: idCasa no encontrado.");
+        return;
+      }
+
+      const payload = adaptarReservaUpdate({
+        idSolicitud: Number(reservaEditando.id),
+        fechaSolicitud: editDate.toISOString().split("T")[0],
+        horaInicio: editHoraInicial,
+        horaFin: editHoraFinal,
+        numeroInvitados: editNumeroInvitados,
+      });
+
+      await updateReserva(payload);
+
+      toast.success("Reserva actualizada correctamente");
+
+      setIsEditSheetOpen(false);
+      setReservaEditando(null);
+
+      // Refetch ambos
+      fetchReservasPropietario();
+      // idCasa ya está declarado arriba
+      if (idCasa) {
+        fetchMisReservas(Number(idCasa));
+      }
+
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al actualizar la reserva";
+      toast.error(msg);
+    }
+  };
+
+  const handleOpenEditReserva = (reserva: ReservaAdaptada) => {
+    // 1. Setear reserva que se está editando
+    setReservaEditando(reserva);
+
+    // 2. Seleccionar el recurso (para mostrar nombre e ícono)
+    const recursoEncontrado = recurso?.find(r => Number(r.id) === reserva.idRecurso);
+    setSelectedRecurso(recursoEncontrado || null);
+
+    // 3. Cargar fecha
+    setEditDate(reserva.fechaInicio);
+
+    // 4. Cargar horas
+    setEditHoraInicial(reserva.horaInicio);
+    setEditHoraFinal(reserva.horaFin);
+
+    // 5. Cargar número de invitados
+    setEditNumeroInvitados(reserva.numeroInvitados);
+
+    // 6. Abrir sheet
+    setIsEditSheetOpen(true);
+  };
+
 
   // Obtener horas ocupadas para el recurso y fecha seleccionada (para crear)
   const horasOcupadas = useMemo(() => {
     if (!selectedRecurso || !selectedDate) {
       return new Set<string>()
     }
-    
+
     const ocupadas = new Set<string>()
-    
+
     // Filtrar reservas que coincidan con el recurso y la fecha
     const reservasDelDia = reservas.filter(reserva => {
       // Comparar recursoId
-      if (reserva.recursoId !== selectedRecurso.id) {
+      if (String(reserva.idRecurso) !== String(selectedRecurso.id)) {
         return false
       }
-      
+
+
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(reserva.fechaInicio)
       fechaReserva.setHours(0, 0, 0, 0)
-      const fechaSeleccionada = new Date(selectedDate)
+      const fechaSeleccionada = new Date(selectedDate as Date)
       fechaSeleccionada.setHours(0, 0, 0, 0)
-      
+
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
       const mismoDia = fechaReserva.getDate() === fechaSeleccionada.getDate()
       const mismoMes = fechaReserva.getMonth() === fechaSeleccionada.getMonth()
       const mismoAnio = fechaReserva.getFullYear() === fechaSeleccionada.getFullYear()
-      
+
       const fechaCoincide = mismoDia && mismoMes && mismoAnio
-      
+
       if (!fechaCoincide) {
         return false
       }
-      
+
       // Solo considerar reservas aprobadas o pendientes (no rechazadas)
       return reserva.estado === 'aprobada' || reserva.estado === 'pendiente'
     })
-    
+
     // Marcar todas las horas ocupadas por las reservas
     reservasDelDia.forEach(reserva => {
       const [horaInicio] = reserva.horaInicio.split(':').map(Number)
       const [horaFin] = reserva.horaFin.split(':').map(Number)
-      
+
       // Marcar todas las horas que están dentro del rango de la reserva
       // Incluimos desde la hora de inicio hasta la hora de fin (excluyendo la hora de fin)
       // Ejemplo: si la reserva es de 14:00 a 18:00, ocupamos 14:00, 15:00, 16:00, 17:00
@@ -217,7 +317,7 @@ export default function ReservasPropietarioPage() {
         }
       }
     })
-    
+
     return ocupadas
   }, [selectedRecurso, selectedDate, reservas])
 
@@ -226,47 +326,47 @@ export default function ReservasPropietarioPage() {
     if (!selectedRecurso || !editDate) {
       return new Set<string>()
     }
-    
+
     const ocupadas = new Set<string>()
-    
+
     // Filtrar reservas que coincidan con el recurso y la fecha (excluyendo la reserva que se está editando)
     const reservasDelDia = reservas.filter(reserva => {
       // Excluir la reserva que se está editando
       if (reservaEditando && reserva.id === reservaEditando.id) {
         return false
       }
-      
-      // Comparar recursoId
-      if (reserva.recursoId !== selectedRecurso.id) {
+
+      // Comparar recurso por nombre (backend devuelve nombre en la reserva)
+      if (String(reserva.idRecurso) !== String(selectedRecurso.id)) {
         return false
       }
-      
+
       // Comparar fecha (solo día, mes y año)
       const fechaReserva = new Date(reserva.fechaInicio)
       fechaReserva.setHours(0, 0, 0, 0)
-      const fechaSeleccionada = new Date(editDate)
+      const fechaSeleccionada = new Date(editDate as Date)
       fechaSeleccionada.setHours(0, 0, 0, 0)
-      
+
       // Comparar año, mes y día por separado para evitar problemas de zona horaria
       const mismoDia = fechaReserva.getDate() === fechaSeleccionada.getDate()
       const mismoMes = fechaReserva.getMonth() === fechaSeleccionada.getMonth()
       const mismoAnio = fechaReserva.getFullYear() === fechaSeleccionada.getFullYear()
-      
+
       const fechaCoincide = mismoDia && mismoMes && mismoAnio
-      
+
       if (!fechaCoincide) {
         return false
       }
-      
+
       // Solo considerar reservas aprobadas o pendientes (no rechazadas)
       return reserva.estado === 'aprobada' || reserva.estado === 'pendiente'
     })
-    
+
     // Marcar todas las horas ocupadas por las reservas
     reservasDelDia.forEach(reserva => {
       const [horaInicio] = reserva.horaInicio.split(':').map(Number)
       const [horaFin] = reserva.horaFin.split(':').map(Number)
-      
+
       // Marcar todas las horas que están dentro del rango de la reserva
       for (let hora = horaInicio; hora < horaFin; hora++) {
         if (hora >= 7 && hora < 24) {
@@ -275,7 +375,7 @@ export default function ReservasPropietarioPage() {
         }
       }
     })
-    
+
     return ocupadas
   }, [selectedRecurso, editDate, reservas, reservaEditando])
 
@@ -285,12 +385,12 @@ export default function ReservasPropietarioPage() {
       // Si no hay hora inicial seleccionada, mostrar todas las horas no ocupadas
       return horas.filter(h => !horasOcupadas.has(h.value))
     }
-    
+
     const horaInicialObj = horas.find(h => h.value === horaInicial)
     if (!horaInicialObj) return horas.filter(h => !horasOcupadas.has(h.value))
-    
+
     // Filtrar horas posteriores a la inicial y que no estén ocupadas
-    return horas.filter(h => 
+    return horas.filter(h =>
       h.hora24 > horaInicialObj.hora24 && !horasOcupadas.has(h.value)
     )
   }, [horaInicial, horas, horasOcupadas])
@@ -301,12 +401,12 @@ export default function ReservasPropietarioPage() {
       // Si no hay hora inicial seleccionada, mostrar todas las horas no ocupadas
       return horas.filter(h => !horasOcupadasEdit.has(h.value))
     }
-    
+
     const horaInicialObj = horas.find(h => h.value === editHoraInicial)
     if (!horaInicialObj) return horas.filter(h => !horasOcupadasEdit.has(h.value))
-    
+
     // Filtrar horas posteriores a la inicial y que no estén ocupadas
-    return horas.filter(h => 
+    return horas.filter(h =>
       h.hora24 > horaInicialObj.hora24 && !horasOcupadasEdit.has(h.value)
     )
   }, [editHoraInicial, horas, horasOcupadasEdit])
@@ -324,11 +424,11 @@ export default function ReservasPropietarioPage() {
     if (horaInicial && horaFinal) {
       const horaInicialObj = horas.find(h => h.value === horaInicial)
       const horaFinalObj = horas.find(h => h.value === horaFinal)
-      
+
       if (horaInicialObj && horaFinalObj && horaFinalObj.hora24 <= horaInicialObj.hora24) {
         setHoraFinal('')
       }
-      
+
       // También resetear si la hora final está ocupada
       if (horasOcupadas.has(horaFinal)) {
         setHoraFinal('')
@@ -349,11 +449,11 @@ export default function ReservasPropietarioPage() {
     if (editHoraInicial && editHoraFinal) {
       const horaInicialObj = horas.find(h => h.value === editHoraInicial)
       const horaFinalObj = horas.find(h => h.value === editHoraFinal)
-      
+
       if (horaInicialObj && horaFinalObj && horaFinalObj.hora24 <= horaInicialObj.hora24) {
         setEditHoraFinal('')
       }
-      
+
       // También resetear si la hora final está ocupada
       if (horasOcupadasEdit.has(editHoraFinal)) {
         setEditHoraFinal('')
@@ -376,7 +476,7 @@ export default function ReservasPropietarioPage() {
       <div key={zona.id} className="min-w-[360px] md:min-w-[450px] lg:min-w-[500px] max-w-[500px]">
         <Card className="flex flex-row border border-gray-200 bg-white transition-all duration-300 h-full min-h-[210px] overflow-hidden group p-3 rounded-2xl">
           {/* Contenedor izquierdo con círculos concéntricos */}
-          <div 
+          <div
             className="flex-shrink-0 w-36 flex items-center justify-center relative rounded-xl"
             style={{
               background: `radial-gradient(circle at center, rgba(163, 145, 112, 0.28) 0%, rgba(163, 145, 112, 0.28) 15%, transparent 15%, transparent 18%),
@@ -406,18 +506,17 @@ export default function ReservasPropietarioPage() {
               </p>
             </div>
             <div className="flex items-center justify-between overflow-hidden">
-              <span 
-                className={`inline-block text-xs font-medium px-2 py-1 rounded-full border ${
-                  zona.estado === 'Disponible' 
-                    ? 'border-green-500 text-green-700' 
-                    : 'border-orange-500 text-orange-700'
-                }`}
+              <span
+                className={`inline-block text-xs font-medium px-2 py-1 rounded-full border ${zona.estado === 'Disponible'
+                  ? 'border-green-500 text-green-700'
+                  : 'border-orange-500 text-orange-700'
+                  }`}
               >
                 {zona.estado}
-              </span> 
+              </span>
               {zona.estado === 'En Mantenimiento' ? (
-                <Button 
-                  className="h-10 font-semibold transition-all duration-300 w-[140px] bg-gray-100 border border-gray-300 text-gray-500 overflow-hidden relative shadow-sm ml-3 p-0 cursor-not-allowed" 
+                <Button
+                  className="h-10 font-semibold transition-all duration-300 w-[140px] bg-gray-100 border border-gray-300 text-gray-500 overflow-hidden relative shadow-sm ml-3 p-0 cursor-not-allowed"
                   disabled
                 >
                   <div className="flex items-center justify-center gap-2 px-3">
@@ -426,8 +525,8 @@ export default function ReservasPropietarioPage() {
                   </div>
                 </Button>
               ) : (
-                <Button 
-                  className="group/btn h-10 font-semibold transition-all duration-300 w-10 hover:w-[140px] bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 overflow-hidden relative shadow-sm hover:shadow-md ml-3 p-0" 
+                <Button
+                  className="group/btn h-10 font-semibold transition-all duration-300 w-10 hover:w-[140px] bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 overflow-hidden relative shadow-sm hover:shadow-md ml-3 p-0"
                   onClick={() => handleReservarClick(zona)}
                 >
                   {/* Icono centrado cuando el botón está pequeño */}
@@ -454,7 +553,7 @@ export default function ReservasPropietarioPage() {
       <div key={objeto.id} className="min-w-[360px] md:min-w-[450px] lg:min-w-[500px] max-w-[500px]">
         <Card className="flex flex-row border border-gray-200 bg-white transition-all duration-300 h-full min-h-[210px] overflow-hidden group p-3 rounded-2xl">
           {/* Contenedor izquierdo con círculos concéntricos */}
-          <div 
+          <div
             className="flex-shrink-0 w-36 flex items-center justify-center relative rounded-xl"
             style={{
               background: `radial-gradient(circle at center, rgba(89, 93, 117, 0.28) 0%, rgba(89, 93, 117, 0.28) 15%, transparent 15%, transparent 18%),
@@ -484,18 +583,17 @@ export default function ReservasPropietarioPage() {
               </p>
             </div>
             <div className="flex items-center justify-between overflow-hidden">
-              <span 
-                className={`inline-block text-xs font-medium px-2 py-1 rounded-full border ${
-                  objeto.estado === 'Disponible' 
-                    ? 'border-green-500 text-green-700' 
-                    : 'border-orange-500 text-orange-700'
-                }`}
+              <span
+                className={`inline-block text-xs font-medium px-2 py-1 rounded-full border ${objeto.estado === 'Disponible'
+                  ? 'border-green-500 text-green-700'
+                  : 'border-orange-500 text-orange-700'
+                  }`}
               >
                 {objeto.estado}
               </span>
               {objeto.estado === 'En Mantenimiento' ? (
-                <Button 
-                  className="h-10 font-semibold transition-all duration-300 w-[140px] bg-gray-100 border border-gray-300 text-gray-500 overflow-hidden relative shadow-sm ml-3 p-0 cursor-not-allowed" 
+                <Button
+                  className="h-10 font-semibold transition-all duration-300 w-[140px] bg-gray-100 border border-gray-300 text-gray-500 overflow-hidden relative shadow-sm ml-3 p-0 cursor-not-allowed"
                   disabled
                 >
                   <div className="flex items-center justify-center gap-2 px-3">
@@ -504,8 +602,8 @@ export default function ReservasPropietarioPage() {
                   </div>
                 </Button>
               ) : (
-                <Button 
-                  className="group/btn h-10 font-semibold transition-all duration-300 w-10 hover:w-[140px] bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 overflow-hidden relative shadow-sm hover:shadow-md ml-3 p-0" 
+                <Button
+                  className="group/btn h-10 font-semibold transition-all duration-300 w-10 hover:w-[140px] bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 overflow-hidden relative shadow-sm hover:shadow-md ml-3 p-0"
                   onClick={() => handleReservarClick(objeto)}
                 >
                   {/* Icono centrado cuando el botón está pequeño */}
@@ -566,15 +664,15 @@ export default function ReservasPropietarioPage() {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList variant="line" className="h-auto bg-transparent p-0 border-b border-gray-200">
-              <TabsTrigger 
-                value="recursos" 
+              <TabsTrigger
+                value="recursos"
                 className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:border-green-800"
               >
                 <Package className="w-4 h-4" />
                 Recursos
               </TabsTrigger>
-              <TabsTrigger 
-                value="mis-reservas" 
+              <TabsTrigger
+                value="mis-reservas"
                 className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:border-green-800"
               >
                 <CalendarIcon className="w-4 h-4" />
@@ -590,7 +688,33 @@ export default function ReservasPropietarioPage() {
                     <h2 className="text-lg font-semibold text-gray-900 mb-1">Zonas Comunes</h2>
                     <Separator className="bg-gray-200" />
                   </div>
-                  {zonas.length > 0 ? (
+                  {loadingRecursos ? (
+                    <div className="flex gap-4 py-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="min-w-[360px] md:min-w-[450px] lg:min-w-[500px] max-w-[500px]">
+                          <Card className="flex flex-row border border-gray-200 bg-white h-full min-h-[210px] overflow-hidden p-3 rounded-2xl">
+                            <div className="flex-shrink-0 w-36 flex items-center justify-center rounded-xl bg-gray-100">
+                              <Skeleton className="w-16 h-16 rounded-full" />
+                            </div>
+                            <CardContent className="pl-5 flex-1 flex flex-col justify-between p-0">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2 mt-2">
+                                  <Skeleton className="h-6 w-32" />
+                                  <Skeleton className="h-6 w-14 rounded-full" />
+                                </div>
+                                <Skeleton className="h-4 w-full mb-2" />
+                                <Skeleton className="h-4 w-3/4" />
+                              </div>
+                              <div className="flex items-center justify-between overflow-hidden mt-3">
+                                <Skeleton className="h-6 w-20 rounded-full" />
+                                <Skeleton className="h-10 w-10 rounded-lg" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  ) : zonas.length > 0 ? (
                     <Carousel items={zonasCards} />
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 px-6 flex flex-col items-center justify-center">
@@ -613,7 +737,33 @@ export default function ReservasPropietarioPage() {
                     <h2 className="text-lg font-semibold text-gray-900 mb-1">Equipos Disponibles</h2>
                     <Separator className="bg-gray-200" />
                   </div>
-                  {objetos.length > 0 ? (
+                  {loadingRecursos ? (
+                    <div className="flex gap-4 py-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="min-w-[360px] md:min-w-[450px] lg:min-w-[500px] max-w-[500px]">
+                          <Card className="flex flex-row border border-gray-200 bg-white h-full min-h-[210px] overflow-hidden p-3 rounded-2xl">
+                            <div className="flex-shrink-0 w-36 flex items-center justify-center rounded-xl bg-gray-100">
+                              <Skeleton className="w-16 h-16 rounded-full" />
+                            </div>
+                            <CardContent className="pl-5 flex-1 flex flex-col justify-between p-0">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2 mt-2">
+                                  <Skeleton className="h-6 w-32" />
+                                  <Skeleton className="h-6 w-14 rounded-full" />
+                                </div>
+                                <Skeleton className="h-4 w-full mb-2" />
+                                <Skeleton className="h-4 w-3/4" />
+                              </div>
+                              <div className="flex items-center justify-between overflow-hidden mt-3">
+                                <Skeleton className="h-6 w-20 rounded-full" />
+                                <Skeleton className="h-10 w-10 rounded-lg" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  ) : objetos.length > 0 ? (
                     <Carousel items={objetosCards} />
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 px-6 flex flex-col items-center justify-center">
@@ -634,7 +784,29 @@ export default function ReservasPropietarioPage() {
 
             <TabsContent value="mis-reservas" className="mt-6">
               <div className="space-y-4">
-                {reservas.length === 0 ? (
+                {loadingMisReservas ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                      <Card key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <Skeleton className="h-6 w-32" />
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                          </div>
+                          <Skeleton className="h-4 w-full mb-2" />
+                          <Skeleton className="h-4 w-3/4 mb-4" />
+                          <div className="flex justify-between items-center">
+                            <Skeleton className="h-4 w-24" />
+                            <div className="flex gap-2">
+                              <Skeleton className="h-8 w-8 rounded" />
+                              <Skeleton className="h-8 w-8 rounded" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : misReservas.length === 0 ? (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg py-12 px-6 flex flex-col items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                       <CalendarIcon className="w-8 h-8 text-gray-400" />
@@ -648,27 +820,35 @@ export default function ReservasPropietarioPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {reservas.map((reserva) => {
+                    {misReservas.map((reserva) => {
                       const estadoColors = {
                         aprobada: 'bg-transparent text-green-700 border-green-300',
                         pendiente: 'bg-transparent text-yellow-700 border-yellow-300',
                         rechazada: 'bg-transparent text-red-700 border-red-300',
+                        finalizada: 'bg-transparent text-gray-700 border-gray-300',
                       }
 
                       const estadoLabels = {
                         aprobada: 'Aprobada',
                         pendiente: 'Pendiente',
                         rechazada: 'Rechazada',
+                        finalizada: 'Finalizada',
                       }
 
                       // Formatear hora en formato 12 horas
                       const formatearHora = (hora24: string) => {
-                        const [hora, minutos] = hora24.split(':')
-                        const horaNum = parseInt(hora)
-                        const hora12 = horaNum === 0 ? 12 : horaNum > 12 ? horaNum - 12 : horaNum
-                        const ampm = horaNum >= 12 ? 'PM' : 'AM'
-                        return `${hora12}:${minutos} ${ampm}`
-                      }
+                        if (!hora24) return "—";
+
+                        // asegurar formato HH:mm sin segundos
+                        const [h, m] = hora24.split(':').slice(0, 2);
+                        const hora = parseInt(h, 10);
+                        const minutos = m ?? "00";
+
+                        const hora12 = hora === 0 ? 12 : hora > 12 ? hora - 12 : hora;
+                        const ampm = hora >= 12 ? "PM" : "AM";
+
+                        return `${hora12}:${minutos} ${ampm}`;
+                      };
 
                       // Formatear fecha
                       const formatearFecha = (fecha: Date) => {
@@ -689,14 +869,7 @@ export default function ReservasPropietarioPage() {
                         return fecha.toLocaleDateString('es-ES', { month: 'short' })
                       }
 
-                      // Formatear fecha de creación
-                      const formatearFechaCreacion = (fecha: Date) => {
-                        return fecha.toLocaleDateString('es-ES', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })
-                      }
+
 
                       return (
                         <Card key={reserva.id} className="border border-gray-200 bg-white transition-all duration-300 hover:shadow-md py-0 h-full flex flex-col">
@@ -727,16 +900,16 @@ export default function ReservasPropietarioPage() {
                                   {reserva.recursoNombre}
                                 </h3>
                                 <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                                  <span 
+                                  <span
                                     className="inline-block text-xs font-medium px-2 py-1 rounded-full"
-                                    style={{ 
+                                    style={{
                                       backgroundColor: reserva.tipoRecurso === 'zona' ? '#F1E8D6' : '#E3E4EA',
                                       color: reserva.tipoRecurso === 'zona' ? '#A39170' : '#595D75'
                                     }}
                                   >
                                     {reserva.tipoRecurso === 'zona' ? 'Zona' : 'Objeto'}
                                   </span>
-                                  <span 
+                                  <span
                                     className={`inline-block text-xs font-medium px-2 py-1 rounded-full border ${estadoColors[reserva.estado]}`}
                                   >
                                     {estadoLabels[reserva.estado]}
@@ -744,10 +917,10 @@ export default function ReservasPropietarioPage() {
                                 </div>
                                 {/* Descripción del recurso */}
                                 {(() => {
-                                  const recurso = RECURSOS_MOCK.find(r => r.id === reserva.recursoId)
-                                  return recurso?.descripcion ? (
+                                  const recursoEncontrado = recurso.find(r => r.id === String(reserva.idRecurso))
+                                  return recursoEncontrado?.descripcion ? (
                                     <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                      {recurso.descripcion}
+                                      {recursoEncontrado.descripcion}
                                     </p>
                                   ) : null
                                 })()}
@@ -771,27 +944,33 @@ export default function ReservasPropietarioPage() {
 
                               {/* Footer con fecha de creación y botones - siempre al final */}
                               <div className="pt-1.5 border-t border-gray-100 flex items-center justify-between mt-auto">
-                                <p className="text-xs text-gray-500">
-                                  Creada el {formatearFechaCreacion(reserva.fechaCreacion)}
-                                </p>
+                                {/* Fecha de creación a la izquierda */}
+                                <div className="text-xs text-gray-500">
+                                  {reserva.fechaCreacion && (
+                                    <span>
+                                      Creada el {reserva.fechaCreacion.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Botones a la derecha */}
                                 <div className="flex items-center gap-1">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button 
-                                        aria-label="editar" 
-                                        variant="ghost" 
-                                        size="icon" 
+                                      <Button
+                                        aria-label="editar"
+                                        variant="ghost"
+                                        size="icon"
                                         className="h-7 w-7"
                                         disabled={reserva.estado === 'aprobada' || reserva.estado === 'rechazada'}
                                         onClick={() => {
-                                          const recurso = RECURSOS_MOCK.find(r => r.id === reserva.recursoId)
-                                          if (recurso) {
-                                            setReservaEditando(reserva)
-                                            setSelectedRecurso(recurso)
+                                          const recursoEncontrado = recurso.find(r => r.id === String(reserva.idRecurso))
+                                          if (recursoEncontrado) {
+                                            setSelectedRecurso(recursoEncontrado)
                                             setEditDate(new Date(reserva.fechaInicio))
                                             setEditHoraInicial(reserva.horaInicio)
                                             setEditHoraFinal(reserva.horaFin)
                                             setEditNumeroInvitados(reserva.numeroInvitados)
+                                            handleOpenEditReserva(reserva)
                                             setIsEditSheetOpen(true)
                                           }
                                         }}
@@ -801,7 +980,7 @@ export default function ReservasPropietarioPage() {
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p>
-                                        {reserva.estado === 'aprobada' || reserva.estado === 'rechazada' 
+                                        {reserva.estado === 'aprobada' || reserva.estado === 'rechazada'
                                           ? 'No se puede editar una reserva ' + (reserva.estado === 'aprobada' ? 'aprobada' : 'rechazada')
                                           : 'Editar'}
                                       </p>
@@ -811,10 +990,10 @@ export default function ReservasPropietarioPage() {
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <AlertDialogTrigger asChild>
-                                          <Button 
-                                            aria-label="eliminar" 
-                                            variant="ghost" 
-                                            size="icon" 
+                                          <Button
+                                            aria-label="eliminar"
+                                            variant="ghost"
+                                            size="icon"
                                             className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
                                           >
                                             <Trash2 className="h-4 w-4" />
@@ -835,8 +1014,20 @@ export default function ReservasPropietarioPage() {
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                         <AlertDialogAction
-                                          onClick={() => {
-                                            setReservas(reservas.filter(r => r.id !== reserva.id))
+                                          onClick={async () => {
+                                            try {
+                                              await eliminarReserva(Number(reserva.id))
+                                              toast.success("Reserva eliminada correctamente")
+                                              // Refetch ambos
+                                              fetchReservasPropietario();
+                                              const idCasa = authService.getIdCasa();
+                                              if (idCasa) {
+                                                fetchMisReservas(Number(idCasa));
+                                              }
+                                            } catch (error: unknown) {
+                                              const msg = error instanceof Error ? error.message : "Error al eliminar la reserva";
+                                              toast.error(msg)
+                                            }
                                           }}
                                           className="bg-red-600 hover:bg-red-700"
                                         >
@@ -862,14 +1053,31 @@ export default function ReservasPropietarioPage() {
 
       {/* Sheet para crear reserva */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent 
-          side="right" 
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
-          style={{ width: '500px', maxWidth: 'none' }}
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle className="text-xl font-semibold">Nueva Reserva</SheetTitle>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRecurso?.tipo === 'zona' ? 'bg-amber-50' : 'bg-slate-100'}`}>
+                {selectedRecurso?.tipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  Nueva Reserva
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {selectedRecurso ? `Reservar ${selectedRecurso.nombre}` : 'Selecciona un recurso para reservar'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           {selectedRecurso && (
             <div className="flex flex-col flex-1 min-h-0">
@@ -878,7 +1086,7 @@ export default function ReservasPropietarioPage() {
                 <Card className="border border-gray-200 bg-white p-3 rounded-2xl">
                   <div className="flex flex-row gap-4">
                     {/* Contenedor izquierdo con círculos concéntricos */}
-                    <div 
+                    <div
                       className="flex-shrink-0 w-20 flex items-center justify-center relative rounded-xl"
                       style={{
                         background: selectedRecurso.tipo === 'zona'
@@ -911,9 +1119,9 @@ export default function ReservasPropietarioPage() {
                     <div className="flex-1 flex flex-col justify-center">
                       <div className="flex items-start justify-between mb-1.5">
                         <h3 className="font-bold text-lg text-gray-900 leading-tight">{selectedRecurso.nombre}</h3>
-                        <span 
+                        <span
                           className="inline-block text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2"
-                          style={{ 
+                          style={{
                             backgroundColor: selectedRecurso.tipo === 'zona' ? '#F1E8D6' : '#E3E4EA',
                             color: selectedRecurso.tipo === 'zona' ? '#A39170' : '#595D75'
                           }}
@@ -927,11 +1135,11 @@ export default function ReservasPropietarioPage() {
                           <div className="flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
                             <p className="text-sm text-gray-700 font-medium">
-                              {selectedDate.toLocaleDateString('es-ES', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
+                              {selectedDate.toLocaleDateString('es-ES', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
                               }).replace(/^\w/, c => c.toUpperCase())}
                             </p>
                           </div>
@@ -1056,21 +1264,19 @@ export default function ReservasPropietarioPage() {
               </div>
 
               {/* Footer con botones */}
-              <div className="border-t px-6 py-4 bg-gray-50">
+              <div className="border-t border-gray-100 px-6 py-5 bg-gray-50/50 rounded-b-lg">
                 <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsSheetOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Cancelar
                   </Button>
-                  <Button 
-                    onClick={() => {
-                      setOpenDialogConfirmacion(true)
-                    }}
+                  <Button
+                    onClick={() => setOpenDialogConfirmacion(true)}
                     disabled={!selectedDate || !horaInicial || !horaFinal}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Confirmar Reserva
                   </Button>
@@ -1094,14 +1300,31 @@ export default function ReservasPropietarioPage() {
           setEditNumeroInvitados(1)
         }
       }}>
-        <SheetContent 
-          side="right" 
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0"
-          style={{ width: '500px', maxWidth: 'none' }}
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle className="text-xl font-semibold">Editar Reserva</SheetTitle>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedRecurso?.tipo === 'zona' ? 'bg-amber-50' : 'bg-slate-100'}`}>
+                {selectedRecurso?.tipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  Editar Reserva
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {selectedRecurso ? `Modificar reserva de ${selectedRecurso.nombre}` : 'Editar reserva'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           {selectedRecurso && reservaEditando && (
             <div className="flex flex-col flex-1 min-h-0">
@@ -1110,7 +1333,7 @@ export default function ReservasPropietarioPage() {
                 <Card className="border border-gray-200 bg-white p-3 rounded-2xl">
                   <div className="flex flex-row gap-4">
                     {/* Contenedor izquierdo con círculos concéntricos */}
-                    <div 
+                    <div
                       className="flex-shrink-0 w-20 flex items-center justify-center relative rounded-xl"
                       style={{
                         background: selectedRecurso.tipo === 'zona'
@@ -1143,9 +1366,9 @@ export default function ReservasPropietarioPage() {
                     <div className="flex-1 flex flex-col justify-center">
                       <div className="flex items-start justify-between mb-1.5">
                         <h3 className="font-bold text-lg text-gray-900 leading-tight">{selectedRecurso.nombre}</h3>
-                        <span 
+                        <span
                           className="inline-block text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2"
-                          style={{ 
+                          style={{
                             backgroundColor: selectedRecurso.tipo === 'zona' ? '#F1E8D6' : '#E3E4EA',
                             color: selectedRecurso.tipo === 'zona' ? '#A39170' : '#595D75'
                           }}
@@ -1159,11 +1382,11 @@ export default function ReservasPropietarioPage() {
                           <div className="flex items-center gap-2">
                             <CalendarIcon className="w-4 h-4 text-gray-600 flex-shrink-0" />
                             <p className="text-sm text-gray-700 font-medium">
-                              {editDate.toLocaleDateString('es-ES', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
+                              {editDate.toLocaleDateString('es-ES', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
                               }).replace(/^\w/, c => c.toUpperCase())}
                             </p>
                           </div>
@@ -1288,20 +1511,20 @@ export default function ReservasPropietarioPage() {
               </div>
 
               {/* Footer con botones */}
-              <div className="border-t px-6 py-4 bg-gray-50">
+              <div className="border-t border-gray-100 px-6 py-5 bg-gray-50/50 rounded-b-lg">
                 <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsEditSheetOpen(false)}
-                    className="flex-1"
+                    className="flex-1 h-10 font-medium"
                   >
                     Cancelar
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
+                      <Button
                         disabled={!editDate || !editHoraInicial || !editHoraFinal}
-                        className="flex-1"
+                        className="flex-1 h-10 font-medium"
                       >
                         Guardar Cambios
                       </Button>
@@ -1313,7 +1536,7 @@ export default function ReservasPropietarioPage() {
                           Por favor, revisa los detalles actualizados de tu reserva antes de confirmar.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      
+
                       {selectedRecurso && editDate && editHoraInicial && editHoraFinal && (
                         <div className="space-y-4 py-4">
                           {/* Información del Recurso */}
@@ -1336,11 +1559,11 @@ export default function ReservasPropietarioPage() {
                             <CalendarIcon className="w-5 h-5 text-gray-600 flex-shrink-0" />
                             <div>
                               <p className="text-sm font-medium text-gray-900">
-                                {editDate.toLocaleDateString('es-ES', { 
-                                  weekday: 'long', 
-                                  year: 'numeric', 
-                                  month: 'long', 
-                                  day: 'numeric' 
+                                {editDate.toLocaleDateString('es-ES', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
                                 }).replace(/^\w/, c => c.toUpperCase())}
                               </p>
                             </div>
@@ -1373,24 +1596,9 @@ export default function ReservasPropietarioPage() {
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => {
+                          onClick={async () => {
                             if (reservaEditando && editDate && editHoraInicial && editHoraFinal) {
-                              // Actualizar la reserva
-                              setReservas(prev => prev.map(r => 
-                                r.id === reservaEditando.id 
-                                  ? {
-                                      ...r,
-                                      fechaInicio: editDate,
-                                      fechaFin: editDate,
-                                      horaInicio: editHoraInicial,
-                                      horaFin: editHoraFinal,
-                                      numeroInvitados: editNumeroInvitados
-                                    }
-                                  : r
-                              ))
-                              setIsEditSheetOpen(false)
-                              setReservaEditando(null)
-                              // TODO: Aquí iría la llamada a la API para actualizar la reserva
+                              handleUpdateReserva()
                             }
                           }}
                         >
@@ -1415,7 +1623,7 @@ export default function ReservasPropietarioPage() {
               Por favor, revisa los detalles de tu reserva antes de confirmar.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedRecurso && selectedDate && horaInicial && horaFinal && (
             <div className="space-y-4 py-4">
               {/* Información del Recurso */}
@@ -1438,11 +1646,11 @@ export default function ReservasPropietarioPage() {
                 <CalendarIcon className="w-5 h-5 text-gray-600 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                    {selectedDate.toLocaleDateString('es-ES', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    {selectedDate.toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     }).replace(/^\w/, c => c.toUpperCase())}
                   </p>
                 </div>
@@ -1471,21 +1679,15 @@ export default function ReservasPropietarioPage() {
               </div>
             </div>
           )}
-
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setOpenDialogConfirmacion(false)}
             >
               Cancelar
             </Button>
-            <Button 
-              onClick={() => {
-                // TODO: Implementar lógica de reserva
-                setOpenDialogConfirmacion(false)
-                setIsSheetOpen(false)
-                // Aquí iría la llamada a la API para crear la reserva
-              }}
+            <Button
+              onClick={handleCreateReserva}
             >
               Confirmar Reserva
             </Button>

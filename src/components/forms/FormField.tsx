@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 interface FormFieldWithTooltipProps {
   children: React.ReactElement
@@ -33,7 +34,7 @@ export function FormFieldWithTooltip({
 
   return (
     <Field data-invalid={invalid} className={className}>
-      <FieldLabel>
+      <FieldLabel className={cn('font-normal', invalid && 'text-red-500')}>
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </FieldLabel>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
@@ -18,7 +18,7 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
+
   SheetTitle,
 } from '@/components/ui/sheet'
 import {
@@ -80,15 +80,15 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { RecursoResponse, DisponibilidadRecurso } from '@/types/recursos.types'
-import { recursoService } from '@/services/recurso.service'
-import { mapFormToRequest, mapResponseToUI } from '@/services/recurso.adapter'
-import type { RecursoUI } from '@/services/recurso.adapter'
+import { mapFormToRequest } from '@/services/admin.recurso.adapter'
+import type { RecursoUI } from '@/services/admin.recurso.adapter'
 import { useRecurso } from '@/hooks/useRecurso'
+import { useRecursos } from '@/hooks/useRecursos'
 
 export default function RecursosPage() {
-  const [recursos, setRecursos] = useState<RecursoUI[]>([])
+  const { recursos: recursosLista, loading, refetch } = useRecursos()
+  const { crearRecurso, editarRecurso } = useRecurso(refetch)
   const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])
-  const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
   const [sorting, setSorting] = useState<SortingState>([])
   const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -106,7 +106,7 @@ export default function RecursosPage() {
   const { cambiarDisponibilidad } = useRecurso()
 
   const syncRecurso = useCallback((updated: RecursoResponse) => {
-    setRecursosResponse((prev) => {
+    setRecursosResponse((prev: RecursoResponse[]) => {
       if (!updated?.id) return prev
       const exists = prev.some((resp) => resp.id === updated.id)
       const next = exists
@@ -114,11 +114,9 @@ export default function RecursosPage() {
         : [...prev, updated]
       return next
     })
-    if (!updated?.id) return
-    setRecursos((prev) =>
-      prev.map((r) => (r.id === updated.id!.toString() ? mapResponseToUI(updated) : r))
-    )
-  }, [])
+    // Refetch to update the list from useRecursos
+    refetch()
+  }, [refetch])
 
   const handleAvailabilityChange = useCallback(
     async (id: number, disponibilidad: DisponibilidadRecurso) => {
@@ -133,47 +131,25 @@ export default function RecursosPage() {
     [cambiarDisponibilidad, syncRecurso]
   )
 
-  useEffect(() => {
-    let mounted = true
-    async function loadRecursos() {
-      try {
-        setLoading(true)
-        const list = await recursoService.getRecurso()
-        if (!mounted) return
-        // El servicio ya devuelve un array normalizado
-        console.debug('[recursos] raw response:', list)
-        const items = Array.isArray(list) ? list : []
-
-        setRecursosResponse(items)
-        setRecursos(items.map(mapResponseToUI))
-      } catch (err) {
-        console.error('Error cargando recursos:', err)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    }
-    loadRecursos()
-    return () => { mounted = false }
-  }, [])
-
   const handleClearSearch = () => setSearchTerm('')
+
+
+
 
   const filteredData = useMemo(() => {
     const term = searchTerm.toLowerCase()
-    return recursos.filter((r) => {
+    return recursosLista.filter((r) => {
       // Filtrar por tipo
       if (filterType === 'zonas' && r.tipoRecursoComun !== 'ZONA') return false
       if (filterType === 'objetos' && r.tipoRecursoComun !== 'OBJETO') return false
-      
+
       // Filtrar por estado
       if (estadoFilter !== 'todas') {
         if (estadoFilter === 'disponible' && r.disponibilidadRecurso !== 'DISPONIBLE') return false
         if (estadoFilter === 'no-disponible' && r.disponibilidadRecurso !== 'NO_DISPONIBLE') return false
         if (estadoFilter === 'en-mantenimiento' && r.disponibilidadRecurso !== 'EN_MANTENIMIENTO') return false
       }
-      
+
       // Filtrar por término de búsqueda
       if (!term) return true
       return (
@@ -181,7 +157,7 @@ export default function RecursosPage() {
         r.descripcion.toLowerCase().includes(term)
       )
     })
-  }, [searchTerm, filterType, estadoFilter, recursos])
+  }, [searchTerm, filterType, estadoFilter, recursosLista])
 
   const validateForm = () => {
     const nextErrors: { nombre?: string; descripcion?: string; tipo?: string } = {}
@@ -221,48 +197,27 @@ export default function RecursosPage() {
       const existing = recursosResponse.find(r => r.id === idNum)
       const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo }, existing?.disponibilidadRecurso)
 
-      try {
-        const updated = await recursoService.putRecurso(idNum, payload)
+      await editarRecurso(idNum, payload)
 
-        setRecursosResponse((prev) => prev.map((resp) => resp.id === idNum ? updated : resp))
-
-        setRecursos((prev) => prev.map((r) => r.id === selectedRecursoId ? mapResponseToUI(updated) : r))
-
-        setIsSheetOpen(false)
-        setFormNombre('')
-        setFormDescripcion('')
-        setFormTipo('')
-        setIsEditMode(false)
-        setSelectedRecursoId(null)
-      } catch (err) {
-        console.error('Error actualizando recurso:', err)
-        setErrors((prev) => ({ ...prev, nombre: 'Error al actualizar el recurso. Intenta de nuevo.' }))
-      }
+      setIsSheetOpen(false)
+      setFormNombre('')
+      setFormDescripcion('')
+      setFormTipo('')
+      setIsEditMode(false)
+      setSelectedRecursoId(null)
 
     } else {
       // Create new recurso via API
       const payload = mapFormToRequest({ nombre: formNombre, descripcion: formDescripcion, tipo: formTipo })
 
-      try {
-        const created = await recursoService.postRecurso(payload)
+      await crearRecurso(payload)
 
-        setRecursosResponse((prev) => [...prev, created])
-
-        setRecursos((prev) => [
-          ...prev,
-          mapResponseToUI(created),
-        ])
-
-        setIsSheetOpen(false)
-        setFormNombre('')
-        setFormDescripcion('')
-        setFormTipo('')
-        setIsEditMode(false)
-        setSelectedRecursoId(null)
-      } catch (err) {
-        console.error('Error creando recurso:', err)
-        setErrors((prev) => ({ ...prev, nombre: 'Error al crear el recurso. Intenta de nuevo.' }))
-      }
+      setIsSheetOpen(false)
+      setFormNombre('')
+      setFormDescripcion('')
+      setFormTipo('')
+      setIsEditMode(false)
+      setSelectedRecursoId(null)
     }
   }
 
@@ -370,8 +325,8 @@ export default function RecursosPage() {
         id: 'tipo',
         header: ({ column }) => <DataGridColumnHeader title="Tipo" column={column} />,
         cell: ({ row }) => (
-          <Badge 
-            variant={row.original.tipo === 'zona' ? 'secondary' : 'outline'} 
+          <Badge
+            variant={row.original.tipo === 'zona' ? 'secondary' : 'outline'}
             appearance="light"
           >
             {row.original.tipo === 'zona' ? 'Zona' : 'Objeto'}
@@ -452,12 +407,12 @@ export default function RecursosPage() {
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {row.original.habilitado ? `¿Deshabilitar recurso &quot;${row.original.nombre}&quot;?` : `¿Habilitar recurso &quot;${row.original.nombre}&quot;?`}
+                        {row.original.habilitado ? `¿Deshabilitar recurso "${row.original.nombre}"?` : `¿Habilitar recurso "${row.original.nombre}"?`}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         {row.original.habilitado
-                          ? `El recurso &quot;${row.original.nombre}&quot; quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
-                          : `El recurso &quot;${row.original.nombre}&quot; quedará disponible para su uso.`}
+                          ? `El recurso "${row.original.nombre}" quedará no disponible para reservas o uso hasta que lo habilites nuevamente.`
+                          : `El recurso "${row.original.nombre}" quedará disponible para su uso.`}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -535,7 +490,7 @@ export default function RecursosPage() {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          ¿Deshabilitar recurso &ldquo;{row.original.nombre}&rdquo;?
+                          ¿Deshabilitar recurso &quot;{row.original.nombre}&quot;?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           El recurso dejará de estar disponible y saldrá del estado de mantenimiento.
@@ -578,8 +533,8 @@ export default function RecursosPage() {
     columns,
     data: filteredData,
     pageCount: Math.ceil((filteredData?.length || 0) / pagination.pageSize),
-  getRowId: (row: RecursoUI) => row.id,
-  getRowCanExpand: (row) => Boolean(row.original.descripcion),
+    getRowId: (row: RecursoUI) => row.id,
+    getRowCanExpand: (row) => Boolean(row.original.descripcion),
     state: {
       pagination,
       sorting,
@@ -818,13 +773,13 @@ export default function RecursosPage() {
                           <span className={cn(
                             'ms-0.5 size-1.5 rounded-full',
                             estadoFilter === 'disponible' ? 'bg-green-500' :
-                            estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
-                            'bg-red-500'
+                              estadoFilter === 'en-mantenimiento' ? 'bg-yellow-500' :
+                                'bg-red-500'
                           )}></span>
                           <span className="truncate">
                             {estadoFilter === 'disponible' ? 'Disponible' :
-                             estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
-                             'No disponible'}
+                              estadoFilter === 'en-mantenimiento' ? 'En Mantenimiento' :
+                                'No disponible'}
                           </span>
                         </span>
                       ) : (
@@ -907,11 +862,11 @@ export default function RecursosPage() {
                     className="pl-10 pr-10 h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md"
                   />
                   {searchTerm !== '' && (
-                    <Button 
-                      onClick={handleClearSearch} 
-                      variant="ghost" 
+                    <Button
+                      onClick={handleClearSearch}
+                      variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full" 
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 hover:bg-gray-100 rounded-full"
                     >
                       <X size={16} className="text-gray-500" />
                     </Button>
@@ -927,25 +882,41 @@ export default function RecursosPage() {
         </div>
       </div>
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent 
-          side="right" 
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: '500px', maxWidth: 'none' }}
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="border-b pb-4">
-            <SheetTitle className="text-xl font-semibold">{isEditMode ? 'Editar Recurso' : 'Agregar Recurso'}</SheetTitle>
-            <SheetDescription className="text-gray-600">
-              {isEditMode ? 'Modifica la información del recurso seleccionado.' : 'Agrega un recurso de bienes comunes.'}
-            </SheetDescription>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${formTipo === 'zona' ? 'bg-amber-50' : formTipo === 'objeto' ? 'bg-slate-100' : 'bg-gray-100'}`}>
+                {formTipo === 'zona' ? (
+                  <MapPin className="w-6 h-6" style={{ color: '#A39170' }} />
+                ) : formTipo === 'objeto' ? (
+                  <Package className="w-6 h-6" style={{ color: '#595D75' }} />
+                ) : (
+                  <Package className="w-6 h-6 text-gray-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  {isEditMode ? 'Editar Recurso' : 'Agregar Recurso'}
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  {isEditMode ? 'Modifica la información del recurso seleccionado.' : 'Agrega un recurso de bienes comunes.'}
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           <form onSubmit={handleNuevoRecursoSubmit} className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto">
-              <div className="space-y-6 px-4 pt-4">
-                <FormFieldWithTooltip 
-                  label="Nombre" 
-                  required 
-                  invalid={Boolean(errors.nombre)} 
+              <div className="space-y-6 px-6 py-6">
+                <FormFieldWithTooltip
+                  label="Nombre"
+                  required
+                  invalid={Boolean(errors.nombre)}
                   error={errors.nombre}
                 >
                   <Input id="nombre" value={formNombre} onChange={(e) => {
@@ -956,9 +927,9 @@ export default function RecursosPage() {
                   }} placeholder="Ej. Salón Comunal" />
                 </FormFieldWithTooltip>
 
-                <FormFieldWithTooltip 
-                  label="Descripción" 
-                  invalid={Boolean(errors.descripcion)} 
+                <FormFieldWithTooltip
+                  label="Descripción"
+                  invalid={Boolean(errors.descripcion)}
                   error={errors.descripcion}
                 >
                   <textarea
@@ -975,10 +946,10 @@ export default function RecursosPage() {
                   />
                 </FormFieldWithTooltip>
 
-                <FormFieldWithTooltip 
-                  label="Tipo" 
-                  required 
-                  invalid={Boolean(errors.tipo)} 
+                <FormFieldWithTooltip
+                  label="Tipo"
+                  required
+                  invalid={Boolean(errors.tipo)}
                   error={errors.tipo || 'Selecciona el tipo de recurso.'}
                 >
                   <Select value={formTipo} onValueChange={(v) => {
@@ -1011,11 +982,11 @@ export default function RecursosPage() {
               </div>
             </div>
 
-            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
               <SheetClose asChild>
-                <Button variant="outline" type="button" className="flex-1">Cancelar</Button>
+                <Button variant="outline" type="button" className="flex-1 h-10 font-medium">Cancelar</Button>
               </SheetClose>
-              <Button type="submit" className="flex-1">{isEditMode ? 'Guardar cambios' : 'Agregar recurso'}</Button>
+              <Button type="submit" className="flex-1 h-10 font-medium">{isEditMode ? 'Guardar cambios' : 'Agregar recurso'}</Button>
             </SheetFooter>
           </form>
         </SheetContent>

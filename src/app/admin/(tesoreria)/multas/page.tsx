@@ -20,7 +20,6 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
@@ -512,127 +511,127 @@ export default function MultasPage() {
                 value: 'PENDIENTE',
                 label: 'Pendientes',
                 content: error ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-red-500 mb-2">
-                    <X className="w-12 h-12 mx-auto" />
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-red-500 mb-2">
+                      <X className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      Error al cargar multas
+                    </h3>
+                    <p className="text-gray-500 text-sm">{error}</p>
+                    <Button onClick={refreshMultas} className="mt-4">
+                      Reintentar
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    Error al cargar multas
-                  </h3>
-                  <p className="text-gray-500 text-sm">{error}</p>
-                  <Button onClick={refreshMultas} className="mt-4">
-                    Reintentar
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <DataGrid
-                    table={table}
-                    recordCount={loading ? 10 : filteredMultas?.length || 0}
-                    isLoading={loading}
-                    loadingMode="skeleton"
-                    tableLayout={{
-                      headerBackground: false,
-                      rowBorder: true,
-                      rowRounded: false,
-                    }}
-                  >
-                    <div className="w-full space-y-2.5">
-                      <DataGridContainer border={false}>
-                        <ScrollArea>
-                          <DataGridTable />
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </DataGridContainer>
-                      <DataGridPagination
-                        rowsPerPageLabel="Filas por página"
-                        info="{from} - {to} de {count}"
-                        previousPageLabel="Ir a la página anterior"
-                        nextPageLabel="Ir a la página siguiente"
-                      />
-                    </div>
-                  </DataGrid>
-                  {!loading && !hasResults && (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="text-gray-400 mb-2">
-                        <Search className="w-12 h-12 mx-auto" />
+                ) : (
+                  <>
+                    <DataGrid
+                      table={table}
+                      recordCount={loading ? 10 : filteredMultas?.length || 0}
+                      isLoading={loading}
+                      loadingMode="skeleton"
+                      tableLayout={{
+                        headerBackground: false,
+                        rowBorder: true,
+                        rowRounded: false,
+                      }}
+                    >
+                      <div className="w-full space-y-2.5">
+                        <DataGridContainer border={false}>
+                          <ScrollArea>
+                            <DataGridTable />
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </DataGridContainer>
+                        <DataGridPagination
+                          rowsPerPageLabel="Filas por página"
+                          info="{from} - {to} de {count}"
+                          previousPageLabel="Ir a la página anterior"
+                          nextPageLabel="Ir a la página siguiente"
+                        />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">
-                        No se encontraron resultados
-                      </h3>
-                      <p className="text-gray-500 text-sm">
-                        {searchTerm || estadoFilter !== 'todas'
-                          ? `No hay multas pendientes que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'abonado' ? 'abonado' : 'pendiente'}` : ''}`
-                          : 'No hay multas pendientes'
-                        }
-                      </p>
-                    </div>
-                  )}
-                </>
-              ),
+                    </DataGrid>
+                    {!loading && !hasResults && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="text-gray-400 mb-2">
+                          <Search className="w-12 h-12 mx-auto" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          No se encontraron resultados
+                        </h3>
+                        <p className="text-gray-500 text-sm">
+                          {searchTerm || estadoFilter !== 'todas'
+                            ? `No hay multas pendientes que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'abonado' ? 'abonado' : 'pendiente'}` : ''}`
+                            : 'No hay multas pendientes'
+                          }
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ),
               },
               {
                 value: 'CONDONADO',
                 label: 'Pagadas',
                 content: error ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-red-500 mb-2">
-                    <X className="w-12 h-12 mx-auto" />
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-red-500 mb-2">
+                      <X className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      Error al cargar multas
+                    </h3>
+                    <p className="text-gray-500 text-sm">{error}</p>
+                    <Button onClick={refreshMultas} className="mt-4">
+                      Reintentar
+                    </Button>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    Error al cargar multas
-                  </h3>
-                  <p className="text-gray-500 text-sm">{error}</p>
-                  <Button onClick={refreshMultas} className="mt-4">
-                    Reintentar
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <DataGrid
-                    table={table}
-                    recordCount={loading ? 10 : filteredMultas?.length || 0}
-                    isLoading={loading}
-                    loadingMode="skeleton"
-                    tableLayout={{
-                      headerBackground: false,
-                      rowBorder: true,
-                      rowRounded: false,
-                    }}
-                  >
-                    <div className="w-full space-y-2.5">
-                      <DataGridContainer border={false}>
-                        <ScrollArea>
-                          <DataGridTable />
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </DataGridContainer>
-                      <DataGridPagination
-                        rowsPerPageLabel="Filas por página"
-                        info="{from} - {to} de {count}"
-                        previousPageLabel="Ir a la página anterior"
-                        nextPageLabel="Ir a la página siguiente"
-                      />
-                    </div>
-                  </DataGrid>
-                  {!loading && !hasResults && (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="text-gray-400 mb-2">
-                        <Search className="w-12 h-12 mx-auto" />
+                ) : (
+                  <>
+                    <DataGrid
+                      table={table}
+                      recordCount={loading ? 10 : filteredMultas?.length || 0}
+                      isLoading={loading}
+                      loadingMode="skeleton"
+                      tableLayout={{
+                        headerBackground: false,
+                        rowBorder: true,
+                        rowRounded: false,
+                      }}
+                    >
+                      <div className="w-full space-y-2.5">
+                        <DataGridContainer border={false}>
+                          <ScrollArea>
+                            <DataGridTable />
+                            <ScrollBar orientation="horizontal" />
+                          </ScrollArea>
+                        </DataGridContainer>
+                        <DataGridPagination
+                          rowsPerPageLabel="Filas por página"
+                          info="{from} - {to} de {count}"
+                          previousPageLabel="Ir a la página anterior"
+                          nextPageLabel="Ir a la página siguiente"
+                        />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">
-                        No se encontraron resultados
-                      </h3>
-                      <p className="text-gray-500 text-sm">
-                        {searchTerm
-                          ? `No hay multas pagadas que coincidan con "${searchTerm}"`
-                          : 'No hay multas pagadas'
-                        }
-                      </p>
-                    </div>
-                  )}
-                </>
-              ),
+                    </DataGrid>
+                    {!loading && !hasResults && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="text-gray-400 mb-2">
+                          <Search className="w-12 h-12 mx-auto" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          No se encontraron resultados
+                        </h3>
+                        <p className="text-gray-500 text-sm">
+                          {searchTerm
+                            ? `No hay multas pagadas que coincidan con "${searchTerm}"`
+                            : 'No hay multas pagadas'
+                          }
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ),
               },
             ]}
             rightContent={
@@ -661,106 +660,114 @@ export default function MultasPage() {
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 p-0 flex flex-col"
-          style={{ width: '420px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '480px', maxWidth: 'none' }}
         >
           {selectedMulta && (
             <>
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-base font-semibold text-gray-900">Detalles de Multa</h2>
-              </div>
-
-              {/* Título y descripción */}
-              <div className="px-6 pt-3 pb-4 border-b border-gray-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'
-                    }`}>
+              {/* Header con icono */}
+              <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${selectedMulta.estadoPago === 'CONDONADO' ? 'bg-green-50' : 'bg-red-50'}`}>
                     <HugeiconsIcon
                       icon={FileCorruptIcon}
-                      size={18}
+                      size={24}
                       className={selectedMulta.estadoPago === 'CONDONADO' ? 'text-green-700' : 'text-red-600'}
                     />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedMulta.titulo}</h3>
+                  <div className="flex-1 min-w-0">
+                    <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                      Detalles de Multa
+                    </SheetTitle>
+                    <SheetDescription className="text-sm text-gray-500">
+                      Multa registrada el {new Date(selectedMulta.fecha).toLocaleDateString('es-CO', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </SheetDescription>
+                  </div>
                 </div>
-                {selectedMulta.motivo && (
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.motivo}</p>
-                )}
               </div>
 
               {/* Contenido */}
-              <div className="flex-1 overflow-y-auto px-6 py-5">
-                <div className="space-y-6">
-                  {/* Grid 3 columnas: ID, Fecha, Estado */}
-                  <div className="grid grid-cols-[auto_auto_auto] gap-6">
-                    {/* ID Multa */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">ID Multa</div>
-                      <div className="text-sm text-gray-900">#{selectedMulta.id}</div>
-                    </div>
-
-                    {/* Fecha */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Fecha:</div>
-                      <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {new Date(selectedMulta.fecha).toLocaleDateString('es-CO', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Estado */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Estado:</div>
-                      <Badge
-                        variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : selectedMulta.estadoPago === 'POR_COBRAR' ? 'warning' : 'destructive'}
-                        appearance="outline"
-                        size="sm"
-                      >
-                        {selectedMulta.estadoPago === 'CONDONADO'
-                          ? 'CONDONADO'
-                          : selectedMulta.estadoPago === 'PENDIENTE'
-                            ? 'PENDIENTE'
-                            : 'ABONADO'}
-
-                      </Badge>
-                    </div>
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-6 py-6 space-y-6">
+                  {/* Título y descripción */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Título</div>
+                    <h3 className="text-lg font-bold text-gray-900">{selectedMulta.titulo}</h3>
+                    {selectedMulta.motivo && (
+                      <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{selectedMulta.motivo}</p>
+                    )}
                   </div>
 
-                  {/* Propietario */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="text-xs text-gray-500 mb-3 uppercase tracking-wide">Propietario</div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="text-xs text-gray-500">Nombre:</div>
-                        <div className="text-sm text-gray-900">{selectedMulta.propietario}</div>
+                  {/* Detalles en grid */}
+                  <div className="space-y-4 pt-4 border-t border-gray-200">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* ID Multa */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">ID Multa</div>
+                        <div className="text-sm font-medium text-gray-900">#{selectedMulta.id}</div>
                       </div>
-                      <div className="flex justify-between">
-                        <div className="text-xs text-gray-500">Casa:</div>
-                        <div className="text-sm text-gray-900">No. {selectedMulta.casa}</div>
+
+                      {/* Estado */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Estado</div>
+                        <Badge
+                          variant={selectedMulta.estadoPago === 'CONDONADO' ? 'success' : selectedMulta.estadoPago === 'POR_COBRAR' ? 'warning' : 'destructive'}
+                          appearance="outline"
+                          size="sm"
+                        >
+                          {selectedMulta.estadoPago === 'CONDONADO'
+                            ? 'CONDONADO'
+                            : selectedMulta.estadoPago === 'PENDIENTE'
+                              ? 'PENDIENTE'
+                              : 'ABONADO'}
+                        </Badge>
+                      </div>
+
+                      {/* Fecha */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Fecha</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {new Date(selectedMulta.fecha).toLocaleDateString('es-CO', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Tipo de Pago */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Tipo de Pago</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {selectedMulta.tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Detalles financieros */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="text-xs text-gray-500">Monto:</div>
-                        <div className="text-sm font-semibold text-gray-900">
+                    {/* Propietario */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Propietario</div>
+                        <div className="text-sm font-medium text-gray-900">{selectedMulta.propietario}</div>
+                        <div className="text-xs text-gray-500">Casa No. {selectedMulta.casa}</div>
+                      </div>
+                    </div>
+
+                    {/* Monto */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Monto</div>
+                        <div className="text-lg font-bold text-gray-900">
                           {new Intl.NumberFormat('es-CO', {
                             style: 'currency',
                             currency: 'COP',
                           }).format(selectedMulta.monto)}
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <div className="text-xs text-gray-500">Tipo de pago:</div>
-                        <div className="text-sm text-gray-900">
-                          {selectedMulta.tipoPago === 'DINERO' ? 'Efectivo' : 'Labor Social'}
                         </div>
                       </div>
                     </div>
@@ -769,16 +776,25 @@ export default function MultasPage() {
               </div>
 
               {/* Footer con acciones */}
-              <div className="px-6 py-4 border-t border-gray-200">
+              <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
                 <Button
-                  onClick={() => handleEdit(selectedMulta)}
-                  className="w-full"
+                  onClick={() => setIsDetailSheetOpen(false)}
+                  className="flex-1 h-10 font-medium"
                   variant="outline"
                 >
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Editar Multa
+                  Cerrar
                 </Button>
-              </div>
+                <Button
+                  onClick={() => {
+                    setIsDetailSheetOpen(false)
+                    handleEdit(selectedMulta)
+                  }}
+                  className="flex-1 h-10 font-medium"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+              </SheetFooter>
             </>
           )}
         </SheetContent>
@@ -788,15 +804,25 @@ export default function MultasPage() {
       <Sheet open={isFormSheetOpen} onOpenChange={setIsFormSheetOpen}>
         <SheetContent
           side="right"
-          className="data-[state=open]:duration-300 data-[state=closed]:duration-250"
-          style={{ width: '500px', maxWidth: 'none' }}
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
         >
-          <SheetHeader className="border-b pb-4">
-            <SheetTitle className="text-xl font-semibold">Asignar Multa</SheetTitle>
-            <SheetDescription className="text-gray-600">
-              Registra una nueva multa para un propietario del condominio.
-            </SheetDescription>
-          </SheetHeader>
+          {/* Header con icono */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-red-50">
+                <HugeiconsIcon icon={FileCorruptIcon} size={24} className="text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                  Asignar Multa
+                </SheetTitle>
+                <SheetDescription className="text-sm text-gray-500">
+                  Registra una nueva multa para un propietario del condominio.
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
           <form
             onSubmit={async (e) => {
@@ -896,8 +922,6 @@ export default function MultasPage() {
                     value={formDescripcion}
                     onChange={(e) => setFormDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>
@@ -920,11 +944,11 @@ export default function MultasPage() {
               </div>
             </div>
 
-            <SheetFooter className="flex flex-row gap-3 mt-auto px-4 pb-4">
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
               <Button
                 variant="outline"
                 type="button"
-                className="flex-1"
+                className="flex-1 h-10 font-medium"
                 onClick={() => {
                   setIsFormSheetOpen(false)
                   // Limpiar formulario
@@ -938,7 +962,7 @@ export default function MultasPage() {
               </Button>
               <Button
                 type="submit"
-                className="flex-1"
+                className="flex-1 h-10 font-medium"
                 disabled={!formCasa || !formTitulo || !formDescripcion || !formValor}
               >
                 Asignar Multa
@@ -950,17 +974,31 @@ export default function MultasPage() {
 
       {/* Sheet para Editar Multa */}
       <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SheetContent side="right" className="sm:max-w-[540px] w-full p-0">
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '520px', maxWidth: 'none' }}
+        >
           <form
             onSubmit={handleEditSubmit}
             className="flex flex-col h-full"
           >
-            <SheetHeader className="px-6 py-4 border-b">
-              <SheetTitle>Editar Multa</SheetTitle>
-              <SheetDescription>
-                Modifica los detalles de la multa
-              </SheetDescription>
-            </SheetHeader>
+            {/* Header con icono */}
+            <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-red-50">
+                  <HugeiconsIcon icon={FileCorruptIcon} size={24} className="text-red-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                    Editar Multa
+                  </SheetTitle>
+                  <SheetDescription className="text-sm text-gray-500">
+                    Modifica los detalles de la multa
+                  </SheetDescription>
+                </div>
+              </div>
+            </div>
 
             <div className="flex-1 overflow-y-auto">
               <div className="space-y-6 px-6 py-6">
@@ -1004,8 +1042,6 @@ export default function MultasPage() {
                     value={editDescripcion}
                     onChange={(e) => setEditDescripcion(e.target.value)}
                     placeholder="Describe los detalles de la infracción..."
-                    autoExpand
-                    maxHeight={250}
                     required
                   />
                 </div>
@@ -1066,18 +1102,18 @@ export default function MultasPage() {
               </div>
             </div>
 
-            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-4 border-t">
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
               <Button
                 variant="outline"
                 type="button"
-                className="flex-1"
+                className="flex-1 h-10 font-medium"
                 onClick={handleEditCancel}
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                className="flex-1"
+                className="flex-1 h-10 font-medium"
                 disabled={!editTitulo || !editDescripcion || !editValor || !editTipoPago}
               >
                 Guardar Cambios

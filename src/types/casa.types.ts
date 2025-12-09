@@ -61,3 +61,24 @@ export type MascotasCasa = {
   cantidad: number;
   idCasa: number;
 };
+
+export interface MultaPropietario {
+  id: string
+  titulo: string
+  motivo: string
+  monto: number
+  estadoPago: 'POR_COBRAR' | 'CONDONADO' | 'PENDIENTE'
+  tipoPago?: 'DINERO' | 'LABOR_SOCIAL'
+  año: number
+  fechaGenerada: string
+}
+
+export interface ObligacionPendiente {
+  id: string
+  titulo: string
+  valorTotal: number
+  valorPendiente: number
+  montoPagado: number
+  estadoPago: 'PENDIENTE' | 'POR_COBRAR' | 'CONDONADO'
+  año: number
+}

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Calendar } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface PeriodoComboboxProps {
   value: Date
@@ -45,7 +45,7 @@ export function PeriodoCombobox({
   const mesesDisponibles = React.useMemo(() => {
     const meses: { value: string; label: string; fecha: Date }[] = []
     const añoActual = añoSeleccionado
-    
+
     // Generar meses del año seleccionado
     for (let mes = 0; mes < 12; mes++) {
       const fecha = new Date(añoActual, mes, 1)
@@ -57,7 +57,7 @@ export function PeriodoCombobox({
         fecha,
       })
     }
-    
+
     return meses
   }, [añoSeleccionado])
 
@@ -96,17 +96,36 @@ export function PeriodoCombobox({
         className={`w-[var(--radix-popover-trigger-width)] p-0 ${className || ''}`}
         onWheel={(e) => e.stopPropagation()}
       >
+        <div className="flex items-center justify-between px-3 py-2 border-b">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(new Date(añoSeleccionado - 1, value.getMonth(), 1))}
+          >
+            <ChevronLeft className="h-3 w-3" />
+          </Button>
+
+          <span className="font-semibold">{añoSeleccionado}</span>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange(new Date(añoSeleccionado + 1, value.getMonth(), 1))}
+          >
+            <ChevronRight className="h-3 w-3" />
+          </Button>
+        </div>
         <Command>
           <CommandInput placeholder="Buscar mes..." />
           <CommandList>
             <ScrollArea viewportClassName="max-h-[300px]">
-              <CommandEmpty>No se encontró el mes.</CommandEmpty>
+              <CommandEmpty>No se encontró el mes</CommandEmpty>
               <CommandGroup>
                 {mesesDisponibles.map((mes) => {
                   const isSelected =
                     value.getMonth() === mes.fecha.getMonth() &&
                     value.getFullYear() === mes.fecha.getFullYear()
-                  
+
                   return (
                     <CommandItem
                       key={mes.value}

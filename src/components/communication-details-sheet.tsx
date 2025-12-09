@@ -1,5 +1,5 @@
+import { useEffect } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Sheet,
@@ -7,40 +7,42 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { MailOpenIcon } from '@hugeicons/core-free-icons'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { MailOpenIcon } from '@hugeicons/core-free-icons'
+import { Loader2 } from 'lucide-react'
 
-interface Comunicado {
+interface ComunicadoUI {
   id: string
   asunto: string
   mensaje: string
   fechaEnvio: string
-  destinatarios: number
+  destinatarios: string
+  destinatariosCount?: number
   estado: 'enviado' | 'pendiente' | 'error'
 }
 
-interface PropietarioSeleccionable {
-  id: string
-  nombre: string
+interface DestinatarioCorreo {
+  nombreCompleto: string
+  idCasa: number
   email: string
-  numeroCasa: string
-  tipo: 'propietario' | 'arrendatario'
 }
 
 interface CommunicationDetailsSheetProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  selectedComunicado: Comunicado | null
-  propietariosDisponibles: PropietarioSeleccionable[]
+  selectedComunicado: ComunicadoUI | null
+  destinatarios: DestinatarioCorreo[]
+  loadingDestinatarios: boolean
+  onFetchDestinatarios: (idCorreo: string) => void
 }
 
-// Función para obtener las iniciales del nombre
 function getInitials(nombre: string) {
+  if (!nombre) return '??'
   return nombre
     .split(' ')
     .map(n => n[0])
@@ -49,20 +51,44 @@ function getInitials(nombre: string) {
     .slice(0, 2)
 }
 
+// CSS styles for HTML content
+const htmlContentStyles = `
+  .html-content ul { list-style-type: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+  .html-content ol { list-style-type: decimal; padding-left: 1.25rem; margin: 0.5rem 0; }
+  .html-content li { margin: 0.25rem 0; }
+  .html-content p { margin: 0.25rem 0; }
+  .html-content strong, .html-content b { font-weight: 600; }
+  .html-content em, .html-content i { font-style: italic; }
+  .html-content u { text-decoration: underline; }
+  .html-content s, .html-content strike, .html-content del { text-decoration: line-through; }
+  .html-content a { color: #2563eb; text-decoration: underline; }
+`
+
 export function CommunicationDetailsSheet({
   isOpen,
   onOpenChange,
   selectedComunicado,
-  propietariosDisponibles,
+  destinatarios,
+  loadingDestinatarios,
+  onFetchDestinatarios,
 }: CommunicationDetailsSheetProps) {
+  useEffect(() => {
+    if (isOpen && selectedComunicado) {
+      onFetchDestinatarios(selectedComunicado.id)
+    }
+  }, [isOpen, selectedComunicado, onFetchDestinatarios])
+
+  const visibleAvatars = destinatarios.slice(0, 4)
+  const remainingCount = destinatarios.length - 4
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <style dangerouslySetInnerHTML={{ __html: htmlContentStyles }} />
       <SheetContent
         side="right"
         className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 !rounded-lg !top-2 !bottom-2 !right-2 !h-[calc(100vh-1rem)] overflow-hidden"
         style={{ width: '600px', maxWidth: 'none' }}
       >
-        {/* Header con icono */}
         <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -92,100 +118,103 @@ export function CommunicationDetailsSheet({
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Mensaje</label>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedComunicado.mensaje}</p>
+                  <div
+                    className="html-content text-sm text-gray-700 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: selectedComunicado.mensaje }}
+                  />
                 </div>
               </div>
 
-              {/* Destinatarios con avatares */}
+              {/* Destinatarios */}
               <div className="space-y-3">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Destinatarios</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="mt-1 flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-                      <div className="flex items-center -space-x-2">
-                        {propietariosDisponibles.slice(0, 4).map((propietario, index) => (
-                          <Avatar
-                            key={propietario.id}
-                            className="h-8 w-8 rounded-full"
-                            style={{ zIndex: 4 - index }}
-                          >
-                            <AvatarFallback className="h-8 w-8 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700 flex items-center justify-center">
-                              {getInitials(propietario.nombre)}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
-                      </div>
-                      {selectedComunicado.destinatarios > 4 && (
-                        <span className="text-sm font-medium text-gray-600">
-                          +{selectedComunicado.destinatarios - 4} personas
-                        </span>
-                      )}
-                      {selectedComunicado.destinatarios <= 4 && (
-                        <span className="text-sm font-medium text-gray-600">
-                          {selectedComunicado.destinatarios} {selectedComunicado.destinatarios === 1 ? 'persona' : 'personas'}
-                        </span>
-                      )}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-96 p-0" align="start" side="bottom">
-                    <div className="px-4 pt-4 pb-2 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-800">Destinatarios ({selectedComunicado.destinatarios})</p>
-                    </div>
-                    <div
-                      className="max-h-72 overflow-y-auto py-2 px-2 space-y-1"
-                      onWheelCapture={(event) => event.stopPropagation()}
-                    >
-                      {propietariosDisponibles.slice(0, selectedComunicado.destinatarios).map((propietario) => (
-                        <div
-                          key={propietario.id}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="rounded-xl text-[10px] font-medium">
-                              {getInitials(propietario.nombre)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{propietario.nombre}</p>
-                            <p className="text-xs text-gray-500 truncate">Casa {propietario.numeroCasa} · {propietario.email}</p>
-                          </div>
+
+                {loadingDestinatarios ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    <span className="text-sm text-gray-400">Cargando...</span>
+                  </div>
+                ) : (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-3 hover:bg-gray-50 rounded-xl p-2 -m-2 mt-0.5 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center -space-x-2">
+                          {visibleAvatars.map((dest, index) => (
+                            <Avatar
+                              key={index}
+                              className="h-9 w-9 rounded-full outline outline-1 outline-gray-200"
+                              style={{ zIndex: 4 - index }}
+                            >
+                              <AvatarFallback className="h-9 w-9 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                {getInitials(dest.nombreCompleto || dest.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                        {remainingCount > 0 && (
+                          <span className="text-sm font-medium text-gray-500">
+                            +{remainingCount} personas
+                          </span>
+                        )}
+                        {destinatarios.length <= 4 && destinatarios.length > 0 && (
+                          <span className="text-sm font-medium text-gray-500">
+                            {destinatarios.length} {destinatarios.length === 1 ? 'persona' : 'personas'}
+                          </span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 p-0" align="start" side="bottom">
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm font-semibold text-gray-900">
+                          Destinatarios ({destinatarios.length})
+                        </p>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        <div className="divide-y divide-gray-100">
+                          {destinatarios.map((dest, index) => (
+                            <div key={index} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                              <Avatar className="h-10 w-10">
+                                <AvatarFallback className="rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                  {getInitials(dest.nombreCompleto || dest.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {dest.nombreCompleto || 'Sin nombre'}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {dest.idCasa != null ? `Casa ${dest.idCasa} · ` : ''}{dest.email}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
 
               {/* Fecha de envío */}
               <div className="bg-gray-50 rounded-xl p-4 space-y-1">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de envío</label>
                 <p className="text-sm font-medium text-gray-900">
-                  {new Date(selectedComunicado.fechaEnvio).toLocaleDateString('es-ES', {
+                  {new Date(selectedComunicado.fechaEnvio + 'Z').toLocaleDateString('es-ES', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {new Date(selectedComunicado.fechaEnvio).toLocaleTimeString('es-ES', {
+                  {new Date(selectedComunicado.fechaEnvio + 'Z').toLocaleTimeString('es-ES', {
                     hour: '2-digit',
                     minute: '2-digit',
+                    hour12: true,
                   })}
                 </p>
-              </div>
-
-              {/* Estado */}
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</label>
-                <div>
-                  <Badge
-                    variant={selectedComunicado.estado === 'enviado' ? 'success' : selectedComunicado.estado === 'pendiente' ? 'warning' : 'destructive'}
-                    appearance="outline"
-                    size="md"
-                  >
-                    {selectedComunicado.estado === 'enviado' ? 'Enviado' : selectedComunicado.estado === 'pendiente' ? 'Pendiente' : 'Error'}
-                  </Badge>
-                </div>
               </div>
             </div>
           </ScrollArea>

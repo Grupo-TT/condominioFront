@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Sent02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -15,79 +15,48 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { propietariosMock } from '@/data/propietarios.mock'
-import { comunicadosMock as comunicadosData } from '@/data/comunicados.mock'
 import { RecipientSelector } from '@/components/recipient-selector'
 import { EmailComposer } from '@/components/email-composer'
 import { CommunicationDetailsSheet } from '@/components/communication-details-sheet'
 import { CommunicationHistorySheet } from '@/components/communication-history-sheet'
-
-// Tipo para los comunicados
-interface Comunicado {
-  id: string
-  asunto: string
-  mensaje: string
-  fechaEnvio: string
-  destinatarios: number
-  estado: 'enviado' | 'pendiente' | 'error'
-}
-
-// Tipo para propietario seleccionable
-interface PropietarioSeleccionable {
-  id: string
-  nombre: string
-  email: string
-  numeroCasa: string
-  tipo: 'propietario' | 'arrendatario'
-}
-
-// Tipo para archivos adjuntos
-interface ArchivoAdjunto {
-  id: string
-  nombre: string
-  tamaño: number
-  tipo: string
-  file: File
-}
+import { useComunicados } from '@/hooks/useComunicados'
+import { PersonaSeleccionable, ComunicadoUI } from '@/types/comunicados.types'
 
 export default function ComunicadosPage() {
-  const [comunicados, setComunicados] = useState<Comunicado[]>(comunicadosData)
-  const [loading, setLoading] = useState(false)
+  const {
+    personas,
+    loadingPersonas,
+    fetchPersonas,
+    comunicados,
+    loadingComunicados,
+    fetchComunicados,
+    destinatarios,
+    loadingDestinatarios,
+    fetchDestinatarios,
+    sendingEmail,
+    enviarEmail,
+    deletingId,
+    eliminarComunicado,
+  } = useComunicados()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [searchPropietarios, setSearchPropietarios] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false)
-  const [selectedComunicado, setSelectedComunicado] = useState<Comunicado | null>(null)
+  const [selectedComunicado, setSelectedComunicado] = useState<ComunicadoUI | null>(null)
 
-  // Estados del formulario
+  // Form state
   const [formAsunto, setFormAsunto] = useState('')
   const [formMensaje, setFormMensaje] = useState('')
-  const [selectedPropietarios, setSelectedPropietarios] = useState<PropietarioSeleccionable[]>([])
-  const [archivosAdjuntos, setArchivosAdjuntos] = useState<ArchivoAdjunto[]>([])
+  const [selectedPropietarios, setSelectedPropietarios] = useState<PersonaSeleccionable[]>([])
+  const [archivos, setArchivos] = useState<File[]>([])
   const [errors, setErrors] = useState<{ asunto?: string; contenido?: string; destinatarios?: string }>({})
 
-  // Usar propietarios mock directamente
-  const propietariosDisponibles = useMemo<PropietarioSeleccionable[]>(() => {
-    return propietariosMock.map(p => ({
-      id: p.id,
-      nombre: p.nombre,
-      email: p.email,
-      numeroCasa: p.numeroCasa,
-      tipo: p.tipo,
-    }))
-  }, [])
-
-  // Filtrar propietarios por búsqueda (ahora manejado en RecipientSelector)
-  // const propietariosFiltrados = useMemo(() => {
-  //   if (!searchPropietarios) return propietariosDisponibles
-  //   const term = searchPropietarios.toLowerCase()
-  //   return propietariosDisponibles.filter(
-  //     p => p.nombre.toLowerCase().includes(term) ||
-  //          p.email.toLowerCase().includes(term) ||
-  //          p.numeroCasa.toLowerCase().includes(term) ||
-  //          p.tipo.toLowerCase().includes(term)
-  //   )
-  // }, [propietariosDisponibles, searchPropietarios])
+  // Fetch data on mount
+  useEffect(() => {
+    fetchPersonas()
+    fetchComunicados()
+  }, [fetchPersonas, fetchComunicados])
 
   const clearError = (errorKey: string) => {
     setErrors(prev => ({ ...prev, [errorKey]: undefined }))
@@ -105,15 +74,14 @@ export default function ComunicadosPage() {
       nextErrors.asunto = 'El asunto no puede superar los 200 caracteres.'
     }
 
-    // Validar que haya contenido: mensaje o archivos adjuntos (o ambos)
+    // Validate that there is content
     const hasMensaje = formMensaje && formMensaje.trim().length > 0
-    const hasArchivos = archivosAdjuntos.length > 0
 
-    if (!hasMensaje && !hasArchivos) {
-      nextErrors.contenido = 'Debes incluir una descripción o adjuntar al menos un archivo.'
+    if (!hasMensaje) {
+      nextErrors.contenido = 'Debes incluir una descripción del comunicado.'
     }
 
-    // Si hay mensaje, validar longitud máxima
+    // If there is a message, validate max length
     if (hasMensaje && formMensaje.length > 5000) {
       nextErrors.contenido = 'El mensaje no puede superar los 5000 caracteres.'
     }
@@ -127,60 +95,91 @@ export default function ComunicadosPage() {
     if (!validateForm()) return
 
     try {
-      setLoading(true)
-      
-      // Aquí iría la llamada al servicio para enviar el comunicado
-      // const response = await comunicadoService.enviarComunicado({
-      //   asunto: formAsunto,
-      //   mensaje: formMensaje,
-      //   destinatarios: selectedPropietarios.map(p => p.email),
-      //   archivos: archivosAdjuntos.map(a => a.file),
-      // })
+      // Pass the file directly - the service handles multipart/form-data
+      const success = await enviarEmail({
+        emails: selectedPropietarios.map(p => p.correo),
+        subject: formAsunto,
+        message: formMensaje,
+      }, archivos.length > 0 ? archivos[0] : undefined)
 
-      // Simulación de envío
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (success) {
+        toast.success('Comunicado enviado exitosamente', {
+          description: `Se envió a ${selectedPropietarios.length} destinatarios`,
+        })
 
-      const nuevoComunicado: Comunicado = {
-        id: Date.now().toString(),
-        asunto: formAsunto,
-        mensaje: formMensaje,
-        fechaEnvio: new Date().toISOString(),
-        destinatarios: selectedPropietarios.length,
-        estado: 'enviado',
+        // Clear form
+        setFormAsunto('')
+        setFormMensaje('')
+        setSelectedPropietarios([])
+        setArchivos([])
+        setErrors({})
+      } else {
+        toast.error('Error al enviar el comunicado', {
+          description: 'Por favor, intenta de nuevo.',
+        })
       }
-
-      setComunicados(prev => [nuevoComunicado, ...prev])
-      
-      toast.success('Comunicado enviado exitosamente', {
-        description: `Se envió a ${nuevoComunicado.destinatarios} propietarios`,
-      })
-
-      // Limpiar formulario
-      setFormAsunto('')
-      setFormMensaje('')
-      setSelectedPropietarios([])
-      setArchivosAdjuntos([])
-      setErrors({})
     } catch (err) {
       console.error('Error enviando comunicado:', err)
       toast.error('Error al enviar el comunicado', {
         description: 'Por favor, intenta de nuevo.',
       })
-    } finally {
-      setLoading(false)
     }
   }
 
-  // const filteredComunicados = useMemo(() => {
-  //   const term = searchTerm.toLowerCase()
-  //   return comunicados.filter((c) => {
-  //     if (!term) return true
-  //     return (
-  //       c.asunto.toLowerCase().includes(term) ||
-  //       c.mensaje.toLowerCase().includes(term)
-  //     )
-  //   })
-  // }, [searchTerm, comunicados])
+  const handleDeleteComunicado = async (id: string): Promise<boolean> => {
+    const success = await eliminarComunicado(id)
+    if (success) {
+      toast.success('Comunicado eliminado', {
+        description: 'El comunicado ha sido eliminado correctamente.',
+      })
+    } else {
+      toast.error('Error al eliminar', {
+        description: 'No se pudo eliminar el comunicado. Intenta de nuevo.',
+      })
+    }
+    return success
+  }
+
+  const handleTogglePropietario = (propietario: PersonaSeleccionable) => {
+    setSelectedPropietarios(prev => {
+      const isSelected = prev.some(p => p.id === propietario.id)
+      if (isSelected) {
+        return prev.filter(p => p.id !== propietario.id)
+      } else {
+        return [...prev, propietario]
+      }
+    })
+    setErrors(prev => ({ ...prev, destinatarios: undefined }))
+  }
+
+  const handleSelectAll = () => {
+    if (selectedPropietarios.length === personas.length) {
+      setSelectedPropietarios([])
+    } else {
+      setSelectedPropietarios([...personas])
+    }
+    setErrors(prev => ({ ...prev, destinatarios: undefined }))
+  }
+
+  const handleSelectByRole = (role: string) => {
+    const personasWithRole = personas.filter(p => (p.roles || []).includes(role))
+    const isAllSelected = personasWithRole.every(p => selectedPropietarios.some(s => s.id === p.id))
+
+    if (isAllSelected) {
+      // Deselect all with this role
+      setSelectedPropietarios(selectedPropietarios.filter(s => !(s.roles || []).includes(role)))
+    } else {
+      // Add all with this role that are not already selected
+      const nuevosSeleccionados = [...selectedPropietarios]
+      personasWithRole.forEach(p => {
+        if (!nuevosSeleccionados.some(s => s.id === p.id)) {
+          nuevosSeleccionados.push(p)
+        }
+      })
+      setSelectedPropietarios(nuevosSeleccionados)
+    }
+    setErrors(prev => ({ ...prev, destinatarios: undefined }))
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-1rem)] overflow-hidden">
@@ -213,7 +212,7 @@ export default function ComunicadosPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Comunicados</h1>
               <p className="text-gray-500 mt-1">
-                Envía correos masivos a los propietarios del condominio.
+                Envía correos masivos a los residentes del condominio.
               </p>
             </div>
             <Button
@@ -230,61 +229,14 @@ export default function ComunicadosPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 flex-1 min-h-0">
             {/* Sección izquierda: Lista de propietarios */}
             <RecipientSelector
-              propietariosDisponibles={propietariosDisponibles}
+              propietariosDisponibles={personas}
               selectedPropietarios={selectedPropietarios}
               searchPropietarios={searchPropietarios}
               onSearchChange={setSearchPropietarios}
-              onTogglePropietario={(propietario) => {
-                setSelectedPropietarios(prev => {
-                  const isSelected = prev.some(p => p.id === propietario.id)
-                  if (isSelected) {
-                    return prev.filter(p => p.id !== propietario.id)
-                  } else {
-                    return [...prev, propietario]
-                  }
-                })
-                setErrors(prev => ({ ...prev, destinatarios: undefined }))
-              }}
-              onSelectAll={() => {
-                if (selectedPropietarios.length === propietariosDisponibles.length) {
-                  setSelectedPropietarios([])
-                } else {
-                  setSelectedPropietarios([...propietariosDisponibles])
-                }
-                setErrors(prev => ({ ...prev, destinatarios: undefined }))
-              }}
-              onSelectTipo={(tipo) => {
-                if (tipo === 'propietario') {
-                  const propietarios = propietariosDisponibles.filter(p => p.tipo === 'propietario')
-                  const isAllSelected = propietarios.every(p => selectedPropietarios.some(s => s.id === p.id))
-                  if (isAllSelected) {
-                    setSelectedPropietarios(selectedPropietarios.filter(s => s.tipo !== 'propietario'))
-                  } else {
-                    const nuevosSeleccionados = [...selectedPropietarios]
-                    propietarios.forEach(p => {
-                      if (!nuevosSeleccionados.some(s => s.id === p.id)) {
-                        nuevosSeleccionados.push(p)
-                      }
-                    })
-                    setSelectedPropietarios(nuevosSeleccionados)
-                  }
-                } else {
-                  const arrendatarios = propietariosDisponibles.filter(p => p.tipo === 'arrendatario')
-                  const isAllSelected = arrendatarios.every(p => selectedPropietarios.some(s => s.id === p.id))
-                  if (isAllSelected) {
-                    setSelectedPropietarios(selectedPropietarios.filter(s => s.tipo !== 'arrendatario'))
-                  } else {
-                    const nuevosSeleccionados = [...selectedPropietarios]
-                    arrendatarios.forEach(p => {
-                      if (!nuevosSeleccionados.some(s => s.id === p.id)) {
-                        nuevosSeleccionados.push(p)
-                      }
-                    })
-                    setSelectedPropietarios(nuevosSeleccionados)
-                  }
-                }
-                setErrors(prev => ({ ...prev, destinatarios: undefined }))
-              }}
+              onTogglePropietario={handleTogglePropietario}
+              onSelectAll={handleSelectAll}
+              onSelectByRole={handleSelectByRole}
+              loading={loadingPersonas}
             />
 
             {/* Sección derecha: Formulario de comunicado estilo email */}
@@ -292,33 +244,10 @@ export default function ComunicadosPage() {
               selectedPropietarios={selectedPropietarios}
               formAsunto={formAsunto}
               formMensaje={formMensaje}
-              archivosAdjuntos={archivosAdjuntos}
               errors={errors}
-              loading={loading}
+              loading={sendingEmail}
               onAsuntoChange={setFormAsunto}
               onMensajeChange={setFormMensaje}
-              onFileChange={(e) => {
-                const files = e.target.files
-                if (!files) return
-
-                const nuevosArchivos: ArchivoAdjunto[] = Array.from(files).map(file => ({
-                  id: `${Date.now()}-${file.name}`,
-                  nombre: file.name,
-                  tamaño: file.size,
-                  tipo: file.type,
-                  file: file,
-                }))
-
-                setArchivosAdjuntos(prev => [...prev, ...nuevosArchivos])
-
-                // Reset input para permitir seleccionar el mismo archivo de nuevo
-                if (e.target) {
-                  e.target.value = ''
-                }
-              }}
-              onRemoveArchivo={(id) => {
-                setArchivosAdjuntos(prev => prev.filter(a => a.id !== id))
-              }}
               onRemovePropietario={(id) => {
                 setSelectedPropietarios(prev => prev.filter(p => p.id !== id))
               }}
@@ -326,11 +255,13 @@ export default function ComunicadosPage() {
                 setFormAsunto('')
                 setFormMensaje('')
                 setSelectedPropietarios([])
-                setArchivosAdjuntos([])
+                setArchivos([])
                 setErrors({})
               }}
               onSubmit={handleEnviarComunicado}
               onClearError={clearError}
+              archivos={archivos}
+              onArchivosChange={setArchivos}
             />
           </div>
         </div>
@@ -341,7 +272,9 @@ export default function ComunicadosPage() {
         isOpen={isSheetOpen}
         onOpenChange={setIsSheetOpen}
         selectedComunicado={selectedComunicado}
-        propietariosDisponibles={propietariosDisponibles}
+        destinatarios={destinatarios}
+        loadingDestinatarios={loadingDestinatarios}
+        onFetchDestinatarios={fetchDestinatarios}
       />
 
       {/* Sheet para historial de comunicados enviados */}
@@ -353,8 +286,10 @@ export default function ComunicadosPage() {
         onSearchChange={setSearchTerm}
         onSelectComunicado={setSelectedComunicado}
         onOpenDetails={() => setIsSheetOpen(true)}
+        onDelete={handleDeleteComunicado}
+        deletingId={deletingId}
+        loading={loadingComunicados}
       />
     </div>
   )
 }
-

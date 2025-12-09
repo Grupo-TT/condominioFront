@@ -4,7 +4,6 @@ import { RecursoRequest, RecursoResponse, DisponibilidadRecurso } from '../types
 export const recursoService = {
     async postRecurso(data: RecursoRequest): Promise<RecursoResponse> {
         const response = await apiClient.post('/recurso/create', data);
-        // Normalizar si el backend devuelve { message, data: { ... } }
         const body = response.data
         if (body && typeof body === 'object' && 'data' in body) return body.data as RecursoResponse
         return body as RecursoResponse
@@ -21,7 +20,14 @@ export const recursoService = {
         if (Array.isArray(body)) return body as RecursoResponse[]
         if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
         return []
-    },  
+    },
+    async getRecursoEnabled(): Promise<RecursoResponse[]> {
+        const response = await apiClient.get(`/recurso/all-public`);
+        const body = response.data
+        if (Array.isArray(body)) return body as RecursoResponse[]
+        if (body && typeof body === 'object' && 'data' in body && Array.isArray(body.data)) return body.data as RecursoResponse[]
+        return []
+    },
     async changeAvailability(id: number, disponibilidad: DisponibilidadRecurso): Promise<RecursoResponse> {
         const response = await apiClient.put(`/recurso/change-availability/${id}`, null, {
             params: { disponibilidad }
