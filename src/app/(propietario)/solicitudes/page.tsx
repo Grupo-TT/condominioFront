@@ -273,7 +273,7 @@ export default function SolicitudesPropietarioPage() {
         }
         setSolicitudes(prev => [newSolicitud, ...prev])
         setIsCreateSheetOpen(false)
-    }, [formTitulo, formTipo, formDescripcion, formTipoObra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
+    }, [formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
 
     const handleEditSubmit = useCallback(() => {
         if (selectedSolicitud) {

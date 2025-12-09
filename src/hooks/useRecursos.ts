@@ -15,7 +15,7 @@ export const useRecursos = () => {
             const list = await recursoService.getRecurso()
             const adaptados = list.map(mapResponseToUI)
             setRecursos(adaptados)
-        } catch (_e) {
+        } catch {
             setError('Error cargando recursos')
         } finally {
             setLoading(false)
