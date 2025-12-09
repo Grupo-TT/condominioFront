@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { monthlyDataByYear, dashboardSummary, housesStatus, houseTypes } from "@/data/dashboard.mock"
 import {
   MonthlyFinanceChart,
   MetricsCardsGrid,
@@ -22,28 +21,29 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
 
 export default function Page() {
-    const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes } = useDashboardAdmin()
+  const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
   const [selectedYear, setSelectedYear] = useState<number>(2025)
-  const monthlyData = monthlyDataByYear[selectedYear]
   const [monthlyData2, setMonthlyData] = useState<any[]>([])
   const [monthSummary, setMonthSummary] = useState<any>({})
+  const [housesStatus2, setHousesStatus] = useState<any>({})
+  const [houseTypes2, setHouseTypes] = useState<any>({})
 
   useEffect(() => {
     const load = async () => {
-        const yearData = await fetchResumenFinancieroAnio(selectedYear)
-        const monthData = await fetchResumenFinancieroMes()
+      const yearData = await fetchResumenFinancieroAnio(selectedYear)
+      const monthData = await fetchResumenFinancieroMes()
+      const housesStatus = await fetchCasas()
+      const houseTypes = await fetchTypes()
 
-        console.log('Por Año:', yearData)
-        console.log('Mes Actual:', monthData)
-
-        setMonthlyData(yearData)
-        setMonthSummary(monthData)
-        console.log("🚀 ~ load ~ monthData:", monthData)
+      setMonthlyData(yearData)
+      setMonthSummary(monthData)
+      setHousesStatus(housesStatus)
+      setHouseTypes(houseTypes)
     }
 
     load()
-}, [selectedYear])
-  
+  }, [selectedYear])
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -111,8 +111,8 @@ export default function Page() {
 
               {/* Cards Container */}
               <div className="flex gap-6">
-                <PropertyOverviewCard houseTypes={houseTypes} />
-                <HousesStatusChart housesStatus={housesStatus} />
+                <PropertyOverviewCard houseTypes={houseTypes2} />
+                <HousesStatusChart housesStatus={housesStatus2} />
               </div>
             </div>
 

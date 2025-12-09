@@ -22,8 +22,40 @@ export function useDashboardAdmin() {
         }
     }, [])
 
+    const fetchCasas = useCallback(async () => {
+        try {
+            const data = await adminDashboardService.getHousesStatus()
+            return data
+        } catch (err) {
+            console.error('Error fetching houses status:', err)
+            return []
+        }
+    }, [])
+
+    const fetchTypes = useCallback(async () => {
+        try {
+            const data = await adminDashboardService.getHousesTypes()
+            return data
+        } catch (err) {
+            console.error('Error fetching houses types:', err)
+            return []
+        }
+    }, [])
+
+    const fetchAsambleas = useCallback(async () => {
+        try {
+            const data = await adminDashboardService.getAsambleas()
+            return data
+        } catch (err) {
+            console.error('Error fetching asambleas:', err)
+            return []
+        }
+    }, [])
+
     return {
         fetchResumenFinancieroAnio,
         fetchResumenFinancieroMes,
+        fetchCasas,
+        fetchTypes,
     }
 }
