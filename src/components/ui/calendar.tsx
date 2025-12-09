@@ -5,10 +5,12 @@ import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker } from 'react-day-picker';
+import { es } from 'date-fns/locale';
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: React.ComponentProps<typeof DayPicker>) {
   return (
     <DayPicker
+      locale={es}
       showOutsideDays={showOutsideDays}
       className={cn('p-3', className)}
       classNames={{

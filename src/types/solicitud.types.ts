@@ -15,7 +15,7 @@ export interface Solicitud {
   estado: 'pendiente' | 'aprobada' | 'rechazada' | 'revisada'
   descripcion?: string
   // Campos específicos para reparaciones locativas
-  tipoObra?: 'Hidráulica' | 'Eléctrica' | 'Obra blanca' | 'Obra gris' | 'Otra'
+  tipoObra?: 'Eléctrica' | 'Hidráulica' | 'Alturas (superior a 1.50m)' | 'Obra blanca' | 'Obra gris' | 'Otra' | string
   fechaInicio?: string
   fechaFinalizacion?: string
   trabajadores?: Trabajador[]
