@@ -507,12 +507,12 @@ export default function MovimientosPage() {
                           try {
                             await eliminarMovimiento(row.original.id);
 
-                            toast.success("Movimiento eliminado correctamente");
+                            toast.success('Movimiento eliminado', { description: 'El registro ha sido removido correctamente.' });
                             recargar();
 
                           } catch (error) {
                             console.error("Error al eliminar:", error);
-                            toast.error("No se pudo eliminar el movimiento");
+                            toast.error('No se pudo eliminar el movimiento', { description: 'Intenta de nuevo más tarde.' });
                           }
                         }}
                         className="bg-red-600 hover:bg-red-700"
@@ -1138,7 +1138,7 @@ export default function MovimientosPage() {
               try {
                 await registrarMovimiento(payload);
 
-                toast.success("Movimiento registrado correctamente");
+                toast.success('Movimiento registrado', { description: 'El registro ha sido guardado correctamente.' });
                 setIsFormSheetOpen(false);
                 recargar();
 
@@ -1150,7 +1150,7 @@ export default function MovimientosPage() {
                 setFormCategoria("");
                 setFormResponsable("");
               } catch {
-                toast.error("No se pudo registrar el movimiento");
+                toast.error('No se pudo registrar el movimiento', { description: 'Verifica los datos e intenta de nuevo.' });
               }
             }}
             className="flex flex-col h-full"
@@ -1405,7 +1405,7 @@ export default function MovimientosPage() {
 
               try {
                 await editarMovimiento(editingMovimiento.id, payload);
-                toast.success("Movimiento actualizado correctamente");
+                toast.success('Movimiento actualizado', { description: 'Los cambios han sido guardados.' });
 
                 setIsEditSheetOpen(false);
                 handleEditCancel();
@@ -1413,7 +1413,7 @@ export default function MovimientosPage() {
 
               } catch (error) {
                 console.error("Error al editar el movimiento:", error);
-                toast.error("No se pudo editar el movimiento");
+                toast.error('No se pudo editar el movimiento', { description: 'Verifica los datos e intenta de nuevo.' });
               }
             }}
             className="flex flex-col h-full"

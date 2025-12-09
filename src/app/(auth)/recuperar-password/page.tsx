@@ -61,7 +61,7 @@ export default function RecoverPasswordPage() {
       );
       setRecoveryEmail(email);
       setTempCode('');
-      toast.success('Te enviamos un código de verificación a tu correo.');
+      toast.success('Te enviamos un código de verificación', { description: 'Revisa tu bandeja de entrada.' });
       router.push('/recuperar-password/otp');
     } catch (error: unknown) {
       let message = 'No pudimos enviar el código. Intenta nuevamente.';

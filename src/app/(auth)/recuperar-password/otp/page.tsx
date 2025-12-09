@@ -47,9 +47,9 @@ export default function RecoverOtpPage() {
           withCredentials: false,
         }
       );
-      toast.success('Código reenviado a tu correo.');
+      toast.success('Código reenviado', { description: 'Revisa tu bandeja de entrada.' });
     } catch {
-      toast.error('Error al reenviar el código.');
+      toast.error('Error al reenviar el código', { description: 'Intenta de nuevo más tarde.' });
     }
   };
 
@@ -73,7 +73,7 @@ export default function RecoverOtpPage() {
       setHasVerified(true);
       router.push('/recuperar-password/nueva');
     } catch {
-      toast.error('Código incorrecto');
+      toast.error('Código incorrecto', { description: 'Verifica el código e intenta de nuevo.' });
       setCode('');
     } finally {
       setIsLoading(false);

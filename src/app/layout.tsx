@@ -23,8 +23,10 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster position="top-right" style={{ width: '400px' }} />
       </body>
     </html>
   );
 }
+
+

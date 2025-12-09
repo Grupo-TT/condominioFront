@@ -107,22 +107,22 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
   return (
     <div className="flex gap-1 flex-wrap">
       {tipos
-      .filter(({ cantidad }) => cantidad > 0)
-      .map(({ tipo }, idx) => {
+        .filter(({ cantidad }) => cantidad > 0)
+        .map(({ tipo }, idx) => {
           // Colores personalizados para cada tipo
           const bgColor =
             tipo === 'perro'
               ? '#F1E8D6' // Beige/Dorado claro
               : tipo === 'gato'
-              ? '#E3E4EA' // Azul grisáceo claro
-              : '#E6EFEA' // Verde claro
+                ? '#E3E4EA' // Azul grisáceo claro
+                : '#E6EFEA' // Verde claro
 
           const iconColor =
             tipo === 'perro'
               ? '#A39170' // Dorado/Marrón
               : tipo === 'gato'
-              ? '#595D75' // Azul grisáceo oscuro
-              : '#4C6C5A' // Verde oscuro
+                ? '#595D75' // Azul grisáceo oscuro
+                : '#4C6C5A' // Verde oscuro
 
           const Icon =
             tipo === 'perro' ? Dog : tipo === 'gato' ? Cat : PawPrint
@@ -146,7 +146,7 @@ export default function CasasPage() {
   const router = useRouter()
   const { casas, loading, refetch: refetchCasas } = useCasas()
   const { setCasaInCache } = useCasaContext()
-  
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -175,16 +175,16 @@ export default function CasasPage() {
     // Verificar si la casa seleccionada ya tiene un propietario
     const casaId = parseInt(data.idCasa, 10)
     const casaSeleccionada = casas?.find(casa => parseInt(casa.numeroCasa, 10) === casaId)
-    
+
     // Verificar si la casa tiene propietario real (no los valores por defecto)
     // El adaptador asigna 'Sin propietario' o 'Sin nombre' cuando no hay propietario
     const nombrePropietario = casaSeleccionada?.propietario?.nombreCompleto?.trim() || ''
-    const tienePropietarioReal = nombrePropietario !== '' && 
-                                 nombrePropietario !== 'Sin propietario' && 
-                                 nombrePropietario !== 'Sin nombre'
+    const tienePropietarioReal = nombrePropietario !== '' &&
+      nombrePropietario !== 'Sin propietario' &&
+      nombrePropietario !== 'Sin nombre'
     const tieneArrendatarioReal = tienePropietarioReal && casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA'
     const rolSeleccionado = data.rolEnCasa
-    
+
     // Solo mostrar el diálogo si hay un propietario/arrendatario real según corresponda
     if ((rolSeleccionado === 'PROPIETARIO' && tienePropietarioReal) || (rolSeleccionado === 'ARRENDATARIO' && tieneArrendatarioReal)) {
       setPendingRegistroData(data)
@@ -208,6 +208,7 @@ export default function CasasPage() {
 
       // Mostrar toast de éxito
       toast.success('Propietario creado exitosamente', {
+        description: 'El registro ha sido guardado correctamente.',
         duration: 5000,
       })
 
@@ -223,9 +224,10 @@ export default function CasasPage() {
       const errorMessage = axios.isAxiosError(err)
         ? (err.response?.data as { message?: string })?.message || err.message || "Error al crear el propietario"
         : "Error al crear el propietario. Intenta de nuevo."
-      
+
       // Mostrar toast de error
       toast.error(errorMessage, {
+        description: 'No se pudo completar el registro.',
         duration: 5000,
       })
       return false
@@ -303,7 +305,7 @@ export default function CasasPage() {
         cell: ({ row }) => {
           const nombrePropietario = row.original.propietario.nombreCompleto
           const sinPropietario = nombrePropietario === 'Sin propietario' || nombrePropietario === 'Sin nombre'
-          
+
           return (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -564,152 +566,152 @@ export default function CasasPage() {
                 value: 'todas',
                 label: 'Todas',
                 content: loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
+                  /* Tabla con skeleton o datos */
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredCasas?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ) : (
+                  /* Sin resultados */
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <Search className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      No se encontraron resultados
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      {searchTerm || estadoFilter !== 'todas'
+                        ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''}${filterType !== 'todas' ? ` de tipo ${filterType === 'residencial' ? 'residencial' : 'arrendada'}` : ''}`
+                        : filterType === 'residencial'
+                          ? 'No hay casas residenciales registradas'
+                          : filterType === 'arrendada'
+                            ? 'No hay casas arrendadas registradas'
+                            : 'No hay casas registradas'
+                      }
+                    </p>
                   </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''}${filterType !== 'todas' ? ` de tipo ${filterType === 'residencial' ? 'residencial' : 'arrendada'}` : ''}`
-                      : filterType === 'residencial'
-                        ? 'No hay casas residenciales registradas'
-                        : filterType === 'arrendada'
-                          ? 'No hay casas arrendadas registradas'
-                          : 'No hay casas registradas'
-                    }
-                  </p>
-                </div>
-              ),
+                ),
               },
               {
                 value: 'residencial',
                 label: 'Residenciales',
                 content: loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
+                  /* Tabla con skeleton o datos */
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredCasas?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ) : (
+                  /* Sin resultados */
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <Search className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      No se encontraron resultados
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      {searchTerm || estadoFilter !== 'todas'
+                        ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo residencial`
+                        : 'No hay casas residenciales registradas'
+                      }
+                    </p>
                   </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo residencial`
-                      : 'No hay casas residenciales registradas'
-                    }
-                  </p>
-                </div>
-              ),
+                ),
               },
               {
                 value: 'arrendada',
                 label: 'Arrendadas',
                 content: loading || hasResults ? (
-                /* Tabla con skeleton o datos */
-                <DataGrid
-                  table={table}
-                  recordCount={filteredCasas?.length || 0}
-                  loadingMode="skeleton"
-                  isLoading={loading}
-                  tableLayout={{
-                    headerBackground: false,
-                    rowBorder: true,
-                    rowRounded: false,
-                  }}
-                >
-                  <div className="w-full space-y-2.5">
-                    <DataGridContainer border={false}>
-                      <ScrollArea>
-                        <DataGridTable />
-                        <ScrollBar orientation="horizontal" />
-                      </ScrollArea>
-                    </DataGridContainer>
-                    <DataGridPagination
-                      rowsPerPageLabel="Filas por página"
-                      info="{from} - {to} de {count}"
-                      previousPageLabel="Ir a la página anterior"
-                      nextPageLabel="Ir a la página siguiente"
-                    />
+                  /* Tabla con skeleton o datos */
+                  <DataGrid
+                    table={table}
+                    recordCount={filteredCasas?.length || 0}
+                    loadingMode="skeleton"
+                    isLoading={loading}
+                    tableLayout={{
+                      headerBackground: false,
+                      rowBorder: true,
+                      rowRounded: false,
+                    }}
+                  >
+                    <div className="w-full space-y-2.5">
+                      <DataGridContainer border={false}>
+                        <ScrollArea>
+                          <DataGridTable />
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
+                      </DataGridContainer>
+                      <DataGridPagination
+                        rowsPerPageLabel="Filas por página"
+                        info="{from} - {to} de {count}"
+                        previousPageLabel="Ir a la página anterior"
+                        nextPageLabel="Ir a la página siguiente"
+                      />
+                    </div>
+                  </DataGrid>
+                ) : (
+                  /* Sin resultados */
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <Search className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      No se encontraron resultados
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      {searchTerm || estadoFilter !== 'todas'
+                        ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo arrendada`
+                        : 'No hay casas arrendadas registradas'
+                      }
+                    </p>
                   </div>
-                </DataGrid>
-              ) : (
-                /* Sin resultados */
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <Search className="w-12 h-12 mx-auto" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
-                    No se encontraron resultados
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    {searchTerm || estadoFilter !== 'todas'
-                      ? `No hay casas que coincidan con "${searchTerm || ''}"${estadoFilter !== 'todas' ? ` y estado ${estadoFilter === 'al-dia' ? 'al día' : 'en mora'}` : ''} de tipo arrendada`
-                      : 'No hay casas arrendadas registradas'
-                    }
-                  </p>
-                </div>
-              ),
+                ),
               },
             ]}
             rightContent={
@@ -728,7 +730,7 @@ export default function CasasPage() {
                           <span className={cn(
                             'ms-0.5 size-1.5 rounded-full',
                             estadoFilter === 'al-dia' ? 'bg-green-500' :
-                            'bg-red-500'
+                              'bg-red-500'
                           )}></span>
                           <span className="truncate text-sm">
                             {estadoFilter === 'al-dia' ? 'Al día' : 'En mora'}
@@ -822,8 +824,8 @@ export default function CasasPage() {
                   <SheetContent
                     side="right"
                     className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
-                    style={{ 
-                      width: '650px', 
+                    style={{
+                      width: '650px',
                       maxWidth: 'none'
                     }}
                   >

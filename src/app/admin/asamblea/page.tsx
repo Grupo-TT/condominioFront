@@ -225,7 +225,7 @@ export default function AsambleaPage() {
         await fetchAsistentes(asamblea.id);
       } catch {
         loadedAttendanceRef.current.delete(asamblea.id);
-        toast.error('No se pudo cargar la asistencia');
+        toast.error('No se pudo cargar la asistencia', { description: 'Intenta de nuevo más tarde.' });
       } finally {
         setAttendanceLoading(false);
       }
@@ -244,7 +244,7 @@ export default function AsambleaPage() {
         await fetchAsistentes(asamblea.id);
       } catch {
         loadedAttendanceRef.current.delete(asamblea.id);
-        toast.error('No se pudo cargar la asistencia');
+        toast.error('No se pudo cargar la asistencia', { description: 'Intenta de nuevo más tarde.' });
       } finally {
         setAttendanceLoading(false);
       }

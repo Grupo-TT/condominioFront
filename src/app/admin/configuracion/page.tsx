@@ -170,31 +170,31 @@ export default function ConfiguracionPage() {
   const handlePersonalInfoSubmit = async (data: PersonalInfoFormData) => {
     try {
       await updatePersona(data);
-      toast.success("Información actualizada correctamente");
+      toast.success('Información actualizada', { description: 'Los cambios han sido guardados correctamente.' });
       setIsPersonalInfoSheetOpen(false);
       setShowPersonalInfoErrors(false);
       // Refrescar el perfil para mostrar los cambios actualizados
       await refetch();
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "No se pudo actualizar la información";
-      toast.error(errorMessage);
+      toast.error(errorMessage, { description: 'Verifica los datos e intenta de nuevo.' });
     }
   };
 
   const handlePasswordSubmit = async (data: PasswordFormData) => {
     try {
       await updatePassword(data);
-      toast.success("Contraseña actualizada correctamente");
+      toast.success('Contraseña actualizada', { description: 'Tu nueva contraseña está activa.' });
       setIsPasswordSheetOpen(false);
       setShowPasswordErrors(false);
       passwordForm.reset();
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "No se pudo actualizar la contraseña";
-      toast.error(errorMessage);
+      toast.error(errorMessage, { description: 'Verifica tu contraseña actual e intenta de nuevo.' });
     }
   };
 

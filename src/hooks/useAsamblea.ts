@@ -29,7 +29,7 @@ export const useAsamblea = () => {
       const data = await AsambleaService.getAll();
       setAsambleas(data);
     } catch {
-      toast.error('Error al cargar las asambleas');
+      toast.error('Error al cargar las asambleas', { description: 'No se pudieron obtener los datos. Intenta de nuevo.' });
     } finally {
       stopLoading();
       operationInProgress.current['fetchAsambleas'] = false;
@@ -47,7 +47,7 @@ export const useAsamblea = () => {
       // Guardar asistentes asociados a esta asamblea específica
       setAsistentesPorAsamblea(prev => ({ ...prev, [id]: res }));
     } catch {
-      toast.error("Error al cargar los asistentes");
+      toast.error('Error al cargar los asistentes', { description: 'No se pudieron obtener los datos de asistencia.' });
     } finally {
       stopLoading();
       operationInProgress.current[opKey] = false;
@@ -61,12 +61,12 @@ export const useAsamblea = () => {
     startLoading();
     try {
       await AsambleaService.createAsamblea({ ...data, estado: 'PROGRAMADA' });
-      toast.success('Asamblea creada exitosamente');
+      toast.success('Asamblea creada exitosamente', { description: 'La asamblea ha sido programada correctamente.' });
       // Refrescar lista desde el servidor
       const updatedList = await AsambleaService.getAll();
       setAsambleas(updatedList);
     } catch {
-      toast.error('Error al crear la asamblea');
+      toast.error('Error al crear la asamblea', { description: 'No se pudo guardar la información. Intenta de nuevo.' });
     } finally {
       stopLoading();
       operationInProgress.current['createAsamblea'] = false;
@@ -81,12 +81,12 @@ export const useAsamblea = () => {
     startLoading();
     try {
       await AsambleaService.updateAsamblea(Number(id), data);
-      toast.success('Asamblea actualizada exitosamente');
+      toast.success('Asamblea actualizada exitosamente', { description: 'Los cambios han sido guardados.' });
       // Refrescar lista desde el servidor
       const updatedList = await AsambleaService.getAll();
       setAsambleas(updatedList);
     } catch {
-      toast.error('Error al actualizar la asamblea');
+      toast.error('Error al actualizar la asamblea', { description: 'No se pudieron guardar los cambios.' });
     } finally {
       stopLoading();
       operationInProgress.current[opKey] = false;
@@ -101,7 +101,7 @@ export const useAsamblea = () => {
     startLoading();
     try {
       await AsambleaService.deleteAsamblea(Number(id));
-      toast.success('Asamblea eliminada exitosamente');
+      toast.success('Asamblea eliminada exitosamente', { description: 'La asamblea ha sido removida del sistema.' });
       // Refrescar lista desde el servidor
       const updatedList = await AsambleaService.getAll();
       setAsambleas(updatedList);
@@ -112,7 +112,7 @@ export const useAsamblea = () => {
         return updated;
       });
     } catch {
-      toast.error('Error al eliminar la asamblea');
+      toast.error('Error al eliminar la asamblea', { description: 'No se pudo completar la operación.' });
     } finally {
       stopLoading();
       operationInProgress.current[opKey] = false;
@@ -146,10 +146,10 @@ export const useAsamblea = () => {
         }));
 
         await AsambleaService.markAsistencia(idAsamblea, id, asistio);
-        toast.success('Asistencia actualizada');
+        toast.success('Asistencia actualizada', { description: 'El registro de asistencia ha sido guardado.' });
       } catch (error) {
         console.error('Error actualizando asistencia:', error);
-        toast.error('Error actualizando asistencia');
+        toast.error('Error actualizando asistencia', { description: 'No se pudo registrar el cambio.' });
 
         // Rollback: intentar refrescar desde servidor, si falla usar estado previo
         try {

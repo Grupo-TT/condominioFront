@@ -454,6 +454,7 @@ export default function CuotasPage() {
 
       // Mostrar toast de éxito
       toast.success('Pago registrado exitosamente', {
+        description: 'El pago ha sido aplicado correctamente.',
         duration: 5000,
       });
 
@@ -472,6 +473,7 @@ export default function CuotasPage() {
 
       // Mostrar toast de error
       toast.error(errorMessage, {
+        description: 'No se pudo completar la operación.',
         duration: 5000,
       });
     }
@@ -522,6 +524,7 @@ export default function CuotasPage() {
   useEffect(() => {
     if (error) {
       toast.error(error, {
+        description: 'No se pudieron cargar los datos.',
         duration: 5000,
       });
     }
@@ -727,27 +730,44 @@ export default function CuotasPage() {
                         onClick={async () => {
                           if (isPazYSalvoDisabled) return;
                           setSendingPazYSalvoCasaId(row.original.numeroCasa);
-                          try {
-                            const response = await enviarPazYSalvo(
-                              row.original.numeroCasa
-                            );
-                            const successMessage =
-                              response?.message ||
-                              'Paz y salvo enviado exitosamente';
-                            toast.success(successMessage);
-                          } catch (err) {
-                            const errorMessage = axios.isAxiosError(err)
-                              ? (err.response?.data as { message?: string })
-                                ?.message ||
-                              err.message ||
-                              'Error al enviar el paz y salvo'
-                              : err instanceof Error
-                                ? err.message
-                                : 'Error al enviar el paz y salvo';
-                            toast.error(errorMessage);
-                          } finally {
-                            setSendingPazYSalvoCasaId(null);
-                          }
+
+                          const sendPromise = async () => {
+                            const startTime = Date.now();
+                            const minDuration = 2500; // 2.5 segundos mínimo
+
+                            try {
+                              const response = await enviarPazYSalvo(row.original.numeroCasa);
+
+                              // Esperar el tiempo restante si la operación fue muy rápida
+                              const elapsed = Date.now() - startTime;
+                              if (elapsed < minDuration) {
+                                await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+                              }
+
+                              return response?.message || 'Paz y salvo enviado exitosamente';
+                            } catch (err) {
+                              // Esperar el tiempo restante incluso en error
+                              const elapsed = Date.now() - startTime;
+                              if (elapsed < minDuration) {
+                                await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+                              }
+
+                              const errorMessage = axios.isAxiosError(err)
+                                ? (err.response?.data as { message?: string })?.message || err.message || 'Error al enviar el paz y salvo'
+                                : err instanceof Error
+                                  ? err.message
+                                  : 'Error al enviar el paz y salvo';
+                              throw new Error(errorMessage);
+                            } finally {
+                              setSendingPazYSalvoCasaId(null);
+                            }
+                          };
+
+                          toast.promise(sendPromise(), {
+                            loading: 'Enviando paz y salvo...',
+                            success: 'Paz y salvo enviado exitosamente',
+                            error: (err) => err.message || 'Error al enviar el paz y salvo',
+                          });
                         }}
                       >
                         <HugeiconsIcon
