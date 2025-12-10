@@ -113,9 +113,9 @@ export function useReservasPropietario() {
         errorMessage = axiosError.response.data.message;
       }
 
-      if (axiosError && typeof (axiosError as any).message === 'string') {
-        if ((axiosError as any).message.includes('Request failed with status')) {
-          (axiosError as any).message = errorMessage;
+      if (axiosError && typeof (axiosError as Error).message === 'string') {
+        if ((axiosError as Error).message.includes('Request failed with status')) {
+          (axiosError as Error).message = errorMessage;
         }
       }
 
