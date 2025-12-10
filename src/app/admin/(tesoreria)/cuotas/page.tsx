@@ -386,6 +386,7 @@ export default function CuotasPage() {
     mode: "onChange",
     defaultValues: {
       obligacionId: '',
+      tipoObligacion: '',
       monto: 0,
     },
   });
@@ -397,6 +398,7 @@ export default function CuotasPage() {
       setSelectedObligacion(null); // No preseleccionar obligación
       form.reset({
         obligacionId: '',
+        tipoObligacion: '',
         monto: 0,
       });
       setShowAllErrors(false);
@@ -412,6 +414,7 @@ export default function CuotasPage() {
       setSelectedObligacion(obligacion); // Preseleccionar la obligación
       form.reset({
         obligacionId: String(obligacion.id), // Asegurar que sea string
+        tipoObligacion: obligacion.tipoObligacion!,
         monto: obligacion.valorPendiente,
       });
       setShowAllErrors(false);
