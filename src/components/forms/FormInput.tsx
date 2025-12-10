@@ -31,8 +31,8 @@ interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
 const filterValue = (value: string, filter: InputFilter): string => {
   switch (filter) {
     case 'letters-only':
-      // Solo permite letras (mayúsculas y minúsculas) y espacios
-      return value.replace(/[^A-Za-zÀ-ÿ\s]/g, '')
+      // Solo permite letras (mayúsculas, minúsculas, acentuadas, ñ) y espacios
+      return value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿÑñ\s]/g, '')
     case 'numbers-only':
       // Solo permite dígitos numéricos
       return value.replace(/[^0-9]/g, '')

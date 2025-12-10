@@ -216,10 +216,12 @@ export default function CasaDetailPage() {
                 <ArrowLeft className="w-4 h-4" />
                 Volver
               </Button>
+              {/* TODO: Implementar funcionalidad de editar casa
               <Button variant="outline" className="gap-2">
                 <Edit className="w-4 h-4" />
                 Editar
               </Button>
+              */}
             </div>
           </div>
         </div>

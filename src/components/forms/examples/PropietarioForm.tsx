@@ -13,6 +13,8 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 interface PropietarioFormProps {
   onSubmit: (data: PropietarioFormData) => Promise<boolean> | boolean
   onCancel?: () => void
+  initialCasa?: string
+  initialRol?: 'PROPIETARIO' | 'ARRENDATARIO'
 }
 
 const tipoDocumentoOptions: SelectOption[] = [
@@ -50,7 +52,7 @@ const casaOptions: SelectOption[] = [
   { value: "22", label: "Casa 22" }
 ]
 
-export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
+export function PropietarioForm({ onSubmit, onCancel, initialCasa, initialRol }: PropietarioFormProps) {
   const [showAllErrors, setShowAllErrors] = useState(false)
 
   const form = useForm<PropietarioFormData>({
@@ -66,8 +68,8 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
       numeroDocumento: '',
       email: '',
       telefono: '',
-      rolEnCasa: '',
-      idCasa: '',
+      rolEnCasa: initialRol || '',
+      idCasa: initialCasa || '',
     }
   })
 

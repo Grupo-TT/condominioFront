@@ -7,12 +7,12 @@ export const propietarioSchema = z.object({
     .min(1, "Primer nombre es obligatorio")
     .min(1, "Primer nombre debe tener al menos 1 caracter")
     .max(25, "Primer nombre debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-z]+$/, "Primer nombre solo puede contener letras sin espacios"),
+    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Primer nombre solo puede contener letras sin espacios"),
 
   segundoNombre: z
     .string()
     .max(25, "Segundo nombre debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-z\s]*$/, "Segundo nombre solo puede contener letras y espacios")
+    .regex(/^[A-Za-zÀ-ÿÑñ\s]*$/, "Segundo nombre solo puede contener letras y espacios")
     .optional()
     .or(z.literal("")),
 
@@ -21,12 +21,12 @@ export const propietarioSchema = z.object({
     .min(1, "Primer apellido es obligatorio")
     .min(1, "Primer apellido debe tener al menos 1 caracter")
     .max(25, "Primer apellido debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-z]+$/, "Primer apellido solo puede contener letras sin espacios"),
+    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Primer apellido solo puede contener letras sin espacios"),
 
   segundoApellido: z
     .string()
     .max(25, "Segundo apellido debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-z]+$/, "Segundo apellido solo puede contener letras sin espacios")
+    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Segundo apellido solo puede contener letras sin espacios")
     .optional()
     .or(z.literal("")),
 
