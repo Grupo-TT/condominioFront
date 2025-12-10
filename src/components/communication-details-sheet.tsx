@@ -135,7 +135,7 @@ export function CommunicationDetailsSheet({
                     <span className="text-sm text-gray-400">Cargando...</span>
                   </div>
                 ) : (
-                  <Popover>
+                  <Popover modal={false}>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
@@ -166,32 +166,46 @@ export function CommunicationDetailsSheet({
                         )}
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-96 p-0" align="start" side="bottom">
+                    <PopoverContent
+                      className="w-96 p-0"
+                      align="start"
+                      side="bottom"
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      onInteractOutside={(e) => e.preventDefault()}
+                      sideOffset={8}
+                    >
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-semibold text-gray-900">
                           Destinatarios ({destinatarios.length})
                         </p>
                       </div>
-                      <div className="max-h-80 overflow-y-auto">
-                        <div className="divide-y divide-gray-100">
-                          {destinatarios.map((dest, index) => (
-                            <div key={index} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                              <Avatar className="h-10 w-10">
-                                <AvatarFallback className="rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                  {getInitials(dest.nombreCompleto || dest.email)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {dest.nombreCompleto || 'Sin nombre'}
-                                </p>
-                                <p className="text-xs text-gray-500 truncate">
-                                  {dest.idCasa != null ? `Casa ${dest.idCasa} · ` : ''}{dest.email}
-                                </p>
-                              </div>
+                      <div
+                        className="divide-y divide-gray-100 overflow-y-auto pointer-events-auto"
+                        style={{
+                          maxHeight: '320px',
+                          overscrollBehavior: 'contain',
+                          WebkitOverflowScrolling: 'touch'
+                        }}
+                        onWheel={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                      >
+                        {destinatarios.map((dest, index) => (
+                          <div key={index} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                {getInitials(dest.nombreCompleto || dest.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {dest.nombreCompleto || 'Sin nombre'}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {dest.idCasa != null ? `Casa ${dest.idCasa} · ` : ''}{dest.email}
+                              </p>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
                     </PopoverContent>
                   </Popover>
