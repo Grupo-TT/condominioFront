@@ -141,7 +141,7 @@ export default function ReservasPropietarioPage() {
 
   useEffect(() => {
     if (error && !missingIdCasa) {
-      toast.error(error, { description: 'No se pudieron cargar las reservas.' })
+      toast.error(error, { description: 'Ha ocurrido un error' })
     }
   }, [error, missingIdCasa])
 
@@ -150,8 +150,6 @@ export default function ReservasPropietarioPage() {
       toast.error('Datos incompletos', { description: 'Selecciona recurso, fecha e intervalo de horas.' });
       return;
     }
-
-
 
     try {
       const idCasa = authService.getIdCasa();
@@ -199,8 +197,6 @@ export default function ReservasPropietarioPage() {
       if (axiosError?.response?.data?.message) {
         msg = axiosError.response.data.message;
       }
-
-      toast.error(msg, { description: 'No se pudo completar la reserva.' });
     }
   };
 

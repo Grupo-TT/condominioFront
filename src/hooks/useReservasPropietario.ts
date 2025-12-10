@@ -20,7 +20,9 @@ export function useReservasPropietario() {
 
       const response = await reservasService.getReservasPropietario()
 
-      const reservasAdaptadas: ReservaAdaptada[] = response.map((r: ReservaPropietarioItem) => ({
+      const lista = Array.isArray(response) ? response : []
+
+      const reservasAdaptadas: ReservaAdaptada[] = lista.map((r: ReservaPropietarioItem) => ({
         id: String(r.id),
         idRecurso: r.recursoComun.id,
         recursoNombre: r.recursoComun.nombre,
@@ -51,8 +53,10 @@ export function useReservasPropietario() {
 
       const response = await reservasService.getMisReservas(idCasa)
 
+      const lista = Array.isArray(response) ? response : []
+
       // El endpoint mis-reservas tiene estructura plana
-      const reservasAdaptadas: ReservaAdaptada[] = response.map((r: MisReservasItem) => ({
+      const reservasAdaptadas: ReservaAdaptada[] = lista.map((r: MisReservasItem) => ({
         id: String(r.id),
         idRecurso: r.idRecurso,
         recursoNombre: r.nombre,
@@ -101,11 +105,24 @@ export function useReservasPropietario() {
       const response = await reservasService.postReserva(payload)
       return response
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error
-        ? err.message
-        : 'Ocurrió un error creando la reserva'
-      setError(errorMessage)
-      throw new Error(errorMessage)
+      let errorMessage = 'Ocurrió un error creando la reserva';
+
+      const axiosError = err as { response?: { data?: { message?: string } } };
+
+      if (axiosError?.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      }
+
+      if (axiosError && typeof (axiosError as any).message === 'string') {
+        if ((axiosError as any).message.includes('Request failed with status')) {
+          (axiosError as any).message = errorMessage;
+        }
+      }
+
+      setError(errorMessage);
+
+      // Volvemos a lanzar el error ya limpio
+      throw new Error(errorMessage);
     } finally {
       setLoading(false)
     }
