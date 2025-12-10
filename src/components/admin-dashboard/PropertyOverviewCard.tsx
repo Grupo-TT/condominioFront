@@ -1,12 +1,17 @@
 'use client'
 
-import { HouseTypesData } from "@/data/dashboard.mock"
+import { HouseTypesData } from "@/types/dashboard.types";
+
 
 interface PropertyOverviewCardProps {
     houseTypes: HouseTypesData
 }
 
 export function PropertyOverviewCard({ houseTypes }: PropertyOverviewCardProps) {
+
+    if (!houseTypes) return null;
+    if (!houseTypes.arrendadas || !houseTypes.residenciales) return null;
+
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex-1">
             <div className="grid grid-cols-[auto_1fr] gap-6 h-full">

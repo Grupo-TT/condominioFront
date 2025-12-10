@@ -7,7 +7,7 @@ import {
     WalletIcon,
     MoneyBag02Icon,
 } from '@hugeicons/core-free-icons'
-import { DashboardSummary } from "@/data/dashboard.mock"
+import { DashboardSummary } from '@/types/dashboard.types'
 
 const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('es-CO', {
@@ -46,7 +46,7 @@ export function MetricsCardsGrid({ summary }: MetricsCardsGridProps) {
                         </div>
                     </div>
                     <div className="text-[26px] font-semibold text-gray-900 mb-2">
-                        {formatCurrency(summary.entradas)}
+                        {formatCurrency(summary.ingresos)}
                     </div>
                     <p className="text-xs text-gray-500 mt-auto">
                         Total de ingresos del mes
@@ -62,7 +62,7 @@ export function MetricsCardsGrid({ summary }: MetricsCardsGridProps) {
                         </div>
                     </div>
                     <div className="text-[26px] font-semibold text-gray-900 mb-2">
-                        {formatCurrency(summary.salidas)}
+                        {formatCurrency(summary.egresos)}
                     </div>
                     <p className="text-xs text-gray-500 mt-auto">
                         Total de gastos del mes

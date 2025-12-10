@@ -3,8 +3,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Book02Icon } from '@hugeicons/core-free-icons'
+import { useEffect, useState } from "react"
+import { adminDashboardService } from "@/services/adminDashboard.service"
 
-interface Assembly {
+interface AssemblyCard {
     id: string
     title: string
     date: string
@@ -15,40 +17,45 @@ interface Assembly {
     iconColor: string
 }
 
-const assemblies: Assembly[] = [
-    {
-        id: '1',
-        title: 'Asamblea General Ordinaria',
-        date: '15 Dic',
-        time: '6:00 PM',
-        location: 'Salón Comunal',
-        bgColor: '#A4C8AE',
-        hoverColor: '#94b89e',
-        iconColor: '#5a7a56',
-    },
-    {
-        id: '2',
-        title: 'Reunión de Comité',
-        date: '22 Dic',
-        time: '4:00 PM',
-        location: 'Sala de Juntas',
-        bgColor: '#e8ddc5',
-        hoverColor: '#ddd0b5',
-        iconColor: '#9a8a6a',
-    },
-    {
-        id: '3',
-        title: 'Asamblea Extraordinaria',
-        date: '10 Ene',
-        time: '7:00 PM',
-        location: 'Salón Comunal',
-        bgColor: '#c5c8e0',
-        hoverColor: '#b5b8d0',
-        iconColor: '#6a6d8a',
-    },
-]
-
 export function UpcomingAssemblies() {
+
+    const [assemblies, setAssemblies] = useState<AssemblyCard[]>([])
+
+    useEffect(() => {
+        const load = async () => {
+            const nextThree = await adminDashboardService.getAsambleas()
+
+            const mapped: AssemblyCard[] = nextThree.map((a, index) => {
+                const fecha = new Date(a.fecha)
+                const formattedDate = fecha.toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "short",
+                }).replace(".", "")
+
+                const colors = [
+                    { bg: "#A4C8AE", hover: "#94b89e", icon: "#5a7a56" },
+                    { bg: "#e8ddc5", hover: "#ddd0b5", icon: "#9a8a6a" },
+                    { bg: "#c5c8e0", hover: "#b5b8d0", icon: "#6a6d8a" },
+                ]
+
+                return {
+                    id: a.id,
+                    title: a.titulo,
+                    date: formattedDate,
+                    time: a.horaInicio.slice(0,5),
+                    location: a.lugar,
+                    bgColor: colors[index]?.bg || "#e2e2e2",
+                    hoverColor: colors[index]?.hover || "#d5d5d5",
+                    iconColor: colors[index]?.icon || "#666",
+                }
+            })
+
+            setAssemblies(mapped)
+        }
+
+        load()
+    }, [])
+    
     return (
         <div className="flex flex-col gap-4 max-h-[340px]">
             <h2 className="text-lg font-semibold text-gray-900">Próximas Asambleas</h2>

@@ -187,7 +187,7 @@ function CollapsibleConfigCard({
                           }}
                           placeholder="0"
                           className={cn(
-                            "w-full h-9 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+                            "w-full h-9 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
                             unit === '$' && "pl-8",
                             unit === '%' && "pr-8",
                             fieldState.invalid && "border-red-500 focus:border-red-500"
@@ -254,7 +254,7 @@ interface ConfiguracionCuotasDialogProps {
 
 export function ConfiguracionCuotasDialog({ children }: ConfiguracionCuotasDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { 
+  const {
     obtenerConfiguraciones,
     actualizarTasaInteres,
     actualizarPagoAdicional,

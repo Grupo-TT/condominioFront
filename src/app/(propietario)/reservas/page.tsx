@@ -59,9 +59,12 @@ import type { RecursoUI } from '@/services/propietario.recurso.adapter'
 import { useReservasPropietario } from '@/hooks/useReservasPropietario'
 import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
 import type { ReservaAdaptada } from '@/types/propietario.reservas.types'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 
 export default function ReservasPropietarioPage() {
+  useDocumentTitle('Reservas | Flor Digital');
+
   const [activeTab, setActiveTab] = useState<string>('recursos')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
@@ -126,25 +129,25 @@ export default function ReservasPropietarioPage() {
 
   useEffect(() => {
     if (errorRecursos) {
-      toast.error(errorRecursos)
+      toast.error(errorRecursos, { description: 'No se pudieron cargar los recursos disponibles.' })
     }
   }, [errorRecursos])
 
   useEffect(() => {
     if (missingIdCasa) {
-      toast.error('Ocurrio un error al obtener las reservas.')
+      toast.error('Ocurrió un error al obtener las reservas', { description: 'Intenta recargar la página.' })
     }
   }, [missingIdCasa])
 
   useEffect(() => {
     if (error && !missingIdCasa) {
-      toast.error(error)
+      toast.error(error, { description: 'No se pudieron cargar las reservas.' })
     }
   }, [error, missingIdCasa])
 
   const handleCreateReserva = async () => {
     if (!selectedRecurso || !selectedDate || !horaInicial || !horaFinal) {
-      toast.error("Por favor selecciona recurso, fecha e intervalo de horas para la reserva.");
+      toast.error('Datos incompletos', { description: 'Selecciona recurso, fecha e intervalo de horas.' });
       return;
     }
 
@@ -153,13 +156,13 @@ export default function ReservasPropietarioPage() {
     try {
       const idCasa = authService.getIdCasa();
       if (!idCasa) {
-        toast.error("No se pudo crear la reserva.");
+        toast.error('No se pudo crear la reserva', { description: 'Intenta de nuevo más tarde.' });
         return;
       }
 
       const currentUser = authService.getCurrentUser();
       if (!currentUser?.idPersona) {
-        toast.error("No se pudo identificar al solicitante.");
+        toast.error('No se pudo identificar al solicitante', { description: 'Intenta cerrar sesión y volver a entrar.' });
         return;
       }
 
@@ -174,7 +177,7 @@ export default function ReservasPropietarioPage() {
 
       await postReservasPropietario(payload);
 
-      toast.success("Reserva creada correctamente");
+      toast.success('Reserva creada', { description: 'Tu reserva ha sido registrada correctamente.' });
 
       setOpenDialogConfirmacion(false);
       setIsSheetOpen(false);
@@ -197,20 +200,20 @@ export default function ReservasPropietarioPage() {
         msg = axiosError.response.data.message;
       }
 
-      toast.error(msg);
+      toast.error(msg, { description: 'No se pudo completar la reserva.' });
     }
   };
 
   const handleUpdateReserva = async () => {
     if (!reservaEditando || !editDate || !editHoraInicial || !editHoraFinal) {
-      toast.error("Faltan datos para actualizar la reserva.");
+      toast.error('Datos incompletos', { description: 'Verifica que todos los campos estén llenos.' });
       return;
     }
 
     try {
       const idCasa = authService.getIdCasa();
       if (!idCasa) {
-        toast.error("No se pudo actualizar la reserva: idCasa no encontrado.");
+        toast.error('No se pudo actualizar la reserva', { description: 'Error de identificación de casa.' });
         return;
       }
 
@@ -224,7 +227,7 @@ export default function ReservasPropietarioPage() {
 
       await updateReserva(payload);
 
-      toast.success("Reserva actualizada correctamente");
+      toast.success('Reserva actualizada', { description: 'Los cambios han sido guardados.' });
 
       setIsEditSheetOpen(false);
       setReservaEditando(null);
@@ -238,7 +241,7 @@ export default function ReservasPropietarioPage() {
 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error al actualizar la reserva";
-      toast.error(msg);
+      toast.error(msg, { description: 'No se pudieron guardar los cambios.' });
     }
   };
 
@@ -1017,7 +1020,7 @@ export default function ReservasPropietarioPage() {
                                           onClick={async () => {
                                             try {
                                               await eliminarReserva(Number(reserva.id))
-                                              toast.success("Reserva eliminada correctamente")
+                                              toast.success('Reserva eliminada', { description: 'La reserva ha sido cancelada.' })
                                               // Refetch ambos
                                               fetchReservasPropietario();
                                               const idCasa = authService.getIdCasa();
@@ -1026,7 +1029,7 @@ export default function ReservasPropietarioPage() {
                                               }
                                             } catch (error: unknown) {
                                               const msg = error instanceof Error ? error.message : "Error al eliminar la reserva";
-                                              toast.error(msg)
+                                              toast.error(msg, { description: 'No se pudo eliminar la reserva.' })
                                             }
                                           }}
                                           className="bg-red-600 hover:bg-red-700"

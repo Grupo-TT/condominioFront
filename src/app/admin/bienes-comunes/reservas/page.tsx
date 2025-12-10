@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   startOfMonth,
   endOfMonth,
@@ -26,6 +27,8 @@ import { EditReservaSheet } from '@/components/edit-reserva-sheet'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
 export default function ReservasPage() {
+  useDocumentTitle('Reservas | Flor Digital');
+  
   // ==================== Estados de UI ====================
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date())

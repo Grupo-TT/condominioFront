@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Sent02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,8 @@ import { useComunicados } from '@/hooks/useComunicados'
 import { PersonaSeleccionable, ComunicadoUI } from '@/types/comunicados.types'
 
 export default function ComunicadosPage() {
+  useDocumentTitle('Comunicados | Flor Digital');
+
   const {
     personas,
     loadingPersonas,
@@ -94,36 +97,38 @@ export default function ComunicadosPage() {
     e.preventDefault()
     if (!validateForm()) return
 
-    try {
-      // Pass the file directly - the service handles multipart/form-data
-      const success = await enviarEmail({
-        emails: selectedPropietarios.map(p => p.correo),
-        subject: formAsunto,
-        message: formMensaje,
-      }, archivos.length > 0 ? archivos[0] : undefined)
+    const destinatariosCount = selectedPropietarios.length
 
-      if (success) {
-        toast.success('Comunicado enviado exitosamente', {
-          description: `Se envió a ${selectedPropietarios.length} destinatarios`,
-        })
+    // Create promise that includes a minimum 2.5s delay for UX
+    const sendPromise = async () => {
+      const [success] = await Promise.all([
+        enviarEmail({
+          emails: selectedPropietarios.map(p => p.correo),
+          subject: formAsunto,
+          message: formMensaje,
+        }, archivos.length > 0 ? archivos[0] : undefined),
+        new Promise(resolve => setTimeout(resolve, 2500)) // 2.5s minimum delay
+      ])
 
-        // Clear form
-        setFormAsunto('')
-        setFormMensaje('')
-        setSelectedPropietarios([])
-        setArchivos([])
-        setErrors({})
-      } else {
-        toast.error('Error al enviar el comunicado', {
-          description: 'Por favor, intenta de nuevo.',
-        })
+      if (!success) {
+        throw new Error('Error al enviar el comunicado')
       }
-    } catch (err) {
-      console.error('Error enviando comunicado:', err)
-      toast.error('Error al enviar el comunicado', {
-        description: 'Por favor, intenta de nuevo.',
-      })
+
+      // Clear form on success
+      setFormAsunto('')
+      setFormMensaje('')
+      setSelectedPropietarios([])
+      setArchivos([])
+      setErrors({})
+
+      return success
     }
+
+    toast.promise(sendPromise(), {
+      loading: 'Enviando comunicado...',
+      success: `Comunicado enviado exitosamente a ${destinatariosCount} destinatarios`,
+      error: 'Error al enviar el comunicado. Por favor, intenta de nuevo.',
+    })
   }
 
   const handleDeleteComunicado = async (id: string): Promise<boolean> => {

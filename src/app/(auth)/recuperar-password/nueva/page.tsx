@@ -13,15 +13,18 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { LockPasswordIcon, ResetPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
 import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const mainRequirement = { regex: /.{8,}/, text: 'Debe tener al menos 8 caracteres.' };
 const suggestionRequirements = [
   { regex: /(?=.*[a-z])(?=.*[A-Z])/, text: 'Usa letras mayúsculas y minúsculas' },
-  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, text: 'Incluye un símbolo (#$&)' },
+  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, text: 'Incluye un símbolo (#$&)' },
   { regex: /.{12,}/, text: 'Prefiere una contraseña más larga' },
 ];
 
 export default function RecoverNewPasswordPage() {
+  useDocumentTitle('Nueva Contraseña | Flor Digital');
+
   const router = useRouter();
   const { tempCode, tempToken, resetRecovery } = usePasswordRecovery();
   const [newPassword, setNewPassword] = useState('');
@@ -95,7 +98,7 @@ export default function RecoverNewPasswordPage() {
           },
         }
       );
-      toast.success('¡Contraseña actualizada correctamente!');
+      toast.success('¡Contraseña actualizada!', { description: 'Ya puedes iniciar sesión con tu nueva contraseña.' });
       setTimeout(() => {
         resetRecovery();
         router.push('/login');
@@ -103,7 +106,7 @@ export default function RecoverNewPasswordPage() {
     } catch (err) {
       const message =
         err && typeof err === 'object' && 'response' in err &&
-        (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          (err as { response?: { data?: { message?: string } } }).response?.data?.message
           ? (err as { response?: { data?: { message?: string } } }).response!.data!.message!
           : 'No pudimos actualizar tu contraseña. Intenta nuevamente.';
       setError(message);
@@ -207,7 +210,7 @@ export default function RecoverNewPasswordPage() {
                               className={`h-1 flex-1 rounded-full ${index < (headlineMet ? suggestionsScore + 1 : 1)
                                 ? barColor
                                 : 'bg-gray-200'
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>

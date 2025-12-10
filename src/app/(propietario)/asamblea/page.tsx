@@ -18,43 +18,44 @@ import { Clock, MapPin } from 'lucide-react'
 import { useAsamblea } from '@/hooks/useAsamblea'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Book02Icon } from '@hugeicons/core-free-icons'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const formatPrettyDate = (dateString: string) => {
-    const date = new Date(`${dateString}`);
-    if (isNaN(date.getTime())) return dateString;
-    const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
-    const month = monthFormatter.format(date);
-    const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${capitalizedMonth} ${day}, ${year}`;
-  };
+  const date = new Date(`${dateString}`);
+  if (isNaN(date.getTime())) return dateString;
+  const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+  const month = monthFormatter.format(date);
+  const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+  const day = date.getDate().toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${capitalizedMonth} ${day}, ${year}`;
+};
 
-  const formatPrettyTime = (timeString?: string) => {
-    if (!timeString || typeof timeString !== "string") {
-      return "Hora no disponible";
-    }
+const formatPrettyTime = (timeString?: string) => {
+  if (!timeString || typeof timeString !== "string") {
+    return "Hora no disponible";
+  }
 
-    const parts = timeString.split(":");
+  const parts = timeString.split(":");
 
-    if (parts.length < 2) {
-      return timeString;
-    }
+  if (parts.length < 2) {
+    return timeString;
+  }
 
-    const hours = Number(parts[0]);
-    const minutes = Number(parts[1]);
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
 
-    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-      return timeString;
-    }
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return timeString;
+  }
 
-    const period = hours >= 12 ? "PM" : "AM";
-    const hour12 = hours % 12 || 12;
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
 
-    return `${hour12.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")} ${period}`;
-  };
+  return `${hour12.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
 
 const estadoLabels: Record<string, string> = {
   programada: 'Programada',
@@ -108,6 +109,8 @@ const getAccentGradient = (seed: string) => {
 }
 
 export default function AsambleaPropietarioPage() {
+  useDocumentTitle('Asambleas | Flor Digital');
+
   const { asambleas, fetchAsambleas, loading } = useAsamblea()
 
   useEffect(() => {

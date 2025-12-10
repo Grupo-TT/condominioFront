@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 import {
   Collapsible,
@@ -26,7 +26,7 @@ export function NavMain({
   items: {
     title: string
     url: string
-    icon: LucideIcon
+    icon: React.ReactNode
     isActive?: boolean
     items?: {
       title: string
@@ -45,11 +45,11 @@ export function NavMain({
               {item.items?.length ? (
                 <>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton 
-                      tooltip={item.title} 
+                    <SidebarMenuButton
+                      tooltip={item.title}
                       className="[&[data-state=open]>span[data-sidebar=chevron]>svg]:rotate-90"
                     >
-                      <item.icon />
+                      {item.icon}
                       <span>{item.title}</span>
                       <span
                         className={cn(
@@ -83,7 +83,7 @@ export function NavMain({
               ) : (
                 <SidebarMenuButton asChild tooltip={item.title}>
                   <a href={item.url}>
-                    <item.icon />
+                    {item.icon}
                     <span>{item.title}</span>
                   </a>
                 </SidebarMenuButton>

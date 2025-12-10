@@ -18,7 +18,7 @@ export const useRecursoPropietario = () => {
         r.disponibilidadRecurso === 'EN_MANTENIMIENTO'
       );
       setRecurso(filtrados);
-    } catch (_error) {
+    } catch {
       setError("Error fetching recurso propietario");
     } finally {
       setLoading(false);

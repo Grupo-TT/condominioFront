@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Cobro de Administración - Flor Digital</title>
+</head>
+<body style="margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;">
+    
+    <!-- Wrapper -->
+    <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; border: 0 !important; border-spacing: 0 !important; background-color: #ffffff !important;">
+        <tr>
+            <td style="padding: 0 !important;" align="center">
+                
+                <!-- Main Container -->
+                <table role="presentation" style="width: 100% !important; max-width: 600px !important; border-collapse: collapse !important; border: 0 !important; border-spacing: 0 !important; background-color: #ffffff !important;">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 30px 40px !important; border-bottom: 1px solid #e5e5e5 !important;">
+                            <table role="presentation" style="width: 100% !important; border-collapse: collapse !important;">
+                                <tr>
+                                    <td style="text-align: left !important;">
+                                        <span style="font-size: 20px !important; font-weight: 700 !important; color: #18181b !important; letter-spacing: -0.5px !important;">Flor Digital</span>
+                                    </td>
+                                    <td style="text-align: right !important;">
+                                        <span style="font-size: 14px !important; color: #71717a !important;">{{FECHA}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px !important;">
+                            <!-- Title -->
+                            <h1 style="color: #18181b !important; font-size: 24px !important; font-weight: 700 !important; margin: 0 0 30px 0 !important; line-height: 1.3 !important;">Nuevo Cobro Generado</h1>
+                            
+                            <!-- Greeting -->
+                            <p style="color: #18181b !important; font-size: 15px !important; line-height: 1.7 !important; margin: 0 0 20px 0 !important;">
+                                Estimado(a) {{NOMBRE_PROPIETARIO}},
+                            </p>
+                            
+                            <p style="color: #3f3f46 !important; font-size: 15px !important; line-height: 1.7 !important; margin: 0 0 30px 0 !important;">
+                                Te informamos que se ha generado un nuevo <strong style="color: #18181b !important;">cobro por administración</strong> correspondiente al mes actual.
+                            </p>
+                            
+                            <!-- Charge Details Box -->
+                            <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; margin-bottom: 30px !important; background-color: #F9F9F9 !important; border-radius: 12px !important;">
+                                <tr>
+                                    <td style="padding: 25px !important;">
+                                        <!-- Title - Prominent -->
+                                        <p style="color: #4C6C5B !important; font-size: 12px !important; text-transform: uppercase !important; letter-spacing: 1px !important; margin: 0 0 8px 0 !important; font-weight: 500 !important;">Detalles del Cobro</p>
+                                        <p style="color: #18181b !important; font-size: 20px !important; font-weight: 700 !important; margin: 0 0 20px 0 !important;">{{TITULO}}</p>
+                                        
+                                        <!-- Motivo and Casa Row -->
+                                        <table role="presentation" style="width: 100% !important; border-collapse: collapse !important;">
+                                            <tr>
+                                                <td style="width: 50% !important; padding-right: 10px !important; vertical-align: top !important;">
+                                                    <p style="color: #71717a !important; font-size: 12px !important; margin: 0 0 4px 0 !important;">Motivo</p>
+                                                    <p style="color: #18181b !important; font-size: 15px !important; font-weight: 600 !important; margin: 0 !important;">{{MOTIVO}}</p>
+                                                </td>
+                                                <td style="width: 50% !important; padding-left: 10px !important; vertical-align: top !important;">
+                                                    <p style="color: #71717a !important; font-size: 12px !important; margin: 0 0 4px 0 !important;">Casa</p>
+                                                    <p style="color: #18181b !important; font-size: 15px !important; font-weight: 600 !important; margin: 0 !important;">{{NUMERO_CASA}}</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <!-- Monto -->
+                                        <table role="presentation" style="width: 100% !important; border-collapse: collapse !important; margin-top: 15px !important;">
+                                            <tr>
+                                                <td style="vertical-align: top !important;">
+                                                    <p style="color: #71717a !important; font-size: 12px !important; margin: 0 0 4px 0 !important;">Monto a Pagar</p>
+                                                    <p style="color: #4C6C5B !important; font-size: 22px !important; font-weight: 700 !important; margin: 0 !important;">{{MONTO}}</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="color: #3f3f46 !important; font-size: 15px !important; line-height: 1.7 !important; margin: 0 0 30px 0 !important;">
+                                Te recordamos que el pago debe realizarse dentro de los primeros 10 días del mes para evitar recargos por mora.
+                            </p>
+                            
+                            <!-- CTA Button -->
+                            <table role="presentation" style="border-collapse: collapse !important; margin-bottom: 30px !important;">
+                                <tr>
+                                    <td style="background-color: #4C6C5B !important; border-radius: 6px !important;">
+                                        <a href="{{URL_APP}}" style="display: inline-block !important; background-color: #4C6C5B !important; color: #ffffff !important; font-size: 14px !important; font-weight: 500 !important; text-decoration: none !important; padding: 14px 28px !important; border-radius: 6px !important;">
+                                            Ir al Aplicativo
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Signature -->
+                            <p style="color: #3f3f46 !important; font-size: 15px !important; line-height: 1.7 !important; margin: 0 0 5px 0 !important;">
+                                Atentamente,
+                            </p>
+                            <p style="color: #3f3f46 !important; font-size: 15px !important; line-height: 1.7 !important; margin: 0 !important;">
+                                Administración del Condominio
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0 40px !important;">
+                            <hr style="border: none !important; border-top: 1px solid #e5e5e5 !important; margin: 0 !important;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Help Text -->
+                    <tr>
+                        <td style="padding: 15px 40px !important;">
+                            <p style="color: #71717a !important; font-size: 13px !important; line-height: 1.6 !important; margin: 0 !important; font-style: italic !important;">
+                                Este correo fue enviado automáticamente. Por favor no responda a este mensaje.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+                <!-- End Main Container -->
+                
+                <!-- Footer -->
+                <table role="presentation" style="width: 100% !important; max-width: 600px !important; border-collapse: collapse !important; border: 0 !important; border-spacing: 0 !important; background-color: #27272a !important; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important;">
+                    <tr>
+                        <td style="padding: 35px 40px !important; text-align: center !important;">
+                            <!-- Brand -->
+                            <p style="color: #ffffff !important; font-size: 16px !important; font-weight: 600 !important; margin: 0 0 15px 0 !important;">
+                                Flor Digital
+                            </p>
+                            
+                            <!-- Contact -->
+                            <p style="color: #71717a !important; font-size: 12px !important; line-height: 1.6 !important; margin: 0 0 15px 0 !important;">
+                                Si tienes alguna pregunta, puedes contactarnos en {{EMAIL_SOPORTE}}
+                            </p>
+                            
+                            <!-- Copyright -->
+                            <p style="color: #52525b !important; font-size: 12px !important; margin: 0 !important;">
+                                © {{ANIO}} Flor Digital. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <!-- End Footer -->
+                
+            </td>
+        </tr>
+    </table>
+    <!-- End Wrapper -->
+    
+</body>
+</html>

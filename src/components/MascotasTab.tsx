@@ -89,7 +89,7 @@ export function MascotasTab() {
         : 'No se pudieron cargar las mascotas.'
       const errorMessage = responseMessage || fallbackMessage
       setError(errorMessage)
-      toast.error(errorMessage)
+      toast.error(errorMessage, { description: 'No se pudieron cargar las mascotas.' })
     } finally {
       setLoading(false)
     }
@@ -112,13 +112,13 @@ export function MascotasTab() {
   const handleEliminarMascota = async () => {
     if (!tipoMascotaAEliminar) return
     if (casaNumero === undefined || casaNumero === null || casaNumero === '') {
-      toast.error('No se pudo identificar la casa del usuario.')
+      toast.error('No se pudo identificar la casa del usuario.', { description: 'Intenta cerrar sesión y volver a entrar.' })
       return
     }
 
     const casaId = Number(casaNumero)
     if (Number.isNaN(casaId)) {
-      toast.error('Identificador de casa inválido')
+      toast.error('Identificador de casa inválido', { description: 'Contacta al administrador.' })
       return
     }
 
@@ -133,14 +133,14 @@ export function MascotasTab() {
         ...prev,
         [tipoMascotaAEliminar]: 0,
       }))
-      toast.success('Mascota eliminada correctamente')
+      toast.success('Mascota eliminada correctamente', { description: 'El registro ha sido removido.' })
     } catch (err) {
       console.error('Error al eliminar la mascota:', err)
       const responseMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       const fallbackMessage = err instanceof Error
         ? err.message
         : 'No se pudo eliminar la mascota.'
-      toast.error(responseMessage || fallbackMessage)
+      toast.error(responseMessage || fallbackMessage, { description: 'No se pudo eliminar la mascota.' })
     } finally {
       setIsDeleting(false)
       setIsDeleteDialogOpen(false)

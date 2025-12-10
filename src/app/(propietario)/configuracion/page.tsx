@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -105,6 +106,8 @@ const tipoDocumentoOptions: SelectOption[] = [
 ];
 
 export default function ConfiguracionPage() {
+  useDocumentTitle('Configuración | Flor Digital');
+
   const { logout } = useAuth();
   const parentRef = useRef<HTMLDivElement | null>(null);
   const [isPersonalInfoSheetOpen, setIsPersonalInfoSheetOpen] = useState(false);
@@ -170,31 +173,31 @@ export default function ConfiguracionPage() {
   const handlePersonalInfoSubmit = async (data: PersonalInfoFormData) => {
     try {
       await updatePersona(data);
-      toast.success("Información actualizada correctamente");
+      toast.success('Información actualizada', { description: 'Los cambios han sido guardados correctamente.' });
       setIsPersonalInfoSheetOpen(false);
       setShowPersonalInfoErrors(false);
       // Refrescar el perfil para mostrar los cambios actualizados
       await refetch();
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "No se pudo actualizar la información";
-      toast.error(errorMessage);
+      toast.error(errorMessage, { description: 'Verifica los datos e intenta de nuevo.' });
     }
   };
 
   const handlePasswordSubmit = async (data: PasswordFormData) => {
     try {
       await updatePassword(data);
-      toast.success("Contraseña actualizada correctamente");
+      toast.success('Contraseña actualizada', { description: 'Tu nueva contraseña está activa.' });
       setIsPasswordSheetOpen(false);
       setShowPasswordErrors(false);
       passwordForm.reset();
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "No se pudo actualizar la contraseña";
-      toast.error(errorMessage);
+      toast.error(errorMessage, { description: 'Verifica tu contraseña actual e intenta de nuevo.' });
     }
   };
 
@@ -223,7 +226,7 @@ export default function ConfiguracionPage() {
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
                 <BreadcrumbLink href="/dashboard">
-                Dashboard
+                  Dashboard
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
@@ -382,8 +385,8 @@ export default function ConfiguracionPage() {
                               <p className="text-base font-semibold text-gray-900 mb-1">
                                 {getTipoDocumentoLabel(
                                   perfil?.tipoDocumento
-                                  )}{" "}
-                                  - {perfil?.numeroDocumento}
+                                )}{" "}
+                                - {perfil?.numeroDocumento}
                               </p>
                               <p className="text-sm text-gray-500">Documento</p>
                             </div>

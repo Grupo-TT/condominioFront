@@ -193,3 +193,71 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/** Sonner Toast Styles **/
+/* Override toast width */
+[data-sonner-toaster] {
+  --width: 420px !important;
+}
+
+/* Base toast styling - override background and borders */
+[data-sonner-toast][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #f9fafb 0%, #f3f4f6 30%, #ffffff 70%) !important;
+  border: 1px solid rgba(229, 231, 235, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  width: var(--width) !important;
+}
+
+/* Success toast */
+[data-sonner-toast][data-type='success'][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #ecfdf5 0%, #f0fdf4 30%, #ffffff 70%) !important;
+}
+[data-sonner-toast][data-type='success'] [data-icon] svg {
+  color: #10b981 !important;
+}
+
+/* Error toast */
+[data-sonner-toast][data-type='error'][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #fef2f2 0%, #fff1f2 30%, #ffffff 70%) !important;
+}
+[data-sonner-toast][data-type='error'] [data-icon] svg {
+  color: #ef4444 !important;
+}
+
+/* Warning toast */
+[data-sonner-toast][data-type='warning'][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #fffbeb 0%, #fefce8 30%, #ffffff 70%) !important;
+}
+[data-sonner-toast][data-type='warning'] [data-icon] svg {
+  color: #f59e0b !important;
+}
+
+/* Info toast */
+[data-sonner-toast][data-type='info'][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #eff6ff 0%, #f0f9ff 30%, #ffffff 70%) !important;
+}
+[data-sonner-toast][data-type='info'] [data-icon] svg {
+  color: #3b82f6 !important;
+}
+
+/* Loading/Promise toast */
+[data-sonner-toast][data-type='loading'][data-styled='true'],
+[data-sonner-toast][data-promise='true'][data-styled='true'] {
+  background: radial-gradient(ellipse at top left, #f9fafb 0%, #f3f4f6 30%, #ffffff 70%) !important;
+}
+[data-sonner-toast][data-type='loading'] [data-icon] svg,
+[data-sonner-toast][data-promise='true'] [data-icon] svg {
+  color: #6b7280 !important;
+}
+
+/* Title and description text */
+[data-sonner-toast][data-styled='true'] [data-title] {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  color: #111827 !important;
+}
+[data-sonner-toast][data-styled='true'] [data-description] {
+  color: #6b7280 !important;
+  font-size: 14px !important;
+}

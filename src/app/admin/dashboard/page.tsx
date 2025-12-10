@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,7 +14,6 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { monthlyDataByYear, dashboardSummary, housesStatus, houseTypes } from "@/data/dashboard.mock"
 import {
   MonthlyFinanceChart,
   MetricsCardsGrid,
@@ -19,10 +21,70 @@ import {
   HousesStatusChart,
   UpcomingAssemblies
 } from "@/components/admin-dashboard"
+import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
+import { MonthlyData } from '@/data/dashboard.mock'
+import { HousesStatusData, HouseTypesData, DashboardSummary } from '@/types/dashboard.types'
+
+const defaultHousesStatus: HousesStatusData = {
+  total: 0,
+  alDia: { count: 0, percentage: 0 },
+  morosas: { count: 0, percentage: 0 }
+}
+
+const defaultHouseTypes: HouseTypesData = {
+  total: 0,
+  arrendadas: { count: 0, percentage: 0 },
+  residenciales: { count: 0, percentage: 0 }
+}
+
+const defaultSummary: DashboardSummary = {
+  ingresos: 0,
+  egresos: 0,
+  balance: 0,
+  saldoActual: 0
+}
 
 export default function Page() {
-  const [selectedYear, setSelectedYear] = useState<number>(2024)
-  const monthlyData = monthlyDataByYear[selectedYear]
+  useDocumentTitle('Dashboard Admin | Flor Digital');
+
+  const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
+  const [selectedYear, setSelectedYear] = useState<number>(2025)
+  const [monthlyData2, setMonthlyData] = useState<MonthlyData[]>([])
+  const [monthSummary, setMonthSummary] = useState<DashboardSummary>(defaultSummary)
+  const [housesStatus2, setHousesStatus] = useState<HousesStatusData>(defaultHousesStatus)
+  const [houseTypes2, setHouseTypes] = useState<HouseTypesData>(defaultHouseTypes)
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Detectar si fue redirigido por falta de permisos
+  useEffect(() => {
+    const accessDenied = searchParams.get('access_denied')
+    if (accessDenied === 'owner') {
+      toast.warning('Acceso denegado', {
+        description: 'Las páginas de propietarios no están disponibles para administradores.',
+      })
+      // Limpiar el parámetro de la URL sin recargar
+      router.replace('/admin/dashboard', { scroll: false })
+    }
+  }, [searchParams, router])
+
+  useEffect(() => {
+    const load = async () => {
+      const yearData = await fetchResumenFinancieroAnio(selectedYear)
+      const monthData = await fetchResumenFinancieroMes()
+      const housesStatus = await fetchCasas()
+      const houseTypes = await fetchTypes()
+
+      setMonthlyData(yearData)
+      setMonthSummary(monthData)
+      setHousesStatus(housesStatus)
+      setHouseTypes(houseTypes)
+    }
+
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear])
 
   return (
     <>
@@ -70,9 +132,9 @@ export default function Page() {
             <MonthlyFinanceChart
               selectedYear={selectedYear}
               onYearChange={setSelectedYear}
-              monthlyData={monthlyData}
+              monthlyData={monthlyData2}
             />
-            <MetricsCardsGrid summary={dashboardSummary} />
+            <MetricsCardsGrid summary={monthSummary} />
           </div>
 
           {/* Houses Status Section */}
@@ -91,8 +153,8 @@ export default function Page() {
 
               {/* Cards Container */}
               <div className="flex gap-6">
-                <PropertyOverviewCard houseTypes={houseTypes} />
-                <HousesStatusChart housesStatus={housesStatus} />
+                <PropertyOverviewCard houseTypes={houseTypes2} />
+                <HousesStatusChart housesStatus={housesStatus2} />
               </div>
             </div>
 

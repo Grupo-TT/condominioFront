@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { ChevronDown, ChevronUp, MapPin, Package, Search, X, Plus, MoreVertical, Pencil, CheckCircle2, XCircle, Wrench } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
@@ -86,6 +87,8 @@ import { useRecurso } from '@/hooks/useRecurso'
 import { useRecursos } from '@/hooks/useRecursos'
 
 export default function RecursosPage() {
+  useDocumentTitle('Recursos | Flor Digital');
+
   const { recursos: recursosLista, loading, refetch } = useRecursos()
   const { crearRecurso, editarRecurso } = useRecurso(refetch)
   const [recursosResponse, setRecursosResponse] = useState<RecursoResponse[]>([])

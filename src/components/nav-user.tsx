@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import {
   Settings,
   ChevronsUpDown,
@@ -28,17 +29,40 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
+// Función para leer usuario de localStorage de forma segura
+function getUserFromStorage(): { nombre: string; email: string } | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      return { nombre: user.nombre, email: user.email }
+    }
+  } catch {
+    // Ignorar errores de parsing
   }
-}) {
+  return null
+}
+
+export function NavUser() {
   const { isMobile } = useSidebar()
-  const { logout, navigateToRoute } = useAuth()
+  const { user, logout, navigateToRoute } = useAuth()
+
+  // Leer del localStorage inmediatamente
+  const [cachedUser, setCachedUser] = useState<{ nombre: string; email: string } | null>(null)
+
+  useEffect(() => {
+    const storedUser = getUserFromStorage()
+    if (storedUser) {
+      setCachedUser(storedUser)
+    }
+  }, [])
+
+  // Usar datos del contexto si están disponibles, sino usar los cacheados
+  const displayUser = user || cachedUser
+  const userName = displayUser?.nombre || ""
+  const userEmail = displayUser?.email || ""
+  const userInitials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : ""
 
   return (
     <SidebarMenu>
@@ -50,14 +74,14 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                <AvatarImage src="" alt={userName} />
+                <AvatarFallback className="rounded-lg" suppressHydrationWarning>
+                  {userInitials || ""}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <div className="grid flex-1 text-left text-sm leading-tight" suppressHydrationWarning>
+                <span className="truncate font-medium" suppressHydrationWarning>{userName}</span>
+                <span className="truncate text-xs" suppressHydrationWarning>{userEmail}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -71,14 +95,14 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
+                  <AvatarImage src="" alt={userName} />
+                  <AvatarFallback className="rounded-lg" suppressHydrationWarning>
+                    {userInitials || ""}
+                  </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                <div className="grid flex-1 text-left text-sm leading-tight" suppressHydrationWarning>
+                  <span className="truncate font-medium" suppressHydrationWarning>{userName}</span>
+                  <span className="truncate text-xs" suppressHydrationWarning>{userEmail}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
