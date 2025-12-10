@@ -1,12 +1,19 @@
 import { apiClient } from '../lib/config/axios.config'
 
+interface MemberResponse {
+    id: string | number;
+    nombre: string;
+    parentesco: string;
+    estado?: boolean;
+}
+
 export const propDashboardService = {
     async getMembers() {
         try {
-            const res = await apiClient.get(`/miembros/all-casa-members`);
+            const res = await apiClient.get<MemberResponse[]>(`/miembros/all-casa-members`);
             const members = res.data || [];
 
-            const formattedMembers = members.map((m: any) => {
+            const formattedMembers = members.map((m: MemberResponse) => {
                 const nombres = m.nombre.split(' ');
                 let avatar = '';
                 if (nombres.length >= 2) {

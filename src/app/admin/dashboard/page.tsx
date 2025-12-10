@@ -23,15 +23,45 @@ import {
 } from "@/components/admin-dashboard"
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
 
+interface MonthlyData {
+  mes: string;
+  ingresosRecaudados: number;
+  ingresosPendientes: number;
+}
+
+interface MonthSummary {
+  ingresosRecaudados?: number;
+  ingresosPendientes?: number;
+  morasAcumuladas?: number;
+  interesesAcumulados?: number;
+}
+
+interface StatusDetail {
+  count: number;
+  percentage: number;
+}
+
+interface HousesStatus {
+  total?: number;
+  alDia?: StatusDetail;
+  morosas?: StatusDetail;
+}
+
+interface HouseTypes {
+  total?: number;
+  arrendadas?: StatusDetail;
+  residenciales?: StatusDetail;
+}
+
 export default function Page() {
   useDocumentTitle('Dashboard Admin | Flor Digital');
 
   const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
   const [selectedYear, setSelectedYear] = useState<number>(2025)
-  const [monthlyData2, setMonthlyData] = useState<any[]>([])
-  const [monthSummary, setMonthSummary] = useState<any>({})
-  const [housesStatus2, setHousesStatus] = useState<any>({})
-  const [houseTypes2, setHouseTypes] = useState<any>({})
+  const [monthlyData2, setMonthlyData] = useState<MonthlyData[]>([])
+  const [monthSummary, setMonthSummary] = useState<MonthSummary>({})
+  const [housesStatus2, setHousesStatus] = useState<HousesStatus>({})
+  const [houseTypes2, setHouseTypes] = useState<HouseTypes>({})
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -62,6 +92,7 @@ export default function Page() {
     }
 
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear])
 
   return (

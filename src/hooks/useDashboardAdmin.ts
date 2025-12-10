@@ -1,5 +1,5 @@
 import { adminDashboardService } from '@/services/adminDashboard.service'
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 
 export function useDashboardAdmin() {
     const fetchResumenFinancieroAnio = useCallback(async (year: number) => {
@@ -38,16 +38,6 @@ export function useDashboardAdmin() {
             return data
         } catch (err) {
             console.error('Error fetching houses types:', err)
-            return []
-        }
-    }, [])
-
-    const fetchAsambleas = useCallback(async () => {
-        try {
-            const data = await adminDashboardService.getAsambleas()
-            return data
-        } catch (err) {
-            console.error('Error fetching asambleas:', err)
             return []
         }
     }, [])
