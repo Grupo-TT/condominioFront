@@ -58,10 +58,24 @@ export function NavUser() {
     }
   }, [])
 
-  // Usar datos del contexto si están disponibles, sino usar los cacheados
-  const displayUser = user || cachedUser
-  const userName = displayUser?.nombre || ""
-  const userEmail = displayUser?.email || ""
+  // Escuchar evento de actualización de usuario
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      const storedUser = getUserFromStorage()
+      if (storedUser) {
+        setCachedUser(storedUser)
+      }
+    }
+    window.addEventListener('user:updated', handleUserUpdate)
+    return () => {
+      window.removeEventListener('user:updated', handleUserUpdate)
+    }
+  }, [])
+
+  // Usar datos del cachedUser para nombre y email (estos se actualizan cuando el usuario edita su perfil)
+  // El contexto user puede no actualizarse inmediatamente después de editar el perfil
+  const userName = cachedUser?.nombre || user?.nombre || ""
+  const userEmail = cachedUser?.email || user?.email || ""
   const userInitials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : ""
 
   return (

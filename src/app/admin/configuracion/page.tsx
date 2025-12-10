@@ -184,6 +184,17 @@ export default function ConfiguracionPage() {
       setShowPersonalInfoErrors(false);
       // Refrescar el perfil para mostrar los cambios actualizados
       await refetch();
+
+      // Actualizar el localStorage con el nuevo nombre para el sidebar
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userObj = JSON.parse(storedUser);
+        const nuevoNombre = `${data.primerNombre} ${data.segundoNombre || ''} ${data.primerApellido} ${data.segundoApellido || ''}`.replace(/\s+/g, ' ').trim();
+        userObj.nombre = nuevoNombre;
+        localStorage.setItem('user', JSON.stringify(userObj));
+        // Disparar evento para actualizar el sidebar
+        window.dispatchEvent(new Event('user:updated'));
+      }
     } catch (error) {
       const errorMessage = error instanceof Error
         ? error.message
