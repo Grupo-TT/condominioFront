@@ -189,8 +189,8 @@ export function MiembrosTab() {
             genero === "femenino"
               ? { bg: "bg-pink-100", text: "text-pink-600" }
               : genero === "masculino"
-              ? { bg: "bg-blue-100", text: "text-blue-600" }
-              : { bg: "bg-gray-100", text: "text-gray-600" };
+                ? { bg: "bg-blue-100", text: "text-blue-600" }
+                : { bg: "bg-gray-100", text: "text-gray-600" };
 
           return (
             <div className="flex items-center gap-3">
@@ -338,10 +338,10 @@ export function MiembrosTab() {
                               Number(row.original.id)
                             );
                             if (refetch) await refetch();
-                            toast.success(`Estado actualizado correctamente`);
+                            toast.success('Estado actualizado correctamente', { description: 'El cambio ha sido guardado.' });
                           } catch (error) {
                             console.error("Error al actualizar estado:", error);
-                            toast.error("No se pudo actualizar el estado");
+                            toast.error('No se pudo actualizar el estado', { description: 'Intenta de nuevo más tarde.' });
                           }
                         }}
                         className={

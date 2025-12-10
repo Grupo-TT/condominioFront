@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useRef, useCallback } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { MoreVertical, Search, X, Plus, Calendar as CalendarIcon, Pencil, Trash2, Eye, Info } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Wrench01Icon, Alert02Icon, NotificationCircleIcon, IdeaIcon, Delete02Icon } from '@hugeicons/core-free-icons'
@@ -135,6 +136,8 @@ const misSolicitudesData: Solicitud[] = [
 ]
 
 export default function SolicitudesPropietarioPage() {
+    useDocumentTitle('Mis Solicitudes | Flor Digital');
+
     const [searchTerm, setSearchTerm] = useState('')
     const [filterType, setFilterType] = useState<'todas' | 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia'>('todas')
     const [estadoFilter, setEstadoFilter] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada' | 'revisada'>('todas')
@@ -273,7 +276,7 @@ export default function SolicitudesPropietarioPage() {
         }
         setSolicitudes(prev => [newSolicitud, ...prev])
         setIsCreateSheetOpen(false)
-    }, [formTitulo, formTipo, formDescripcion, formTipoObra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
+    }, [formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
 
     const handleEditSubmit = useCallback(() => {
         if (selectedSolicitud) {

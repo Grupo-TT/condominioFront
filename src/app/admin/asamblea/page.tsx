@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -78,7 +79,9 @@ const asambleaSchema = z.object({
 type AsambleaFormData = z.infer<typeof asambleaSchema>;
 
 export default function AsambleaPage() {
-  const { loading: _loading, asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
+  useDocumentTitle('Asambleas | Flor Digital');
+
+  const { asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [selectedAsamblea, setSelectedAsamblea] = useState<Asamblea | null>(null);
@@ -225,7 +228,7 @@ export default function AsambleaPage() {
         await fetchAsistentes(asamblea.id);
       } catch {
         loadedAttendanceRef.current.delete(asamblea.id);
-        toast.error('No se pudo cargar la asistencia');
+        toast.error('No se pudo cargar la asistencia', { description: 'Intenta de nuevo más tarde.' });
       } finally {
         setAttendanceLoading(false);
       }
@@ -244,7 +247,7 @@ export default function AsambleaPage() {
         await fetchAsistentes(asamblea.id);
       } catch {
         loadedAttendanceRef.current.delete(asamblea.id);
-        toast.error('No se pudo cargar la asistencia');
+        toast.error('No se pudo cargar la asistencia', { description: 'Intenta de nuevo más tarde.' });
       } finally {
         setAttendanceLoading(false);
       }

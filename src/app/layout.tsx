@@ -8,7 +8,6 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sistema de Condominio",
   description: "Aplicación para la administración de condominios",
 };
 
@@ -23,8 +22,10 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster position="top-right" style={{ width: '400px' }} />
       </body>
     </html>
   );
 }
+
+

@@ -1,6 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { toast } from 'sonner';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,7 +42,23 @@ const ownerData = {
 };
 
 export default function PropietarioDashboard() {
+  useDocumentTitle('Dashboard | Flor Digital');
+
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Detectar si fue redirigido por falta de permisos
+  useEffect(() => {
+    const accessDenied = searchParams.get('access_denied');
+    if (accessDenied === 'admin') {
+      toast.warning('Acceso denegado', {
+        description: 'No tienes permisos para acceder a las páginas de administrador.',
+      });
+      // Limpiar el parámetro de la URL sin recargar
+      router.replace('/dashboard', { scroll: false });
+    }
+  }, [searchParams, router]);
   const { membersData } = useDashboardProp();
 
   return (

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
@@ -36,6 +37,7 @@ import {
   Home01Icon,
   FileDollarIcon,
   WalletAdd01Icon,
+  InformationCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { CuotaCasa, Obligacion } from '@/types/cuotas.types';
 import { pagoSchema, PagoFormData } from '@/lib/validations/cuotas.validation';
@@ -72,15 +74,30 @@ const ZERO_DEBT_THRESHOLD = 1; // pesos
 const isCasaAlDia = (saldoPendiente: number) =>
   Math.abs(saldoPendiente) <= ZERO_DEBT_THRESHOLD;
 
+// Función para formatear el tipo de obligación
+const formatTipoObligacion = (tipo: string | undefined): string => {
+  if (!tipo) return '';
+  const formatMap: Record<string, string> = {
+    'ADMINISTRACION': 'Cuota de Administración',
+    'MULTA': 'Multa',
+    'EXTRAORDINARIA': 'Cuota Extraordinaria',
+    'PARQUEADERO': 'Parqueadero',
+    'CUOTA_INICIAL': 'Cuota Inicial',
+  };
+  return formatMap[tipo.toUpperCase()] || tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
+};
+
 // Componente para la sub-tabla de obligaciones
 function ObligacionesSubTable({
   obligaciones,
   casa,
   onObligacionClick,
+  onViewDetail,
 }: {
   obligaciones: Obligacion[];
   casa: CuotaCasa;
   onObligacionClick: (casa: CuotaCasa, obligacion: Obligacion) => void;
+  onViewDetail: (obligacion: Obligacion, casa: CuotaCasa) => void;
 }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -97,7 +114,22 @@ function ObligacionesSubTable({
         ),
         cell: (info) => {
           const row = info.row.original;
-          return row.titulo || row.motivo || '';
+          const titulo = row.titulo || row.motivo || '';
+          return (
+            <div className="min-w-0 flex-1">
+              <button
+                onClick={() => onViewDetail(row, casa)}
+                className="group font-semibold text-gray-900 hover:text-green-700 transition-all duration-200 cursor-pointer text-left truncate inline-block max-w-full"
+              >
+                <span className="relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-green-700 after:transition-all after:duration-200 group-hover:after:w-full">
+                  {titulo}
+                </span>
+              </button>
+              {row.tipoObligacion && (
+                <div className="text-sm text-gray-500 truncate">{formatTipoObligacion(row.tipoObligacion)}</div>
+              )}
+            </div>
+          );
         },
         enableSorting: true,
         size: 300,
@@ -151,34 +183,64 @@ function ObligacionesSubTable({
         id: 'actions',
         header: '',
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 items-center justify-center border-primary bg-primary/10 text-primary hover:bg-primary/20"
-            onClick={() => onObligacionClick(casa, row.original)}
-          >
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={MoneyReceiveFlow01Icon}
-                size={20}
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  paddingBottom: '2px',
-                  color: '#4C6C5B',
-                }}
-              />
-              <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>
-                Registrar
-              </span>
-            </div>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 items-center justify-center border-primary bg-primary/10 text-primary hover:bg-primary/20"
+                  onClick={() => onObligacionClick(casa, row.original)}
+                >
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon
+                      icon={MoneyReceiveFlow01Icon}
+                      size={20}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        paddingBottom: '2px',
+                        color: '#4C6C5B',
+                      }}
+                    />
+                    <span style={{ paddingTop: '1px', paddingBottom: '0px' }}>
+                      Registrar
+                    </span>
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Registrar pago
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  mode="icon"
+                  className="h-8 w-8 border-gray-400"
+                  onClick={() => onViewDetail(row.original, casa)}
+                >
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    size={20}
+                    strokeWidth={2}
+                    className="text-gray-600"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Ver detalles
+              </TooltipContent>
+            </Tooltip>
+          </div>
         ),
-        size: 120,
+        size: 180,
         enableSorting: false,
       },
     ],
-    [casa, onObligacionClick]
+    [casa, onObligacionClick, onViewDetail]
   );
 
   const table = useReactTable({
@@ -250,6 +312,8 @@ function ObligacionesSubTable({
 }
 
 export default function CuotasPage() {
+  useDocumentTitle('Cuotas y Pagos | Flor Digital');
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -267,6 +331,12 @@ export default function CuotasPage() {
   >('todas');
   const [sendingPazYSalvoCasaId, setSendingPazYSalvoCasaId] =
     useState<number | null>(null);
+
+  // Estados para el sheet de detalle de obligación
+  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
+  const [detailObligacion, setDetailObligacion] = useState<Obligacion | null>(null);
+  const [detailCasa, setDetailCasa] = useState<CuotaCasa | null>(null);
+
   const { casas, loading, error, fetchCasas, handleRegistrarPago } =
     useCuotas();
   // Función para limpiar búsqueda
@@ -349,6 +419,16 @@ export default function CuotasPage() {
     [form]
   );
 
+  // Función para abrir el sheet de detalle de obligación
+  const handleViewObligacionDetail = useCallback(
+    (obligacion: Obligacion, casa: CuotaCasa) => {
+      setDetailObligacion(obligacion);
+      setDetailCasa(casa);
+      setIsDetailSheetOpen(true);
+    },
+    []
+  );
+
   const handleFormSubmit = async (data: PagoFormData) => {
     // Validación adicional: verificar que el monto no supere el saldo pendiente
     const obligacion = selectedCasa?.obligacionesPendientes.find(
@@ -377,6 +457,7 @@ export default function CuotasPage() {
 
       // Mostrar toast de éxito
       toast.success('Pago registrado exitosamente', {
+        description: 'El pago ha sido aplicado correctamente.',
         duration: 5000,
       });
 
@@ -395,6 +476,7 @@ export default function CuotasPage() {
 
       // Mostrar toast de error
       toast.error(errorMessage, {
+        description: 'No se pudo completar la operación.',
         duration: 5000,
       });
     }
@@ -414,10 +496,38 @@ export default function CuotasPage() {
     fetchCasas();
   }, [fetchCasas]);
 
+  // Limpiar filas expandidas cuando sus casas ya no tienen obligaciones pendientes
+  // Esto soluciona el bug donde el menú desplegado se queda mostrando "no data" 
+  // después de pagar la última obligación de una casa
+  useEffect(() => {
+    if (Object.keys(expandedRows).length === 0) return;
+
+    const newExpandedRows: ExpandedState = {};
+    let hasChanges = false;
+
+    for (const [rowId, isExpanded] of Object.entries(expandedRows)) {
+      if (isExpanded) {
+        // Buscar la casa correspondiente
+        const casa = casas.find(c => c.numeroCasa.toString() === rowId);
+        // Mantener expandida solo si tiene obligaciones pendientes
+        if (casa && casa.obligacionesPendientes && casa.obligacionesPendientes.length > 0) {
+          newExpandedRows[rowId] = true;
+        } else {
+          hasChanges = true;
+        }
+      }
+    }
+
+    if (hasChanges) {
+      setExpandedRows(newExpandedRows);
+    }
+  }, [casas, expandedRows]);
+
   // Mostrar toast de error cuando haya un error de carga
   useEffect(() => {
     if (error) {
       toast.error(error, {
+        description: 'No se pudieron cargar los datos.',
         duration: 5000,
       });
     }
@@ -448,6 +558,7 @@ export default function CuotasPage() {
               obligaciones={row.obligacionesPendientes}
               casa={row}
               onObligacionClick={handleObligacionClick}
+              onViewDetail={handleViewObligacionDetail}
             />
           ),
           skeleton: <Skeleton className="h-6 w-6" />,
@@ -571,27 +682,34 @@ export default function CuotasPage() {
         cell: ({ row }) => (
           <>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="primary"
-                className="gap-2 items-center justify-center"
-                onClick={() => handleCasaClick(row.original)}
-              >
-                <div className="flex items-center gap-2">
-                  <HugeiconsIcon
-                    icon={MoneyReceiveFlow01Icon}
-                    size={20}
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      paddingBottom: '2px',
-                    }}
-                  />
-                  <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
-                    Registrar
-                  </span>
-                </div>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    className="gap-2 items-center justify-center"
+                    onClick={() => handleCasaClick(row.original)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon
+                        icon={MoneyReceiveFlow01Icon}
+                        size={20}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          paddingBottom: '2px',
+                        }}
+                      />
+                      <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
+                        Registrar
+                      </span>
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Registrar pago
+                </TooltipContent>
+              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -615,27 +733,44 @@ export default function CuotasPage() {
                         onClick={async () => {
                           if (isPazYSalvoDisabled) return;
                           setSendingPazYSalvoCasaId(row.original.numeroCasa);
-                          try {
-                            const response = await enviarPazYSalvo(
-                              row.original.numeroCasa
-                            );
-                            const successMessage =
-                              response?.message ||
-                              'Paz y salvo enviado exitosamente';
-                            toast.success(successMessage);
-                          } catch (err) {
-                            const errorMessage = axios.isAxiosError(err)
-                              ? (err.response?.data as { message?: string })
-                                ?.message ||
-                              err.message ||
-                              'Error al enviar el paz y salvo'
-                              : err instanceof Error
-                                ? err.message
-                                : 'Error al enviar el paz y salvo';
-                            toast.error(errorMessage);
-                          } finally {
-                            setSendingPazYSalvoCasaId(null);
-                          }
+
+                          const sendPromise = async () => {
+                            const startTime = Date.now();
+                            const minDuration = 2500; // 2.5 segundos mínimo
+
+                            try {
+                              const response = await enviarPazYSalvo(row.original.numeroCasa);
+
+                              // Esperar el tiempo restante si la operación fue muy rápida
+                              const elapsed = Date.now() - startTime;
+                              if (elapsed < minDuration) {
+                                await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+                              }
+
+                              return response?.message || 'Paz y salvo enviado exitosamente';
+                            } catch (err) {
+                              // Esperar el tiempo restante incluso en error
+                              const elapsed = Date.now() - startTime;
+                              if (elapsed < minDuration) {
+                                await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+                              }
+
+                              const errorMessage = axios.isAxiosError(err)
+                                ? (err.response?.data as { message?: string })?.message || err.message || 'Error al enviar el paz y salvo'
+                                : err instanceof Error
+                                  ? err.message
+                                  : 'Error al enviar el paz y salvo';
+                              throw new Error(errorMessage);
+                            } finally {
+                              setSendingPazYSalvoCasaId(null);
+                            }
+                          };
+
+                          toast.promise(sendPromise(), {
+                            loading: 'Enviando paz y salvo...',
+                            success: 'Paz y salvo enviado exitosamente',
+                            error: (err) => err.message || 'Error al enviar el paz y salvo',
+                          });
                         }}
                       >
                         <HugeiconsIcon
@@ -667,7 +802,7 @@ export default function CuotasPage() {
         },
       },
     ],
-    [handleCasaClick, handleObligacionClick, sendingPazYSalvoCasaId]
+    [handleCasaClick, handleObligacionClick, handleViewObligacionDetail, sendingPazYSalvoCasaId]
   );
 
   const table = useReactTable({
@@ -1146,6 +1281,187 @@ export default function CuotasPage() {
               </Button>
             </SheetFooter>
           </TooltipProvider>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet de detalle de obligación */}
+      <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '480px', maxWidth: 'none' }}
+        >
+          {detailObligacion && detailCasa && (
+            <>
+              {/* Header con icono */}
+              <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                    <HugeiconsIcon
+                      icon={FileDollarIcon}
+                      size={24}
+                      className="text-primary"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
+                      Detalles de Obligación
+                    </SheetTitle>
+                    <SheetDescription className="text-sm text-gray-500">
+                      Información completa de la obligación pendiente
+                    </SheetDescription>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contenido */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="px-6 py-6 space-y-6">
+                  {/* Título y descripción */}
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Concepto</div>
+                    <h3 className="text-lg font-bold text-gray-900">{detailObligacion.titulo || detailObligacion.motivo}</h3>
+                    {detailObligacion.tipoObligacion && (
+                      <Badge variant="outline" size="sm">{formatTipoObligacion(detailObligacion.tipoObligacion)}</Badge>
+                    )}
+                  </div>
+
+                  {/* Detalles en grid */}
+                  <div className="space-y-4 pt-4 border-t border-gray-200">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Detalles</div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* ID Obligación */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">ID Obligación</div>
+                        <div className="text-sm font-medium text-gray-900">#{detailObligacion.id}</div>
+                      </div>
+
+                      {/* Estado */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Estado</div>
+                        <Badge
+                          variant={detailObligacion.valorPendiente === 0 ? 'success' : detailObligacion.montoPagado > 0 ? 'warning' : 'destructive'}
+                          appearance="outline"
+                          size="sm"
+                        >
+                          {detailObligacion.valorPendiente === 0 ? 'PAGADO' : detailObligacion.montoPagado > 0 ? 'ABONADO' : 'PENDIENTE'}
+                        </Badge>
+                      </div>
+
+                      {/* Valor Original (monto base) */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Valor Original</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.monto ?? 0)}
+                        </div>
+                      </div>
+
+                      {/* Valor Total (con intereses y mora) */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Valor Total</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.valorTotal)}
+                        </div>
+                      </div>
+
+                      {/* Monto Pagado */}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Monto Abonado</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.montoPagado)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Intereses y Mora - en tarjetas */}
+                    <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
+                      {/* Tarjeta Intereses */}
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <div className="text-xs text-gray-500 font-medium mb-1">Intereses</div>
+                        <div className="text-lg font-bold text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.interes ?? 0)}
+                        </div>
+                      </div>
+
+                      {/* Tarjeta Mora */}
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <div className="text-xs text-gray-500 font-medium mb-1">Mora</div>
+                        <div className="text-lg font-bold text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.mora ?? 0)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Saldo Pendiente - destacado */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                        <div className="text-xs text-gray-500 font-medium mb-1">Saldo Pendiente</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                          }).format(detailObligacion.valorPendiente)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Propietario / Casa */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Propietario</div>
+                        <div className="flex items-center gap-2">
+                          <HugeiconsIcon icon={Home01Icon} size={16} className="text-gray-400" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {detailCasa.propietario?.nombreCompleto || 'Sin propietario'}
+                            </div>
+                            <div className="text-xs text-gray-500">Casa No. {detailCasa.numeroCasa}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer con acciones */}
+              <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
+                <Button
+                  onClick={() => setIsDetailSheetOpen(false)}
+                  className="flex-1 h-10 font-medium"
+                  variant="outline"
+                >
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsDetailSheetOpen(false);
+                    handleObligacionClick(detailCasa, detailObligacion);
+                  }}
+                  className="flex-1 h-10 font-medium"
+                >
+                  <HugeiconsIcon icon={MoneyReceiveFlow01Icon} size={18} className="mr-2" />
+                  Registrar Pago
+                </Button>
+              </SheetFooter>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </>

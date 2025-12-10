@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,12 +24,29 @@ import {
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
 
 export default function Page() {
+  useDocumentTitle('Dashboard Admin | Flor Digital');
+
   const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
   const [selectedYear, setSelectedYear] = useState<number>(2025)
   const [monthlyData2, setMonthlyData] = useState<any[]>([])
   const [monthSummary, setMonthSummary] = useState<any>({})
   const [housesStatus2, setHousesStatus] = useState<any>({})
   const [houseTypes2, setHouseTypes] = useState<any>({})
+
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Detectar si fue redirigido por falta de permisos
+  useEffect(() => {
+    const accessDenied = searchParams.get('access_denied')
+    if (accessDenied === 'owner') {
+      toast.warning('Acceso denegado', {
+        description: 'Las páginas de propietarios no están disponibles para administradores.',
+      })
+      // Limpiar el parámetro de la URL sin recargar
+      router.replace('/admin/dashboard', { scroll: false })
+    }
+  }, [searchParams, router])
 
   useEffect(() => {
     const load = async () => {

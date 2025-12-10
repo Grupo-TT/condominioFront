@@ -14,6 +14,9 @@ export interface Obligacion {
   monto?: number;
   tipoObligacion?: string;
   estadoPago?: string;
+  fecha?: string;
+  interes?: number;
+  mora?: number;
 }
 
 export interface CuotaCasa {

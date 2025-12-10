@@ -12,8 +12,11 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { MiembrosTab } from '@/components/MiembrosTab'
 import { MascotasTab } from '@/components/MascotasTab'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function HogarPage() {
+  useDocumentTitle('Miembros y Mascotas | Flor Digital');
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2">
@@ -57,10 +60,10 @@ export default function HogarPage() {
           {/* Sección de Miembros */}
           <div className="space-y-6">
             <MiembrosTab />
-            
+
             {/* Separador */}
             <div className="border-t border-gray-200 my-6"></div>
-            
+
             {/* Sección de Mascotas */}
             <div>
               <h2 className="text-xl font-bold text-gray-900 mb-4">Mascotas</h2>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useRef, useCallback } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -19,7 +20,6 @@ import {
   SheetContent,
   SheetDescription,
   SheetFooter,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
 import {
@@ -73,6 +73,8 @@ import { TabSliderIndicator } from '@/components/ui/tab-slider-indicator'
 import { cn } from '@/lib/utils'
 
 export default function SolicitudesPage() {
+  useDocumentTitle('Solicitudes PQRS | Flor Digital');
+  
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
