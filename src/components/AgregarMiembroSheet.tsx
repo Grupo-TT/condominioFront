@@ -271,6 +271,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.nombre}
                       error={errors.nombre}
                       showError={showFormErrors}
+                      inputFilter="letters-only"
                     />
 
                     <div className="space-y-2">
@@ -406,6 +407,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.telefono}
                       error={errors.telefono}
                       showError={showFormErrors}
+                      inputFilter="numbers-only"
                     />
                   </div>
                 </div>
@@ -497,6 +499,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.documento}
                       error={errors.documento}
                       showError={showFormErrors}
+                      inputFilter="numbers-only"
                     />
                   </div>
                 </div>

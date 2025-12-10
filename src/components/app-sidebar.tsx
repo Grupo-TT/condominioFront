@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -69,6 +70,22 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [casaNumero, setCasaNumero] = useState<number | null>(null)
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        if (user.idCasa) {
+          setCasaNumero(user.idCasa)
+        }
+      }
+    } catch {
+      // Ignorar errores de parsing
+    }
+  }, [])
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -87,7 +104,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Flor Digital</span>
-                  <span className="truncate text-xs">Mi Residencia</span>
+                  <span className="truncate text-xs" suppressHydrationWarning>
+                    {casaNumero ? `Casa N° ${casaNumero}` : 'Mi Residencia'}
+                  </span>
                 </div>
               </a>
             </SidebarMenuButton>
@@ -107,5 +126,3 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   )
 }
-
-
