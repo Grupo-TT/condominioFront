@@ -8,7 +8,7 @@ import {
 import { RadialBarChart, RadialBar, PolarRadiusAxis, Label, Customized } from "recharts"
 import { HugeiconsIcon } from '@hugeicons/react'
 import { MoneyReceiveSquareIcon } from '@hugeicons/core-free-icons'
-import { HousesStatusData } from "@/data/dashboard.mock"
+import { HousesStatusData } from "@/types/dashboard.types"
 
 const chartConfig = {
     alDia: {
@@ -68,6 +68,10 @@ interface HousesStatusChartProps {
 }
 
 export function HousesStatusChart({ housesStatus }: HousesStatusChartProps) {
+
+    if (!housesStatus) return null;
+    if (!housesStatus.alDia || !housesStatus.morosas) return null;
+
     return (
         <div className="bg-white rounded-xl border border-gray-200 pt-4 pb-3 px-4 min-w-[280px] overflow-hidden self-start">
             <div className="flex items-center gap-2 mb-2">
