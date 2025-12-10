@@ -22,6 +22,7 @@ import {
   ReservationsCard,
   RequestsCard,
 } from "@/components/owner-dashboard"
+import { useDashboardProp } from '@/hooks/useDashboardProp';
 
 // Datos de ejemplo
 const ownerData = {
@@ -39,16 +40,6 @@ const ownerData = {
   fechaProximoPago: "15 Dic 2024",
   estadoCuenta: "Al día"
 };
-
-const membersData = [
-  { id: 1, nombre: "María Elena Pérez", parentesco: "Esposa", avatar: "ME" },
-  { id: 2, nombre: "Carlos Andrés Pérez", parentesco: "Hijo", avatar: "CA" },
-  { id: 3, nombre: "Ana Sofía Pérez", parentesco: "Hija", avatar: "AS" },
-  { id: 4, nombre: "Rosa María González", parentesco: "Madre", avatar: "RG" },
-  { id: 5, nombre: "Pedro Antonio Pérez", parentesco: "Padre", avatar: "PP" },
-  { id: 6, nombre: "Luisa Fernanda Pérez", parentesco: "Sobrina", avatar: "LF" },
-  { id: 7, nombre: "Roberto Gómez", parentesco: "Tío", avatar: "RG" },
-];
 
 export default function PropietarioDashboard() {
   useDocumentTitle('Dashboard | Flor Digital');
@@ -68,6 +59,7 @@ export default function PropietarioDashboard() {
       router.replace('/dashboard', { scroll: false });
     }
   }, [searchParams, router]);
+  const { membersData } = useDashboardProp();
 
   return (
     <>
