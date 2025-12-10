@@ -1,4 +1,12 @@
 import { apiClient } from '../lib/config/axios.config'
+import type {
+    OwnerInfoResponse,
+    OwnerInfoData,
+    AccountStatusResponse,
+    AccountStatusData,
+    OwnerSolicitudesResponse,
+    OwnerSolicitudItem,
+} from '@/types/propietarioDashboard.types'
 
 interface MemberResponse {
     id: number;
@@ -7,13 +15,40 @@ interface MemberResponse {
     estado?: boolean;
 }
 
-export const propDashboardService = {
-    async getMembers() {
-        try {
-            const res = await apiClient.get<MemberResponse[]>(`/miembros/all-casa-members`);
-            const members = res.data || [];
+export interface FormattedMember {
+    id: number;
+    nombre: string;
+    parentesco: string;
+    avatar: string;
+}
 
-            const formattedMembers = members.map((m: MemberResponse) => {
+export const propDashboardService = {
+    // GET /dashboard-propietario/info
+    async getOwnerInfo(): Promise<OwnerInfoData> {
+        const response = await apiClient.get<OwnerInfoResponse>(`/dashboard-propietario/info`);
+        return response.data.data;
+    },
+
+    // GET /dashboard-propietario/account-status
+    async getAccountStatus(): Promise<AccountStatusData> {
+        const response = await apiClient.get<AccountStatusResponse>(`/dashboard-propietario/account-status`);
+        return response.data.data;
+    },
+
+    // GET /dashboard-propietario/solicitudes
+    async getOwnerSolicitudes(): Promise<OwnerSolicitudItem[]> {
+        const response = await apiClient.get<OwnerSolicitudesResponse>(`/dashboard-propietario/solicitudes`);
+        return response.data.data;
+    },
+
+    // GET /miembros/all-casa-members
+    async getMembers(): Promise<FormattedMember[]> {
+        const res = await apiClient.get<MemberResponse[]>(`/miembros/all-casa-members`);
+        const members = res.data || [];
+
+        const formattedMembers = members
+            .filter((m: MemberResponse) => m.estado !== false)
+            .map((m: MemberResponse) => {
                 const nombres = m.nombre.split(' ');
                 let avatar = '';
                 if (nombres.length >= 2) {
@@ -30,10 +65,6 @@ export const propDashboardService = {
                 };
             });
 
-            return formattedMembers;
-        } catch (error) {
-            console.error("Error al obtener los miembros:", error);
-            throw error;
-        }
+        return formattedMembers;
     }
 }

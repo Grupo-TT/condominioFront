@@ -4,96 +4,95 @@ import { Card, CardContent } from '@/components/ui/card'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AppleReminderIcon, LinkSquare01Icon, Wrench01Icon, Alert02Icon, IdeaIcon, NotificationCircleIcon } from '@hugeicons/core-free-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { Calendar as CalendarIcon } from 'lucide-react'
 
-interface Request {
+interface Solicitud {
     id: string
-    title: string
-    type: string
-    date: string
-    status: string
-    statusColor: string
-    icon: typeof Wrench01Icon
-    iconBgColor: string
-    iconColor: string
-    typeBgColor: string
+    titulo: string
+    tipo: 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia'
+    fecha: string
+    estado: 'pendiente' | 'aprobada' | 'rechazada' | 'revisada'
+    descripcion?: string
 }
 
-const requestsData: Request[] = [
-    {
-        id: '1',
-        title: 'Reparación tubería baño principal',
-        type: 'Reparación Locativa',
-        date: 'Nov 28, 2024',
-        status: 'Pendiente',
-        statusColor: 'bg-yellow-500',
-        icon: Wrench01Icon,
-        iconBgColor: '#E3E4EA',
-        iconColor: '#595D75',
-        typeBgColor: '#E3E4EA',
-    },
-    {
-        id: '2',
-        title: 'Ruido excesivo en horario nocturno',
-        type: 'Queja',
-        date: 'Nov 15, 2024',
-        status: 'Revisada',
-        statusColor: 'bg-blue-500',
-        icon: Alert02Icon,
-        iconBgColor: '#F1E8D6',
-        iconColor: '#A39170',
-        typeBgColor: '#F1E8D6',
-    },
-    {
-        id: '3',
-        title: 'Instalar más bancas en el parque',
-        type: 'Sugerencia',
-        date: 'Oct 20, 2024',
-        status: 'Aprobada',
-        statusColor: 'bg-green-500',
-        icon: IdeaIcon,
-        iconBgColor: '#E6EFEA',
-        iconColor: '#4C6C5A',
-        typeBgColor: '#E6EFEA',
-    },
-    {
-        id: '4',
-        title: 'Notificación de trasteo',
-        type: 'Notificación',
-        date: 'Dic 01, 2024',
-        status: 'Pendiente',
-        statusColor: 'bg-yellow-500',
-        icon: NotificationCircleIcon,
-        iconBgColor: '#E3E4EA',
-        iconColor: '#595D75',
-        typeBgColor: '#E3E4EA',
-    },
-    {
-        id: '5',
-        title: 'Consulta reserva salón social',
-        type: 'Consulta',
-        date: 'Dic 03, 2024',
-        status: 'En revisión',
-        statusColor: 'bg-blue-500',
-        icon: IdeaIcon,
-        iconBgColor: '#F1E8D6',
-        iconColor: '#A39170',
-        typeBgColor: '#F1E8D6',
-    },
-    {
-        id: '6',
-        title: 'Vehículo mal estacionado',
-        type: 'Reporte',
-        date: 'Dic 05, 2024',
-        status: 'Cerrada',
-        statusColor: 'bg-gray-400',
-        icon: Alert02Icon,
-        iconBgColor: '#E6EFEA',
-        iconColor: '#4C6C5A',
-        typeBgColor: '#E6EFEA',
-    },
-]
+interface RequestsCardProps {
+    solicitudes: Solicitud[]
+    loading?: boolean
+}
 
-export function RequestsCard() {
+const getTipoConfig = (tipo: Solicitud['tipo']) => {
+    const configs: Record<Solicitud['tipo'], { icon: typeof Wrench01Icon; iconBgColor: string; iconColor: string; typeBgColor: string; label: string }> = {
+        'reparacion-locativa': {
+            icon: Wrench01Icon,
+            iconBgColor: '#E3E4EA',
+            iconColor: '#595D75',
+            typeBgColor: '#E3E4EA',
+            label: 'Reparación Locativa'
+        },
+        'queja': {
+            icon: Alert02Icon,
+            iconBgColor: '#F1E8D6',
+            iconColor: '#A39170',
+            typeBgColor: '#F1E8D6',
+            label: 'Queja'
+        },
+        'peticion': {
+            icon: NotificationCircleIcon,
+            iconBgColor: '#E6EFEA',
+            iconColor: '#4C6C5A',
+            typeBgColor: '#E6EFEA',
+            label: 'Petición'
+        },
+        'sugerencia': {
+            icon: IdeaIcon,
+            iconBgColor: '#E6EFEA',
+            iconColor: '#4C6C5A',
+            typeBgColor: '#E6EFEA',
+            label: 'Sugerencia'
+        }
+    }
+    return configs[tipo]
+}
+
+const getEstadoConfig = (estado: Solicitud['estado']) => {
+    const configs: Record<Solicitud['estado'], { dotColor: string; label: string }> = {
+        'pendiente': { dotColor: 'bg-yellow-500', label: 'Pendiente' },
+        'aprobada': { dotColor: 'bg-green-500', label: 'Aprobada' },
+        'rechazada': { dotColor: 'bg-red-500', label: 'Rechazada' },
+        'revisada': { dotColor: 'bg-blue-500', label: 'Revisada' }
+    }
+    return configs[estado]
+}
+
+export function RequestsCard({ solicitudes, loading = false }: RequestsCardProps) {
+    if (loading) {
+        return (
+            <Card className="border bg-white rounded-2xl py-0 flex-1 min-w-[280px]">
+                <CardContent className="p-5 h-full flex flex-col">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="w-11 h-11 rounded-xl" />
+                            <div>
+                                <Skeleton className="h-5 w-28 mb-1" />
+                                <Skeleton className="h-4 w-40" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex-1 rounded-xl p-4" style={{ backgroundColor: '#F6F6F6' }}>
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
         <Card className="border bg-white rounded-2xl py-0 flex-1 min-w-[280px]">
             <CardContent className="p-5 h-full flex flex-col">
@@ -111,9 +110,9 @@ export function RequestsCard() {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
+                                <Link href="/solicitudes" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
                                     <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
-                                </button>
+                                </Link>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Ver más</p>
@@ -124,39 +123,61 @@ export function RequestsCard() {
 
                 {/* Requests List */}
                 <div className="flex-1 overflow-y-auto rounded-xl p-4 max-h-[320px]" style={{ backgroundColor: '#F6F6F6' }}>
-                    <div className="space-y-4">
-                        {requestsData.map((request, index) => (
-                            <div
-                                key={request.id}
-                                className={`flex items-start justify-between ${index < requestsData.length - 1 ? 'border-b border-gray-100 pb-4' : ''}`}
-                            >
-                                <div className="flex items-start gap-3 flex-1">
+                    {solicitudes.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+                            <HugeiconsIcon icon={AppleReminderIcon} className="h-10 w-10 text-gray-300 mb-2" />
+                            <p className="text-sm text-gray-500">No tienes solicitudes registradas</p>
+                            <Link href="/solicitudes" className="text-sm text-primary hover:underline mt-2">
+                                Crear una solicitud
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {solicitudes.map((solicitud, index) => {
+                                const tipoConfig = getTipoConfig(solicitud.tipo)
+                                const estadoConfig = getEstadoConfig(solicitud.estado)
+                                return (
                                     <div
-                                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                        style={{ backgroundColor: request.iconBgColor }}
+                                        key={solicitud.id}
+                                        className={`flex items-start justify-between ${index < solicitudes.length - 1 ? 'border-b border-gray-100 pb-4' : ''}`}
                                     >
-                                        <HugeiconsIcon icon={request.icon} size={18} style={{ color: request.iconColor }} strokeWidth={1.5} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-medium text-gray-900">{request.title}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span
-                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium text-gray-700"
-                                                style={{ backgroundColor: request.typeBgColor }}
+                                        <div className="flex items-start gap-3 flex-1">
+                                            <div
+                                                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                style={{ backgroundColor: tipoConfig.iconBgColor }}
                                             >
-                                                {request.type}
-                                            </span>
-                                            <span className="text-xs text-gray-400">{request.date}</span>
+                                                <HugeiconsIcon icon={tipoConfig.icon} size={18} style={{ color: tipoConfig.iconColor }} strokeWidth={1.5} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-medium text-gray-900 line-clamp-1">{solicitud.titulo}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Badge
+                                                        className="text-xs font-medium text-gray-700 border-0"
+                                                        style={{ backgroundColor: tipoConfig.typeBgColor }}
+                                                        size="sm"
+                                                    >
+                                                        {tipoConfig.label}
+                                                    </Badge>
+                                                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                        <CalendarIcon className="w-3 h-3" />
+                                                        {new Date(solicitud.fecha).toLocaleDateString('es-CO', {
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <span className="text-xs font-medium text-gray-600 bg-white border border-gray-300 px-2.5 py-1 rounded-full flex items-center gap-1.5 flex-shrink-0">
+                                            <span className={`w-2 h-2 rounded-full ${estadoConfig.dotColor}`}></span>
+                                            {estadoConfig.label}
+                                        </span>
                                     </div>
-                                </div>
-                                <span className="text-xs font-medium text-gray-600 bg-white border border-gray-300 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                                    <span className={`w-2 h-2 rounded-full ${request.statusColor}`}></span>
-                                    {request.status}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
