@@ -5,6 +5,10 @@ export const pagoSchema = z.object({
     .string()
     .min(1, "Por favor, selecciona una obligación.")
     .max(30, "Máximo 30 caracteres"),
+  tipoObligacion: z
+  .string()
+  .min(1, "Por favor, selecciona un tipo de obligación.")
+  .max(30, "Máximo 30 caracteres"),
   monto: z
     .number()
     .refine((val) => typeof val === "number" && !isNaN(val), {
