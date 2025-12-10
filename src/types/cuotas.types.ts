@@ -29,6 +29,7 @@ export interface CuotaCasa {
 
 export interface PagoPayload {
   soporte: string;
+  tipoObligacion: string;
   idObligacion: number;
   montoAPagar: number;
 }

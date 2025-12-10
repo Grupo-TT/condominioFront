@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -434,6 +435,7 @@ export default function CuotasPage() {
     const obligacion = selectedCasa?.obligacionesPendientes.find(
       (o) => String(o.id) === String(data.obligacionId)
     );
+
     if (obligacion && data.monto > obligacion.valorPendiente) {
       form.setError('monto', {
         type: 'manual',
@@ -449,6 +451,7 @@ export default function CuotasPage() {
     const payload = {
       soporte: selectedCasa.numeroCasa.toString(),
       idObligacion: Number(data.obligacionId),
+      tipoObligacion: data.tipoObligacion,
       montoAPagar: data.monto,
     };
 
@@ -1191,11 +1194,15 @@ export default function CuotasPage() {
                           onObligacionSelect={(obligacion) => {
                             setSelectedObligacion(obligacion);
                             form.setValue('monto', obligacion.valorPendiente);
+                            form.setValue("tipoObligacion", obligacion.tipoObligacion!);
+
                           }}
                         />
                       )}
                     />
                   </div>
+                  
+                  <input type="hidden" {...form.register("tipoObligacion")} />
 
                   {/* Monto a pagar */}
                   <Controller
