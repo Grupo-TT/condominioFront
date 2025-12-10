@@ -5,6 +5,7 @@ import { Users } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { User03Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import Link from 'next/link'
 
 interface Member {
     id: number
@@ -48,9 +49,9 @@ export function MembersCard({ members }: MembersCardProps) {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
+                                    <Link href="/mi-casa/miembros-hogar" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
                                         <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
-                                    </button>
+                                    </Link>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Ver más</p>

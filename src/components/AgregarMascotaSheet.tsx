@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/command'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { mascotasService } from '@/lib/services/casa.service'
+import { toast } from 'sonner'
 
 interface AgregarMascotaSheetProps {
   open: boolean
@@ -88,11 +89,13 @@ export function AgregarMascotaSheet({
     try {
       if (isEditMode) {
         await mascotasService.updateMascotaByCasa(idCasa, tipoMascota.toUpperCase(), cantidad);
+        toast.success('Mascota actualizada', { description: 'Los cambios han sido guardados correctamente.' });
         if (onSave) {
           onSave(cantidad);
         }
       } else {
         await mascotasService.createMascotaByCasa(idCasa, tipoMascota.toUpperCase(), cantidad);
+        toast.success('Mascota agregada', { description: 'La mascota ha sido registrada.' });
         if (onSave) {
           onSave(cantidad);
         }
@@ -101,6 +104,7 @@ export function AgregarMascotaSheet({
       onOpenChange(false);
     } catch (error) {
       console.error("Error al guardar mascota:", error);
+      toast.error('Error al guardar', { description: 'No se pudo guardar la mascota. Intenta de nuevo.' });
     }
   };
 

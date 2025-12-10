@@ -74,10 +74,16 @@ const personalInfoSchema = z.object({
   segundoNombre: z.string().optional(),
   primerApellido: z.string().min(1, "El primer apellido es requerido"),
   segundoApellido: z.string().optional(),
-  telefono: z.number().min(1, "El teléfono es requerido"),
+  telefono: z.number()
+    .refine((val) => val.toString().length === 10, {
+      message: "El teléfono debe tener exactamente 10 dígitos"
+    }),
   correo: z.string().email("Correo electrónico inválido"),
   tipoDocumento: z.string().min(1, "El tipo de documento es requerido"),
-  numeroDocumento: z.number().min(1, "El número de documento es requerido"),
+  numeroDocumento: z.number()
+    .refine((val) => val.toString().length >= 8 && val.toString().length <= 10, {
+      message: "El documento debe tener entre 8 y 10 dígitos"
+    }),
 });
 
 const passwordSchema = z
@@ -178,6 +184,17 @@ export default function ConfiguracionPage() {
       setShowPersonalInfoErrors(false);
       // Refrescar el perfil para mostrar los cambios actualizados
       await refetch();
+
+      // Actualizar el localStorage con el nuevo nombre para el sidebar
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userObj = JSON.parse(storedUser);
+        const nuevoNombre = `${data.primerNombre} ${data.segundoNombre || ''} ${data.primerApellido} ${data.segundoApellido || ''}`.replace(/\s+/g, ' ').trim();
+        userObj.nombre = nuevoNombre;
+        localStorage.setItem('user', JSON.stringify(userObj));
+        // Disparar evento para actualizar el sidebar
+        window.dispatchEvent(new Event('user:updated'));
+      }
     } catch (error) {
       const errorMessage = error instanceof Error
         ? error.message
@@ -540,6 +557,7 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            inputFilter="letters-only"
                           />
                         )}
                       />
@@ -558,6 +576,7 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            inputFilter="letters-only"
                           />
                         )}
                       />
@@ -577,6 +596,7 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            inputFilter="letters-only"
                           />
                         )}
                       />
@@ -595,6 +615,7 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            inputFilter="letters-only"
                           />
                         )}
                       />
@@ -618,12 +639,12 @@ export default function ConfiguracionPage() {
                             label="Teléfono"
                             required={true}
                             placeholder="Ej: 3001234567"
-                            type="number"
+                            type="text"
                             autoComplete="tel"
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
-                            className="[&_input]:[-moz-appearance:textfield] [&_input]:[&::-webkit-outer-spin-button]:appearance-none [&_input]:[&::-webkit-inner-spin-button]:appearance-none"
+                            inputFilter="numbers-only"
                             value={field.value?.toString() ?? ""}
                             onChange={(value: string) =>
                               field.onChange(Number(value))
@@ -694,6 +715,7 @@ export default function ConfiguracionPage() {
                             invalid={fieldState.invalid}
                             error={fieldState.error?.message}
                             showError={showPersonalInfoErrors}
+                            inputFilter="numbers-only"
                             value={field.value?.toString() ?? ""}
                             onChange={(value: string) =>
                               field.onChange(Number(value))
