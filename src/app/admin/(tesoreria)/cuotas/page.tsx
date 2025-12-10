@@ -435,7 +435,6 @@ export default function CuotasPage() {
     const obligacion = selectedCasa?.obligacionesPendientes.find(
       (o) => String(o.id) === String(data.obligacionId)
     );
-    console.log("🚀 ~ handleFormSubmit ~ obligacion:", obligacion)
 
     if (obligacion && data.monto > obligacion.valorPendiente) {
       form.setError('monto', {
@@ -455,7 +454,6 @@ export default function CuotasPage() {
       tipoObligacion: data.tipoObligacion,
       montoAPagar: data.monto,
     };
-    console.log("🚀 ~ handleFormSubmit ~ payload:", payload)
 
     try {
       await handleRegistrarPago(payload);
