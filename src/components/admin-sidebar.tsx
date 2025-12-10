@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   DashboardSquare02Icon,
@@ -10,7 +11,6 @@ import {
   PresentationLineChart02Icon,
   File02Icon,
   Megaphone03Icon,
-  Building06Icon,
 } from '@hugeicons/core-free-icons'
 
 import { NavMain } from "@/components/nav-main"
@@ -97,8 +97,14 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="/admin/dashboard">
-                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <HugeiconsIcon icon={Building06Icon} className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg p-1" style={{ backgroundColor: '#1A4D3D' }}>
+                  <Image
+                    src="/logoFondo.svg"
+                    alt="Flor Digital Logo"
+                    width={24}
+                    height={24}
+                    className="rounded-sm"
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Flor Digital</span>

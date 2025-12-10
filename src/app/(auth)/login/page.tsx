@@ -13,7 +13,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Mail02Icon, LockPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 import { Switch } from '@/components/ui/switch';
@@ -98,8 +98,14 @@ export default function LoginPage() {
         <div className="flex flex-col gap-6 p-8 md:p-12 lg:p-16 text-base md:text-lg">
           <div className="flex justify-center gap-2 md:justify-start">
             <a href="/login" className="flex items-center gap-3 text-foreground font-normal">
-              <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-lg">
-                <Building2 className="size-6" />
+              <div className="flex size-9 items-center justify-center rounded-lg p-1.5" style={{ backgroundColor: '#445D4E' }}>
+                <Image
+                  src="/logoFondo.svg"
+                  alt="Flor Digital Logo"
+                  width={28}
+                  height={28}
+                  className="rounded-sm"
+                />
               </div>
               <span className="text-base md:text-lg font-medium text-gray-600">Flor Digital</span>
             </a>
