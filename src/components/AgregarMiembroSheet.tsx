@@ -40,12 +40,14 @@ import { User03Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { CreateMiembroHogar, UpdateMiembroHogar } from "@/types/casa.types";
 import { miembrosService } from "@/lib/services/casa.service";
+import { toast } from "sonner";
 
 interface AgregarMiembroSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   miembroParaEditar?: UpdateMiembroHogar | null;
   idCasa: number;
+  onSave?: () => void | Promise<void>;
 }
 
 const parentescos = [
@@ -72,6 +74,7 @@ export function AgregarMiembroSheet({
   onOpenChange,
   miembroParaEditar,
   idCasa,
+  onSave,
 }: AgregarMiembroSheetProps) {
   const [formNombre, setFormNombre] = useState("");
   const [formParentesco, setFormParentesco] = useState("");
@@ -176,6 +179,7 @@ export function AgregarMiembroSheet({
             parentesco: formParentesco,
           };
           await miembrosService.updateMember(updatePayload.id, updatePayload);
+          toast.success('Miembro actualizado', { description: 'Los cambios han sido guardados correctamente.' });
         } else {
           const createPayload: CreateMiembroHogar = {
             idCasa,
@@ -186,10 +190,24 @@ export function AgregarMiembroSheet({
             parentesco: formParentesco,
           };
           await miembrosService.createMember(createPayload);
+          toast.success('Miembro agregado', { description: 'El nuevo miembro ha sido registrado.' });
         }
         handleClose(false);
+        // Notificar al padre para que refresque la lista
+        if (onSave) {
+          await onSave();
+        }
       } catch (error) {
         console.error("Error al guardar el miembro del hogar:", error);
+        // Extraer mensaje de error del backend si está disponible
+        let errorMessage = 'No se pudo guardar el miembro. Intenta de nuevo.';
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { data?: { message?: string } } };
+          if (axiosError.response?.data?.message) {
+            errorMessage = axiosError.response.data.message;
+          }
+        }
+        toast.error('Error al guardar', { description: errorMessage });
       }
     }
   };
@@ -261,6 +279,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.nombre}
                       error={errors.nombre}
                       showError={showFormErrors}
+                      inputFilter="letters-only"
                     />
 
                     <div className="space-y-2">
@@ -285,8 +304,8 @@ export function AgregarMiembroSheet({
                             className={cn(
                               "w-full justify-between h-10 bg-white border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 shadow-sm hover:shadow-md",
                               showFormErrors &&
-                                errors.parentesco &&
-                                "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                              errors.parentesco &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                             )}
                           >
                             {formParentesco ? (
@@ -396,6 +415,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.telefono}
                       error={errors.telefono}
                       showError={showFormErrors}
+                      inputFilter="numbers-only"
                     />
                   </div>
                 </div>
@@ -432,8 +452,8 @@ export function AgregarMiembroSheet({
                           id="tipoDocumento"
                           className={cn(
                             showFormErrors &&
-                              errors.tipoDocumento &&
-                              "border-red-500 focus:border-red-500"
+                            errors.tipoDocumento &&
+                            "border-red-500 focus:border-red-500"
                           )}
                         >
                           <SelectValue placeholder="Seleccionar tipo" />
@@ -487,6 +507,7 @@ export function AgregarMiembroSheet({
                       invalid={!!errors.documento}
                       error={errors.documento}
                       showError={showFormErrors}
+                      inputFilter="numbers-only"
                     />
                   </div>
                 </div>

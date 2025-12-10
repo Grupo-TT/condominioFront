@@ -652,11 +652,16 @@ export function MiembrosTab() {
         }}
         miembroParaEditar={miembroParaEditar}
         idCasa={casaNumero}
+        onSave={refetch}
       />
       <AgregarMascotaSheet
         open={isAgregarMascotaSheetOpen}
         onOpenChange={setIsAgregarMascotaSheetOpen}
         idCasa={casaNumero}
+        onSave={() => {
+          // Disparar evento para que MascotasTab refresque la lista
+          window.dispatchEvent(new Event('mascotas:refresh'));
+        }}
       />
     </>
   );

@@ -57,7 +57,7 @@ export function ProximasReservas({ reservas, onAprobar, onRechazar, onViewDetail
         ) : (
           reservasPendientes.map((reserva) => {
             const reservaDate = new Date(reserva.startDate)
-            const baseDate = startOfDay(new Date(2025, 10, 25)) // Fecha base para calcular días
+            const baseDate = startOfDay(new Date()) // Fecha base para calcular días
             const daysLeft = differenceInDays(startOfDay(reservaDate), baseDate)
             const horaInicio = format(reservaDate, 'h:mm a', { locale: es })
             const horaFin = format(new Date(reserva.endDate), 'h:mm a', { locale: es })

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, NotificationSquareIcon, Door01Icon, UserGroupIcon, User03Icon } from '@hugeicons/core-free-icons'
-import { ArrowLeft, Edit, Users, DollarSign, Calendar, Wrench, Dog, Cat, PawPrint } from 'lucide-react'
+import { ArrowLeft, Users, Dog, Cat, PawPrint } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,8 +19,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useMiembros } from '@/hooks/useCasa'
 
 // Datos de ejemplo - en una aplicación real esto vendría de una API
@@ -218,10 +216,12 @@ export default function CasaDetailPage() {
                 <ArrowLeft className="w-4 h-4" />
                 Volver
               </Button>
+              {/* TODO: Implementar funcionalidad de editar casa
               <Button variant="outline" className="gap-2">
                 <Edit className="w-4 h-4" />
                 Editar
               </Button>
+              */}
             </div>
           </div>
         </div>
@@ -296,7 +296,7 @@ export default function CasaDetailPage() {
                     className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
-                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Propia'}
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Residencial'}
                   </p>
                 </div>
               </div>
@@ -331,256 +331,194 @@ export default function CasaDetailPage() {
             </div>
           </div>
 
-          {/* Tabs de información adicional */}
-          <div className="mt-4">
-            <Tabs defaultValue="miembros-mascotas" className="w-full">
-              <div className="border-b border-gray-200">
-                <TabsList className="h-auto bg-transparent p-0">
-                  <TabsTrigger
-                    value="miembros-mascotas"
-                    className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
-                  >
-                    <Users className="w-4 h-4" />
-                    Miembros & Mascotas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="multas"
-                    className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
-                  >
-                    <DollarSign className="w-4 h-4" />
-                    Multas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="reservas"
-                    className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Reservas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="reparaciones"
-                    className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
-                  >
-                    <Wrench className="w-4 h-4" />
-                    Reparaciones
-                  </TabsTrigger>
-                </TabsList>
+          {/* Sección de Miembros y Mascotas */}
+          <div className="mt-6 space-y-8">
+            {/* Miembros */}
+            <div>
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-gray-600" />
+                  Miembros de la Vivienda
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Personas adicionales registradas que habitan en esta vivienda.
+                </p>
               </div>
+              {miembrosFiltrados.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {miembrosFiltrados.map((miembro, index) => {
+                    const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
+                    const colorConfig = genero === 'femenino'
+                      ? { bg: 'bg-pink-100', text: 'text-pink-600' }
+                      : genero === 'masculino'
+                        ? { bg: 'bg-blue-100', text: 'text-blue-600' }
+                        : { bg: 'bg-gray-100', text: 'text-gray-600' }
 
-              <TabsContent value="miembros-mascotas" className="mt-6">
-                <div className="space-y-6">
-                  {/* Miembros */}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
-                    {miembrosFiltrados.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {miembrosFiltrados.map((miembro, index) => {
-                          const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
-                          const colorConfig = genero === 'femenino'
-                            ? { bg: 'bg-pink-100', text: 'text-pink-600' }
-                            : genero === 'masculino'
-                              ? { bg: 'bg-blue-100', text: 'text-blue-600' }
-                              : { bg: 'bg-gray-100', text: 'text-gray-600' }
-
-                          return (
-                            <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                              {/* Header con icono y nombre */}
-                              <div className="flex items-center gap-3 mb-3">
-                                <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
-                                  <HugeiconsIcon
-                                    icon={User03Icon}
-                                    size={20}
-                                    className={colorConfig.text}
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {miembro.tipoMiembro
-                                        ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
-                                        : ""}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Información */}
-                              <div className="space-y-2">
-                                <div className="flex gap-4">
-                                  <div className="flex-1">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
-                                    <p className="text-sm text-gray-900">
-                                      {miembro.numeroDocumento}
-                                    </p>
-                                  </div>
-                                  <div className="flex-1">
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
-                                    <p className="text-sm text-gray-900">{miembro.telefono}</p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
-                                  <p className="text-sm text-gray-900 truncate"
-                                    title={miembro.email || 'Información no disponible'}>
-                                    {miembro.email || 'Información no disponible'}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    return (
+                      <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                        {/* Header con icono y nombre */}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
                             <HugeiconsIcon
-                              icon={UserGroupIcon}
-                              size={24}
-                              className="text-gray-400"
+                              icon={User03Icon}
+                              size={20}
+                              className={colorConfig.text}
                             />
                           </div>
-                          <div className="space-y-0.5">
-                            <p className="text-base font-semibold text-gray-700">No hay miembros registrados</p>
-                            <p className="text-sm text-gray-500">Esta vivienda no tiene miembros adicionales registrados</p>
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {miembro.tipoMiembro
+                                  ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
+                                  : ""}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Información */}
+                        <div className="space-y-2">
+                          <div className="flex gap-4">
+                            <div className="flex-1">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
+                              <p className="text-sm text-gray-900">
+                                {miembro.numeroDocumento}
+                              </p>
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
+                              <p className="text-sm text-gray-900">{miembro.telefono}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
+                            <p className="text-sm text-gray-900 truncate"
+                              title={miembro.email || 'Información no disponible'}>
+                              {miembro.email || 'Información no disponible'}
+                            </p>
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Mascotas */}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
-
-                    {casaSeleccionada?.mascotas &&
-                      (casaSeleccionada.mascotas.perro > 0 ||
-                        casaSeleccionada.mascotas.gato > 0 ||
-                        casaSeleccionada.mascotas.otro > 0) ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Perros */}
-                        {casaSeleccionada.mascotas.perro > 0 && (
-                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: '#F1E8D6' }}
-                              >
-                                <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {casaSeleccionada.mascotas.perro}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  {casaSeleccionada.mascotas.perro === 1 ? 'Perro' : 'Perros'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Gatos */}
-                        {casaSeleccionada.mascotas.gato > 0 && (
-                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: '#E3E4EA' }}
-                              >
-                                <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {casaSeleccionada.mascotas.gato}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  {casaSeleccionada.mascotas.gato === 1 ? 'Gato' : 'Gatos'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Otros */}
-                        {casaSeleccionada.mascotas.otro > 0 && (
-                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: '#E6EFEA' }}
-                              >
-                                <PawPrint className="w-5 h-5" style={{ color: '#4C6C5A' }} />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-lg font-bold text-gray-900">
-                                  {casaSeleccionada.mascotas.otro}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  {casaSeleccionada.mascotas.otro === 1 ? 'Otro' : 'Otros'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <PawPrint className="w-6 h-6 text-gray-400" />
-                          </div>
-                          <div className="space-y-0.5">
-                            <p className="text-base font-semibold text-gray-700">No hay mascotas registradas</p>
-                            <p className="text-sm text-gray-500">Esta vivienda no tiene mascotas registradas</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={UserGroupIcon}
+                        size={24}
+                        className="text-gray-400"
+                      />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">No hay miembros registrados</p>
+                      <p className="text-sm text-gray-500">Esta vivienda no tiene miembros adicionales registrados</p>
+                    </div>
                   </div>
                 </div>
-              </TabsContent>
+              )}
+            </div>
 
-              <TabsContent value="multas" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Multas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No hay multas registradas para esta casa</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            {/* Mascotas */}
+            <div>
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <PawPrint className="w-5 h-5 text-gray-600" />
+                  Mascotas
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Animales registrados que habitan en esta vivienda.
+                </p>
+              </div>
 
-              <TabsContent value="reservas" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Reservas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No hay reservas registradas para esta casa</p>
+              {casaSeleccionada?.mascotas &&
+                (casaSeleccionada.mascotas.perro > 0 ||
+                  casaSeleccionada.mascotas.gato > 0 ||
+                  casaSeleccionada.mascotas.otro > 0) ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Perros */}
+                  {casaSeleccionada.mascotas.perro > 0 && (
+                    <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#F1E8D6' }}
+                        >
+                          <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-lg font-bold text-gray-900">
+                            {casaSeleccionada.mascotas.perro}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {casaSeleccionada.mascotas.perro === 1 ? 'Perro' : 'Perros'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  )}
 
-              <TabsContent value="reparaciones" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Reparaciones</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No hay reparaciones registradas para esta casa</p>
+                  {/* Gatos */}
+                  {casaSeleccionada.mascotas.gato > 0 && (
+                    <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#E3E4EA' }}
+                        >
+                          <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-lg font-bold text-gray-900">
+                            {casaSeleccionada.mascotas.gato}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {casaSeleccionada.mascotas.gato === 1 ? 'Gato' : 'Gatos'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  )}
+
+                  {/* Otros */}
+                  {casaSeleccionada.mascotas.otro > 0 && (
+                    <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#E6EFEA' }}
+                        >
+                          <PawPrint className="w-5 h-5" style={{ color: '#4C6C5A' }} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-lg font-bold text-gray-900">
+                            {casaSeleccionada.mascotas.otro}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {casaSeleccionada.mascotas.otro === 1 ? 'Otro' : 'Otros'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <PawPrint className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-base font-semibold text-gray-700">No hay mascotas registradas</p>
+                      <p className="text-sm text-gray-500">Esta vivienda no tiene mascotas registradas</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, MoreVertical, Pencil, Trash2, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
+import { Plus, MoreVertical, Eye, UserPlus, Search, X, Dog, Cat, PawPrint } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, User03Icon, Profile02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -46,7 +46,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import {
   Breadcrumb,
@@ -164,6 +163,7 @@ export default function CasasPage() {
   const [pendingRegistroData, setPendingRegistroData] = useState<PropietarioFormData | null>(null)
   const [replaceDialogMode, setReplaceDialogMode] = useState<'PROPIETARIO' | 'ARRENDATARIO' | null>(null)
   const [replaceDialogInfo, setReplaceDialogInfo] = useState<{ casaNumero: string; persona?: string } | null>(null)
+  const [selectedCasaForReplace, setSelectedCasaForReplace] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleClearSearch = useCallback(() => {
@@ -201,8 +201,9 @@ export default function CasasPage() {
     }
 
     // Si no hay propietario real o el rol no es PROPIETARIO, proceder directamente
-    await crearPropietario(data)
-    return true // Retornar true para indicar que se puede resetear el formulario
+    // Retornar el resultado de crearPropietario (true si fue exitoso, false si hubo error)
+    const result = await crearPropietario(data)
+    return result
   }
 
   const crearPropietario = async (data: PropietarioFormData) => {
@@ -252,13 +253,6 @@ export default function CasasPage() {
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setIsSheetOpen(open)
-  }, [])
-
-  const handleDelete = useCallback((casaId: string) => {
-    // Aquí agregarías la lógica para eliminar el propietario
-    console.log('Eliminar propietario de casa:', casaId)
-    // Por ahora solo mostramos un mensaje
-    alert(`Propietario de la casa ${casaId} eliminado`)
   }, [])
 
   // Filtrar datos basándose en el término de búsqueda, tipo y estado financiero
@@ -455,42 +449,22 @@ export default function CasasPage() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={() => {
-                    console.log('Editar casa:', row.original.numeroCasa)
+                    setCasaInCache(row.original.numeroCasa, row.original)
+                    router.push(`/admin/casas/${row.original.numeroCasa}`)
                   }}
                 >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Editar
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver detalle
                 </DropdownMenuItem>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Eliminar propietario?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará permanentemente el propietario{' '}
-                        <strong>{row.original.propietario.nombreCompleto}</strong> de la casa{' '}
-                        <strong>{row.original.numeroCasa}</strong> y toda su información asociada.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(row.original.numeroCasa)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedCasaForReplace(row.original.numeroCasa)
+                    setIsSheetOpen(true)
+                  }}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Reemplazar propietario
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -502,7 +476,7 @@ export default function CasasPage() {
         },
       },
     ],
-    [handleDelete, router, setCasaInCache]
+    [router, setCasaInCache]
   )
 
   const table = useReactTable({
@@ -817,7 +791,12 @@ export default function CasasPage() {
                     </Button>
                   )}
                 </div>
-                <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+                <Sheet open={isSheetOpen} onOpenChange={(open) => {
+                  handleSheetOpenChange(open)
+                  if (!open) {
+                    setSelectedCasaForReplace(null)
+                  }
+                }}>
                   <SheetTrigger asChild>
                     <Button className="gap-2">
                       <Plus className="w-4 h-4" />
@@ -839,18 +818,26 @@ export default function CasasPage() {
                         </div>
                         <div className="flex-1">
                           <SheetTitle className="text-base font-semibold text-gray-900 mb-1">
-                            Registrar persona
+                            {selectedCasaForReplace ? 'Reemplazar propietario' : 'Registrar persona'}
                           </SheetTitle>
                           <SheetDescription className="text-sm text-gray-500">
-                            Registra un propietario o arrendatario con toda su información personal.
+                            {selectedCasaForReplace
+                              ? `Registra un nuevo propietario para la Casa ${selectedCasaForReplace}.`
+                              : 'Registra un propietario o arrendatario con toda su información personal.'}
                           </SheetDescription>
                         </div>
                       </div>
                     </div>
 
                     <PropietarioForm
+                      key={selectedCasaForReplace || 'new'}
                       onSubmit={handleCrearPropietario}
-                      onCancel={() => setIsSheetOpen(false)}
+                      onCancel={() => {
+                        setIsSheetOpen(false)
+                        setSelectedCasaForReplace(null)
+                      }}
+                      initialCasa={selectedCasaForReplace || undefined}
+                      initialRol={selectedCasaForReplace ? 'PROPIETARIO' : undefined}
                     />
                   </SheetContent>
                 </Sheet>
