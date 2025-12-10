@@ -3,6 +3,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -13,7 +14,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Mail02Icon, LockPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
@@ -25,7 +25,6 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -49,7 +48,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     const emailValidation = validateEmail(username);
     const passwordValidation = validatePassword(password);
@@ -65,8 +63,10 @@ export default function LoginPage() {
 
     try {
       await login({ username, password, rememberMe });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+    } catch {
+      toast.error('Error al iniciar sesión', {
+        description: 'Credenciales inválidas',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -124,11 +124,6 @@ export default function LoginPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
 
                 <FieldGroup className="space-y-0">
 
