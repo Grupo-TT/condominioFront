@@ -199,7 +199,15 @@ export function AgregarMiembroSheet({
         }
       } catch (error) {
         console.error("Error al guardar el miembro del hogar:", error);
-        toast.error('Error al guardar', { description: 'No se pudo guardar el miembro. Intenta de nuevo.' });
+        // Extraer mensaje de error del backend si está disponible
+        let errorMessage = 'No se pudo guardar el miembro. Intenta de nuevo.';
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { data?: { message?: string } } };
+          if (axiosError.response?.data?.message) {
+            errorMessage = axiosError.response.data.message;
+          }
+        }
+        toast.error('Error al guardar', { description: errorMessage });
       }
     }
   };
