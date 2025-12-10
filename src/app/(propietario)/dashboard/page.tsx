@@ -20,7 +20,6 @@ import {
   AccountStatusCard,
   MembersCard,
   ReservationsCard,
-  RequestsCard,
 } from "@/components/owner-dashboard"
 import { useDashboardProp } from '@/hooks/useDashboardProp';
 

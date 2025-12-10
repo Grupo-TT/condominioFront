@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Home07Icon, NotificationSquareIcon, Door01Icon, UserGroupIcon, User03Icon } from '@hugeicons/core-free-icons'
-import { ArrowLeft, Edit, Users, Dog, Cat, PawPrint } from 'lucide-react'
+import { ArrowLeft, Users, Dog, Cat, PawPrint } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
