@@ -15,30 +15,45 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   OwnerInfoCard,
   AccountStatusCard,
   MembersCard,
   ReservationsCard,
+  RequestsCard,
 } from "@/components/owner-dashboard"
 import { useDashboardProp } from '@/hooks/useDashboardProp';
 
-// Datos de ejemplo
-const ownerData = {
-  numeroCasa: "A-15",
-  uso: "Residencial",
-  mascotas: 2,
-  multasActivas: 1,
-  nombreCompleto: "Juan Carlos Pérez González",
-  email: "jcperez@email.com",
-  saldoActual: "$2,450.00",
-  ultimoPago: "$850.00",
-  conceptoUltimoPago: "Pago de administración Mayo 2025",
-  fechaUltimoPago: "15 Nov 2024",
-  proximoPago: "$850.00",
-  fechaProximoPago: "15 Dic 2024",
-  estadoCuenta: "Al día"
-};
+// Skeleton for OwnerInfoCard
+function OwnerInfoCardSkeleton() {
+  return (
+    <Card
+      className="relative overflow-hidden border-0 rounded-2xl py-0"
+      style={{
+        background: 'radial-gradient(ellipse at 20% 30%, #ffffff 0%, #fafaf5 20%, #f0f4e8 40%, #e5ede5 60%, #dce8dc 80%, #d4e2d4 100%)',
+        width: '100%',
+        maxWidth: '780px'
+      }}
+    >
+      <CardContent className="p-5">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-40 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 flex-1 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function PropietarioDashboard() {
   useDocumentTitle('Dashboard | Flor Digital');
@@ -58,7 +73,27 @@ export default function PropietarioDashboard() {
       router.replace('/dashboard', { scroll: false });
     }
   }, [searchParams, router]);
-  const { membersData } = useDashboardProp();
+
+  const {
+    membersData,
+    ownerInfo,
+    accountStatus,
+    reservations,
+    solicitudes,
+    loadingMembers,
+    loadingOwnerInfo,
+    loadingAccountStatus,
+    loadingReservations,
+    loadingSolicitudes,
+    setIdCasa,
+  } = useDashboardProp();
+
+  // Set idCasa from user context when available
+  useEffect(() => {
+    if (user?.idCasa) {
+      setIdCasa(user.idCasa);
+    }
+  }, [user?.idCasa, setIdCasa]);
 
   return (
     <>
@@ -94,28 +129,32 @@ export default function PropietarioDashboard() {
 
           {/* First Row - Owner Info and Account Status */}
           <div className="flex flex-wrap gap-6">
-            <OwnerInfoCard
-              userName={user?.nombre || ownerData.nombreCompleto}
-              userEmail={user?.email || ownerData.email}
-              numeroCasa={ownerData.numeroCasa}
-              uso={ownerData.uso}
-              membersCount={membersData.length}
-              mascotasCount={ownerData.mascotas}
-            />
+            {loadingOwnerInfo ? (
+              <OwnerInfoCardSkeleton />
+            ) : (
+              <OwnerInfoCard
+                userName={user?.nombre || 'Usuario'}
+                userEmail={user?.email || ''}
+                numeroCasa={ownerInfo?.numeroCasa || '-'}
+                uso={ownerInfo?.tipoUso || '-'}
+                membersCount={ownerInfo?.cantidadMiembros || membersData.length}
+                mascotasCount={ownerInfo?.cantidadMascotas || 0}
+              />
+            )}
             <AccountStatusCard
-              saldoActual={ownerData.saldoActual}
-              ultimoPago={ownerData.ultimoPago}
-              conceptoUltimoPago={ownerData.conceptoUltimoPago}
-              fechaUltimoPago={ownerData.fechaUltimoPago}
+              saldoPendiente={accountStatus?.saldoPendiente || '$0'}
+              estadoCasa={accountStatus?.estadoCasa || 'AL_DIA'}
+              ultimoPago={accountStatus?.ultimoPago || null}
+              loading={loadingAccountStatus}
             />
           </div>
 
           {/* Second Row - Members, Reservations, Requests */}
           <div className="flex flex-wrap gap-6">
-            <MembersCard members={membersData} />
-            <ReservationsCard />
+            <MembersCard members={membersData} loading={loadingMembers} />
+            <ReservationsCard reservations={reservations} loading={loadingReservations} />
             {/* TODO: Habilitar cuando se implemente la funcionalidad de solicitudes
-            <RequestsCard />
+            <RequestsCard solicitudes={solicitudes} loading={loadingSolicitudes} />
             */}
           </div>
         </div>

@@ -6,28 +6,56 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { AddInvoiceIcon, InvoiceIcon, TransactionHistoryIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import Link from 'next/link'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface AccountStatusCardProps {
-    saldoActual: string
-    ultimoPago: string
-    conceptoUltimoPago: string
-    fechaUltimoPago: string
+    saldoPendiente: string
+    estadoCasa: 'AL_DIA' | 'EN_MORA'
+    ultimoPago: {
+        fecha: string
+        concepto: string
+        valor: string
+        tipoAbono: 'COMPLETO' | 'ABONO'
+    } | null
+    loading?: boolean
 }
 
 export function AccountStatusCard({
-    saldoActual,
+    saldoPendiente,
+    estadoCasa,
     ultimoPago,
-    conceptoUltimoPago,
-    fechaUltimoPago,
+    loading = false,
 }: AccountStatusCardProps) {
-    const numericBalance = parseFloat(saldoActual.replace(/[^0-9.-]+/g, ""))
-    const isAlDia = numericBalance === 0
+    const isAlDia = estadoCasa === 'AL_DIA'
 
     const statusLabels = isAlDia
         ? { text: "Al Día", iconColor: "text-emerald-700", icon: CheckCircle2 }
         : { text: "En Mora", iconColor: "text-red-600", icon: AlertCircle }
 
-    const displayAmount = isAlDia ? "$0.00" : saldoActual
+    const displayAmount = isAlDia ? "$0" : saldoPendiente
+
+    if (loading) {
+        return (
+            <Card className="border bg-white rounded-2xl flex-1 min-w-[380px] py-0">
+                <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="w-11 h-11 rounded-xl" />
+                            <div>
+                                <Skeleton className="h-5 w-32 mb-1" />
+                                <Skeleton className="h-4 w-40" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mb-5">
+                        <Skeleton className="h-4 w-24 mb-2" />
+                        <Skeleton className="h-9 w-40" />
+                    </div>
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <Card className="border bg-white rounded-2xl flex-1 min-w-[380px] py-0">
@@ -83,18 +111,32 @@ export function AccountStatusCard({
                             <HugeiconsIcon icon={TransactionHistoryIcon} className="h-4 w-4 text-gray-500" />
                         </div>
                         <span className="text-sm text-gray-600 font-medium">Último pago realizado</span>
-                        <span className="text-xs text-gray-400 ml-auto bg-white px-3 py-1.5 rounded-lg">{fechaUltimoPago}</span>
+                        {ultimoPago && (
+                            <span className="text-xs text-gray-400 ml-auto bg-white px-3 py-1.5 rounded-lg">{ultimoPago.fecha}</span>
+                        )}
                     </div>
                     {/* Payment Card */}
-                    <div className="bg-white rounded-lg p-3 flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50">
-                            <HugeiconsIcon icon={InvoiceIcon} className="h-5 w-5 text-blue-600" />
+                    {ultimoPago ? (
+                        <div className="bg-white rounded-lg p-3 flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-blue-50">
+                                <HugeiconsIcon icon={InvoiceIcon} className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm text-gray-600">{ultimoPago.concepto}</p>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${ultimoPago.tipoAbono === 'COMPLETO'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-yellow-100 text-yellow-700'
+                                    }`}>
+                                    {ultimoPago.tipoAbono === 'COMPLETO' ? 'Pago completo' : 'Abono'}
+                                </span>
+                            </div>
+                            <p className="font-semibold text-gray-800">{ultimoPago.valor}</p>
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-gray-600">{conceptoUltimoPago}</p>
+                    ) : (
+                        <div className="bg-white rounded-lg p-3 flex items-center justify-center text-gray-400 text-sm">
+                            No hay pagos registrados
                         </div>
-                        <p className="font-semibold text-gray-800">{ultimoPago}</p>
-                    </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
