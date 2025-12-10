@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AddInvoiceIcon, InvoiceIcon, TransactionHistoryIcon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import Link from 'next/link'
 
 interface AccountStatusCardProps {
     saldoActual: string
@@ -46,9 +47,9 @@ export function AccountStatusCard({
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
+                                <Link href="/mi-casa/pagos-y-multas" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
                                     <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
-                                </button>
+                                </Link>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Ver más</p>

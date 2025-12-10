@@ -5,6 +5,7 @@ import { Check, Users, MapPin, Package } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Calendar02Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import Link from 'next/link'
 
 interface Reservation {
     id: string
@@ -73,9 +74,9 @@ export function ReservationsCard() {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
+                                <Link href="/reservas" className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600">
                                     <HugeiconsIcon icon={LinkSquare01Icon} className="h-4 w-4" />
-                                </button>
+                                </Link>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Ver más</p>
