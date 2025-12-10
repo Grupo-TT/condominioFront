@@ -41,8 +41,8 @@ export const propietarioSchema = z.object({
     .string()
     .min(1, "El número de documento es obligatorio")
     .regex(/^\d+$/, "El número de documento solo puede contener números")
-    .min(7, "El número de documento debe tener mínimo 7 dígitos")
-    .max(11, "El número de documento debe tener máximo 11 dígitos"),
+    .min(8, "El número de documento debe tener mínimo 8 dígitos")
+    .max(10, "El número de documento debe tener máximo 10 dígitos"),
 
   email: z
     .string()
@@ -54,9 +54,7 @@ export const propietarioSchema = z.object({
     .string()
     .min(1, "Teléfono es obligatorio")
     .regex(/^\d+$/, "Teléfono solo puede contener números")
-    .refine((val) => val.length === 7 || val.length === 10, {
-      message: "Teléfono debe tener 7 o 10 dígitos"
-    }),
+    .length(10, "Teléfono debe tener exactamente 10 dígitos"),
 
   rolEnCasa: z
     .string()

@@ -296,7 +296,7 @@ export default function CasaDetailPage() {
                     className="text-gray-500 shrink-0"
                   />
                   <p className="text-lg font-bold text-gray-900">
-                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Propia'}
+                    {casaSeleccionada?.usoCasa?.toUpperCase() === 'ARRENDADA' ? 'Arrendada' : 'Residencial'}
                   </p>
                 </div>
               </div>

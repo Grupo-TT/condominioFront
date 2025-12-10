@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input'
 import { FormFieldWithTooltip } from './FormField'
 import { cn } from '@/lib/utils'
 
+type InputFilter = 'letters-only' | 'numbers-only' | 'none'
+
 interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   name: string
   label: string
@@ -21,6 +23,22 @@ interface FormInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
   disabled?: boolean
   showError?: boolean
   startIcon?: React.ReactNode
+  /** Filtra caracteres permitidos: 'letters-only' solo letras y espacios, 'numbers-only' solo dígitos */
+  inputFilter?: InputFilter
+}
+
+// Funciones para filtrar caracteres según el tipo
+const filterValue = (value: string, filter: InputFilter): string => {
+  switch (filter) {
+    case 'letters-only':
+      // Solo permite letras (mayúsculas y minúsculas) y espacios
+      return value.replace(/[^A-Za-zÀ-ÿ\s]/g, '')
+    case 'numbers-only':
+      // Solo permite dígitos numéricos
+      return value.replace(/[^0-9]/g, '')
+    default:
+      return value
+  }
 }
 
 export function FormInput({
@@ -39,8 +57,15 @@ export function FormInput({
   disabled = false,
   showError = false,
   startIcon,
+  inputFilter = 'none',
   ...inputProps
 }: FormInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value
+    const filteredValue = filterValue(rawValue, inputFilter)
+    onChange?.(filteredValue)
+  }
+
   return (
     <FormFieldWithTooltip
       label={label}
@@ -63,7 +88,7 @@ export function FormInput({
           type={type}
           placeholder={placeholder}
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
+          onChange={handleChange}
           autoComplete={autoComplete}
           disabled={disabled}
           className={cn(
