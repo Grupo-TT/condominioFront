@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -78,6 +79,8 @@ const asambleaSchema = z.object({
 type AsambleaFormData = z.infer<typeof asambleaSchema>;
 
 export default function AsambleaPage() {
+  useDocumentTitle('Asambleas | Flor Digital');
+
   const { asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);

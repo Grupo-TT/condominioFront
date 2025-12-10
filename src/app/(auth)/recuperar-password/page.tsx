@@ -13,8 +13,11 @@ import { Mail02Icon, RecoveryMailIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function RecoverPasswordPage() {
+  useDocumentTitle('Recuperar Contraseña | Flor Digital');
+
   const router = useRouter();
   const { setRecoveryEmail, setTempCode } = usePasswordRecovery();
   const [email, setEmail] = useState('');

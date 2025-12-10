@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { toast } from 'sonner';
 import {
   Breadcrumb,
@@ -50,6 +51,8 @@ const membersData = [
 ];
 
 export default function PropietarioDashboard() {
+  useDocumentTitle('Dashboard | Flor Digital');
+
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();

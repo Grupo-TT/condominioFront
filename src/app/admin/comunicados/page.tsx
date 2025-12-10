@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Sent02Icon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,8 @@ import { useComunicados } from '@/hooks/useComunicados'
 import { PersonaSeleccionable, ComunicadoUI } from '@/types/comunicados.types'
 
 export default function ComunicadosPage() {
+  useDocumentTitle('Comunicados | Flor Digital');
+
   const {
     personas,
     loadingPersonas,

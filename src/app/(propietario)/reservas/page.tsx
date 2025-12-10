@@ -59,9 +59,12 @@ import type { RecursoUI } from '@/services/propietario.recurso.adapter'
 import { useReservasPropietario } from '@/hooks/useReservasPropietario'
 import { adaptarReservaCreate, adaptarReservaUpdate } from '@/services/propietario.reservas.adapter'
 import type { ReservaAdaptada } from '@/types/propietario.reservas.types'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 
 export default function ReservasPropietarioPage() {
+  useDocumentTitle('Reservas | Flor Digital');
+
   const [activeTab, setActiveTab] = useState<string>('recursos')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)

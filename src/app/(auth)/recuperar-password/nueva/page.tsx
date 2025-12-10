@@ -13,15 +13,18 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { LockPasswordIcon, ResetPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
 import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 const mainRequirement = { regex: /.{8,}/, text: 'Debe tener al menos 8 caracteres.' };
 const suggestionRequirements = [
   { regex: /(?=.*[a-z])(?=.*[A-Z])/, text: 'Usa letras mayúsculas y minúsculas' },
-  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, text: 'Incluye un símbolo (#$&)' },
+  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, text: 'Incluye un símbolo (#$&)' },
   { regex: /.{12,}/, text: 'Prefiere una contraseña más larga' },
 ];
 
 export default function RecoverNewPasswordPage() {
+  useDocumentTitle('Nueva Contraseña | Flor Digital');
+
   const router = useRouter();
   const { tempCode, tempToken, resetRecovery } = usePasswordRecovery();
   const [newPassword, setNewPassword] = useState('');

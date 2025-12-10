@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,6 +24,8 @@ import {
 } from "@/components/admin-dashboard"
 
 export default function Page() {
+  useDocumentTitle('Dashboard Admin | Flor Digital');
+
   const [selectedYear, setSelectedYear] = useState<number>(2024)
   const monthlyData = monthlyDataByYear[selectedYear]
   const searchParams = useSearchParams()

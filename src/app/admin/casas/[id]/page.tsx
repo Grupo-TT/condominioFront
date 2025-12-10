@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useMemo } from 'react'
 import { useCasaContext } from '@/contexts/CasaContext'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -26,11 +27,13 @@ import { useMiembros } from '@/hooks/useCasa'
 
 
 export default function CasaDetailPage() {
+  useDocumentTitle('Detalle Casa | Flor Digital');
+
   const params = useParams()
   const router = useRouter()
   const numeroCasa = params.id as string
   const { getCasaFromCache, clearCasaCache } = useCasaContext()
-  
+
   // Leer la casa del contexto (más rápido que sessionStorage, sin serialización)
   const casaPrecargada = useMemo(() => {
     const casa = getCasaFromCache(numeroCasa)
@@ -40,7 +43,7 @@ export default function CasaDetailPage() {
     }
     return casa
   }, [numeroCasa, getCasaFromCache, clearCasaCache])
-  
+
   const { casa: casaSeleccionada, miembros, loading } = useMiembros(numeroCasa, casaPrecargada)
 
   const propietarioMiembro = useMemo(() => {
@@ -50,7 +53,7 @@ export default function CasaDetailPage() {
   const totalMascotas = useMemo(() => {
     if (!casaSeleccionada?.mascotas) return 0
     return Object.values(casaSeleccionada.mascotas).reduce(
-      (total, cantidad) => total + (cantidad || 0), 
+      (total, cantidad) => total + (cantidad || 0),
       0
     )
   }, [casaSeleccionada])
@@ -65,21 +68,21 @@ export default function CasaDetailPage() {
   // Función helper para determinar el género según el tipo de miembro
   const getGenderFromTipoMiembro = (tipoMiembro: string): 'masculino' | 'femenino' | 'neutro' => {
     const tipo = tipoMiembro.toUpperCase()
-    
+
     // Tipos femeninos
-    if (tipo.includes('HIJA') || tipo.includes('ESPOSA') || tipo.includes('MADRE') || 
-        tipo.includes('HERMANA') || tipo.includes('ABUELA') || tipo.includes('TIA') ||
-        tipo.includes('SOBRINA') || tipo.includes('NIETA')) {
+    if (tipo.includes('HIJA') || tipo.includes('ESPOSA') || tipo.includes('MADRE') ||
+      tipo.includes('HERMANA') || tipo.includes('ABUELA') || tipo.includes('TIA') ||
+      tipo.includes('SOBRINA') || tipo.includes('NIETA')) {
       return 'femenino'
     }
-    
+
     // Tipos masculinos
-    if (tipo.includes('HIJO') || tipo.includes('ESPOSO') || tipo.includes('PADRE') || 
-        tipo.includes('HERMANO') || tipo.includes('ABUELO') || tipo.includes('TIO') ||
-        tipo.includes('SOBRINO') || tipo.includes('NIETO')) {
+    if (tipo.includes('HIJO') || tipo.includes('ESPOSO') || tipo.includes('PADRE') ||
+      tipo.includes('HERMANO') || tipo.includes('ABUELO') || tipo.includes('TIO') ||
+      tipo.includes('SOBRINO') || tipo.includes('NIETO')) {
       return 'masculino'
     }
-    
+
     return 'neutro'
   }
 
@@ -140,7 +143,7 @@ export default function CasaDetailPage() {
               <h1 className="text-2xl font-bold text-gray-900">Casa no encontrada</h1>
               <p className="text-gray-500 mt-1">La casa solicitada no existe en el sistema</p>
             </div>
-            
+
             <Button variant="outline" onClick={() => router.push('/admin/casas')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
@@ -258,7 +261,7 @@ export default function CasaDetailPage() {
                   DOCUMENTO
                 </label>
                 <p className="text-lg font-bold text-gray-900">
-                {propietarioMiembro?.numeroDocumento || 'No disponible'}
+                  {propietarioMiembro?.numeroDocumento || 'No disponible'}
                 </p>
               </div>
 
@@ -273,11 +276,11 @@ export default function CasaDetailPage() {
                     size={18}
                     className="text-gray-500 shrink-0"
                   />
-                <p className="text-lg font-bold text-gray-900">
-                  {casaSeleccionada?.estadoFinancieroCasa
-                    ?.toLowerCase()
-                    ?.replace(/\b\w/g, (c) => c.toUpperCase())}
-                </p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {casaSeleccionada?.estadoFinancieroCasa
+                      ?.toLowerCase()
+                      ?.replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </p>
                 </div>
               </div>
 
@@ -333,29 +336,29 @@ export default function CasaDetailPage() {
             <Tabs defaultValue="miembros-mascotas" className="w-full">
               <div className="border-b border-gray-200">
                 <TabsList className="h-auto bg-transparent p-0">
-                  <TabsTrigger 
-                    value="miembros-mascotas" 
+                  <TabsTrigger
+                    value="miembros-mascotas"
                     className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
                   >
                     <Users className="w-4 h-4" />
                     Miembros & Mascotas
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="multas" 
+                  <TabsTrigger
+                    value="multas"
                     className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
                   >
                     <DollarSign className="w-4 h-4" />
                     Multas
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="reservas" 
+                  <TabsTrigger
+                    value="reservas"
                     className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
                   >
                     <Calendar className="w-4 h-4" />
                     Reservas
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="reparaciones" 
+                  <TabsTrigger
+                    value="reparaciones"
                     className="relative flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 data-[state=active]:text-green-800 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-800 rounded-none border-b-2 border-transparent"
                   >
                     <Wrench className="w-4 h-4" />
@@ -363,178 +366,179 @@ export default function CasaDetailPage() {
                   </TabsTrigger>
                 </TabsList>
               </div>
-              
+
               <TabsContent value="miembros-mascotas" className="mt-6">
                 <div className="space-y-6">
-                      {/* Miembros */}
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
-                          {miembrosFiltrados.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {miembrosFiltrados.map((miembro, index) => {
-                                const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
-                                const colorConfig = genero === 'femenino' 
-                                  ? { bg: 'bg-pink-100', text: 'text-pink-600' }
-                                  : genero === 'masculino'
-                                  ? { bg: 'bg-blue-100', text: 'text-blue-600' }
-                                  : { bg: 'bg-gray-100', text: 'text-gray-600' }
-                                
-                                return (
-                              <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                  {/* Header con icono y nombre */}
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
-                                      <HugeiconsIcon
-                                        icon={User03Icon}
-                                        size={20}
-                                        className={colorConfig.text}
-                                      />
-                                    </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="secondary" className="text-xs">
-                                        {miembro.tipoMiembro
-                                          ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
-                                          : ""}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                </div>
+                  {/* Miembros */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Miembros de la Vivienda</h4>
+                    {miembrosFiltrados.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {miembrosFiltrados.map((miembro, index) => {
+                          const genero = getGenderFromTipoMiembro(miembro.tipoMiembro)
+                          const colorConfig = genero === 'femenino'
+                            ? { bg: 'bg-pink-100', text: 'text-pink-600' }
+                            : genero === 'masculino'
+                              ? { bg: 'bg-blue-100', text: 'text-blue-600' }
+                              : { bg: 'bg-gray-100', text: 'text-gray-600' }
 
-                                {/* Información */}
-                                <div className="space-y-2">
-                                  <div className="flex gap-4">
-                                    <div className="flex-1">
-                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
-                                      <p className="text-sm text-gray-900">
-                                         {miembro.numeroDocumento}
-                                      </p>
-                                    </div>
-                                    <div className="flex-1">
-                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
-                                      <p className="text-sm text-gray-900">{miembro.telefono}</p>
-                                    </div>
-                                  </div>
-                                  <div> 
-                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span> 
-                                    <p className="text-sm text-gray-900 truncate" 
-                                    title={miembro.email || 'Información no disponible'}>
-                                    {miembro.email || 'Información no disponible'} 
-                                    </p> 
-                                  </div>
-                                </div>
-                              </div>
-                            )})}
-                          </div>
-                          ) : (
-                            <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
-                              <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          return (
+                            <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                              {/* Header con icono y nombre */}
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-10 h-10 ${colorConfig.bg} rounded-full flex items-center justify-center`}>
                                   <HugeiconsIcon
-                                    icon={UserGroupIcon}
-                                    size={24}
-                                    className="text-gray-400"
+                                    icon={User03Icon}
+                                    size={20}
+                                    className={colorConfig.text}
                                   />
                                 </div>
-                                <div className="space-y-0.5">
-                                  <p className="text-base font-semibold text-gray-700">No hay miembros registrados</p>
-                                  <p className="text-sm text-gray-500">Esta vivienda no tiene miembros adicionales registrados</p>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="font-semibold text-gray-900 truncate">{miembro.nombreCompleto}</h5>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {miembro.tipoMiembro
+                                        ? miembro.tipoMiembro.charAt(0).toUpperCase() + miembro.tipoMiembro.slice(1).toLowerCase()
+                                        : ""}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Información */}
+                              <div className="space-y-2">
+                                <div className="flex gap-4">
+                                  <div className="flex-1">
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Documento</span>
+                                    <p className="text-sm text-gray-900">
+                                      {miembro.numeroDocumento}
+                                    </p>
+                                  </div>
+                                  <div className="flex-1">
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</span>
+                                    <p className="text-sm text-gray-900">{miembro.telefono}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Correo</span>
+                                  <p className="text-sm text-gray-900 truncate"
+                                    title={miembro.email || 'Información no disponible'}>
+                                    {miembro.email || 'Información no disponible'}
+                                  </p>
                                 </div>
                               </div>
                             </div>
-                          )}
+                          )
+                        })}
                       </div>
+                    ) : (
+                      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <HugeiconsIcon
+                              icon={UserGroupIcon}
+                              size={24}
+                              className="text-gray-400"
+                            />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-base font-semibold text-gray-700">No hay miembros registrados</p>
+                            <p className="text-sm text-gray-500">Esta vivienda no tiene miembros adicionales registrados</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                      {/* Mascotas */}
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
+                  {/* Mascotas */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Mascotas</h4>
 
-                          {casaSeleccionada?.mascotas &&
-                          (casaSeleccionada.mascotas.perro > 0 ||
-                            casaSeleccionada.mascotas.gato > 0 ||
-                            casaSeleccionada.mascotas.otro > 0) ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {/* Perros */}
-                              {casaSeleccionada.mascotas.perro > 0 && (
-                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                  <div className="flex items-center gap-3">
-                                    <div 
-                                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                                      style={{ backgroundColor: '#F1E8D6' }}
-                                    >
-                                      <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-lg font-bold text-gray-900">
-                                        {casaSeleccionada.mascotas.perro}
-                                      </span>
-                                      <span className="text-sm text-gray-500">
-                                        {casaSeleccionada.mascotas.perro === 1 ? 'Perro' : 'Perros'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Gatos */}
-                              {casaSeleccionada.mascotas.gato > 0 && (
-                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                  <div className="flex items-center gap-3">
-                                    <div 
-                                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                                      style={{ backgroundColor: '#E3E4EA' }}
-                                    >
-                                      <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-lg font-bold text-gray-900">
-                                        {casaSeleccionada.mascotas.gato}
-                                      </span>
-                                      <span className="text-sm text-gray-500">
-                                        {casaSeleccionada.mascotas.gato === 1 ? 'Gato' : 'Gatos'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Otros */}
-                              {casaSeleccionada.mascotas.otro > 0 && (
-                                <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                                  <div className="flex items-center gap-3">
-                                    <div 
-                                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                                      style={{ backgroundColor: '#E6EFEA' }}
-                                    >
-                                      <PawPrint className="w-5 h-5" style={{ color: '#4C6C5A' }} />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      <span className="text-lg font-bold text-gray-900">
-                                        {casaSeleccionada.mascotas.otro}
-                                      </span>
-                                      <span className="text-sm text-gray-500">
-                                        {casaSeleccionada.mascotas.otro === 1 ? 'Otro' : 'Otros'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
-                              <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                                  <PawPrint className="w-6 h-6 text-gray-400" />
-                                </div>
-                                <div className="space-y-0.5">
-                                  <p className="text-base font-semibold text-gray-700">No hay mascotas registradas</p>
-                                  <p className="text-sm text-gray-500">Esta vivienda no tiene mascotas registradas</p>
-                                </div>
+                    {casaSeleccionada?.mascotas &&
+                      (casaSeleccionada.mascotas.perro > 0 ||
+                        casaSeleccionada.mascotas.gato > 0 ||
+                        casaSeleccionada.mascotas.otro > 0) ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Perros */}
+                        {casaSeleccionada.mascotas.perro > 0 && (
+                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: '#F1E8D6' }}
+                              >
+                                <Dog className="w-5 h-5" style={{ color: '#A39170' }} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-lg font-bold text-gray-900">
+                                  {casaSeleccionada.mascotas.perro}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {casaSeleccionada.mascotas.perro === 1 ? 'Perro' : 'Perros'}
+                                </span>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
+
+                        {/* Gatos */}
+                        {casaSeleccionada.mascotas.gato > 0 && (
+                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: '#E3E4EA' }}
+                              >
+                                <Cat className="w-5 h-5" style={{ color: '#595D75' }} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-lg font-bold text-gray-900">
+                                  {casaSeleccionada.mascotas.gato}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {casaSeleccionada.mascotas.gato === 1 ? 'Gato' : 'Gatos'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Otros */}
+                        {casaSeleccionada.mascotas.otro > 0 && (
+                          <div className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: '#E6EFEA' }}
+                              >
+                                <PawPrint className="w-5 h-5" style={{ color: '#4C6C5A' }} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-lg font-bold text-gray-900">
+                                  {casaSeleccionada.mascotas.otro}
+                                </span>
+                                <span className="text-sm text-gray-500">
+                                  {casaSeleccionada.mascotas.otro === 1 ? 'Otro' : 'Otros'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 py-4 px-6 text-center hover:border-gray-400 transition-colors">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <PawPrint className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-base font-semibold text-gray-700">No hay mascotas registradas</p>
+                            <p className="text-sm text-gray-500">Esta vivienda no tiene mascotas registradas</p>
+                          </div>
                         </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
 

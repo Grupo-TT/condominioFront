@@ -12,8 +12,11 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { MailOpenIcon } from '@hugeicons/core-free-icons';
 import { Building2, Loader2 } from 'lucide-react';
 import { usePasswordRecovery } from '@/contexts/PasswordRecoveryContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function RecoverOtpPage() {
+  useDocumentTitle('Verificar Código | Flor Digital');
+
   const router = useRouter();
   const { recoveryEmail, setTempCode, setTempToken } = usePasswordRecovery();
   const [code, setCode] = useState('');

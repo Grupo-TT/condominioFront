@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useCallback } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -93,6 +94,8 @@ const categoriaLabels: Record<string, string> = {
 }
 
 export default function MovimientosPage() {
+  useDocumentTitle('Movimientos | Flor Digital');
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,

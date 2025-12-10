@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,6 +20,8 @@ import { Mail02Icon, LockPasswordIcon, ViewIcon, ViewOffIcon } from '@hugeicons/
 import { Switch } from '@/components/ui/switch';
 
 export default function LoginPage() {
+  useDocumentTitle('Iniciar Sesión | Flor Digital');
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useRef, useCallback } from 'react'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
@@ -143,6 +144,8 @@ function MascotasIcons({ mascotas }: { mascotas: Mascotas }) {
 }
 
 export default function CasasPage() {
+  useDocumentTitle('Gestión de Casas | Flor Digital');
+
   const router = useRouter()
   const { casas, loading, refetch: refetchCasas } = useCasas()
   const { setCasaInCache } = useCasaContext()

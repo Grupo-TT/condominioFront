@@ -15,8 +15,11 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { FinanzasSection } from '@/components/FinanzasSection'
 import { FinanzasCards, FinanzasCardsSkeleton } from '@/components/FinanzasCards'
 import { useObligacionesCasa } from '@/hooks/useFinanzas'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function FinanzasPage() {
+  useDocumentTitle('Pagos y Multas | Flor Digital');
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);

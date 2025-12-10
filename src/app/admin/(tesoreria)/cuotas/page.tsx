@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
@@ -311,6 +312,8 @@ function ObligacionesSubTable({
 }
 
 export default function CuotasPage() {
+  useDocumentTitle('Cuotas y Pagos | Flor Digital');
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
