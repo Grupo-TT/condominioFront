@@ -99,6 +99,17 @@ export function MascotasTab() {
     void fetchMascotas()
   }, [fetchMascotas])
 
+  // Escuchar evento de refresco cuando se agrega mascota desde otro componente
+  useEffect(() => {
+    const handleRefresh = () => {
+      void fetchMascotas()
+    }
+    window.addEventListener('mascotas:refresh', handleRefresh)
+    return () => {
+      window.removeEventListener('mascotas:refresh', handleRefresh)
+    }
+  }, [fetchMascotas])
+
   const handleModificar = (tipo: TipoMascota) => {
     setTipoMascotaEditando(tipo)
     setIsEditDialogOpen(true)

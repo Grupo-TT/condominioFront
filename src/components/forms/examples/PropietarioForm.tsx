@@ -13,6 +13,8 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 interface PropietarioFormProps {
   onSubmit: (data: PropietarioFormData) => Promise<boolean> | boolean
   onCancel?: () => void
+  initialCasa?: string
+  initialRol?: 'PROPIETARIO' | 'ARRENDATARIO'
 }
 
 const tipoDocumentoOptions: SelectOption[] = [
@@ -50,7 +52,7 @@ const casaOptions: SelectOption[] = [
   { value: "22", label: "Casa 22" }
 ]
 
-export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
+export function PropietarioForm({ onSubmit, onCancel, initialCasa, initialRol }: PropietarioFormProps) {
   const [showAllErrors, setShowAllErrors] = useState(false)
 
   const form = useForm<PropietarioFormData>({
@@ -66,8 +68,8 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
       numeroDocumento: '',
       email: '',
       telefono: '',
-      rolEnCasa: '',
-      idCasa: '',
+      rolEnCasa: initialRol || '',
+      idCasa: initialCasa || '',
     }
   })
 
@@ -75,8 +77,8 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
   const submitLabel = selectedRol === 'ARRENDATARIO'
     ? 'Crear arrendatario'
     : selectedRol === 'PROPIETARIO'
-    ? 'Crear propietario'
-    : 'Registrar persona'
+      ? 'Crear propietario'
+      : 'Registrar persona'
 
   const handleFormSubmit = async (data: PropietarioFormData) => {
     const result = await onSubmit(data)
@@ -92,9 +94,9 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
     <TooltipProvider>
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 overflow-y-auto">
-          <form 
+          <form
             id="propietario-form"
-            onSubmit={form.handleSubmit(handleFormSubmit)} 
+            onSubmit={form.handleSubmit(handleFormSubmit)}
             className="space-y-6 px-6 pt-2"
           >
             {/* Información Personal */}
@@ -116,6 +118,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="letters-only"
                     />
                   )}
                 />
@@ -134,6 +137,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="letters-only"
                     />
                   )}
                 />
@@ -153,6 +157,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="letters-only"
                     />
                   )}
                 />
@@ -171,6 +176,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="letters-only"
                     />
                   )}
                 />
@@ -208,6 +214,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="numbers-only"
                     />
                   )}
                 />
@@ -253,6 +260,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
                       invalid={fieldState.invalid}
                       error={fieldState.error?.message}
                       showError={showAllErrors}
+                      inputFilter="numbers-only"
                     />
                   )}
                 />
@@ -304,7 +312,7 @@ export function PropietarioForm({ onSubmit, onCancel }: PropietarioFormProps) {
             </div>
           </form>
         </div>
-        
+
         {/* Botones del footer del Sheet */}
         <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
           <Button

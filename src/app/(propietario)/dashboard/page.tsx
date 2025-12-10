@@ -20,7 +20,6 @@ import {
   AccountStatusCard,
   MembersCard,
   ReservationsCard,
-  RequestsCard,
 } from "@/components/owner-dashboard"
 import { useDashboardProp } from '@/hooks/useDashboardProp';
 
@@ -115,7 +114,9 @@ export default function PropietarioDashboard() {
           <div className="flex flex-wrap gap-6">
             <MembersCard members={membersData} />
             <ReservationsCard />
+            {/* TODO: Habilitar cuando se implemente la funcionalidad de solicitudes
             <RequestsCard />
+            */}
           </div>
         </div>
       </div>
