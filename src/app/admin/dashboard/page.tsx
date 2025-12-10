@@ -22,35 +22,26 @@ import {
   UpcomingAssemblies
 } from "@/components/admin-dashboard"
 import { useDashboardAdmin } from '@/hooks/useDashboardAdmin'
+import { MonthlyData } from '@/data/dashboard.mock'
+import { HousesStatusData, HouseTypesData, DashboardSummary } from '@/types/dashboard.types'
 
-interface MonthlyData {
-  mes: string;
-  ingresosRecaudados: number;
-  ingresosPendientes: number;
+const defaultHousesStatus: HousesStatusData = {
+  total: 0,
+  alDia: { count: 0, percentage: 0 },
+  morosas: { count: 0, percentage: 0 }
 }
 
-interface MonthSummary {
-  ingresosRecaudados?: number;
-  ingresosPendientes?: number;
-  morasAcumuladas?: number;
-  interesesAcumulados?: number;
+const defaultHouseTypes: HouseTypesData = {
+  total: 0,
+  arrendadas: { count: 0, percentage: 0 },
+  residenciales: { count: 0, percentage: 0 }
 }
 
-interface StatusDetail {
-  count: number;
-  percentage: number;
-}
-
-interface HousesStatus {
-  total?: number;
-  alDia?: StatusDetail;
-  morosas?: StatusDetail;
-}
-
-interface HouseTypes {
-  total?: number;
-  arrendadas?: StatusDetail;
-  residenciales?: StatusDetail;
+const defaultSummary: DashboardSummary = {
+  ingresos: 0,
+  egresos: 0,
+  balance: 0,
+  saldoActual: 0
 }
 
 export default function Page() {
@@ -59,9 +50,9 @@ export default function Page() {
   const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
   const [selectedYear, setSelectedYear] = useState<number>(2025)
   const [monthlyData2, setMonthlyData] = useState<MonthlyData[]>([])
-  const [monthSummary, setMonthSummary] = useState<MonthSummary>({})
-  const [housesStatus2, setHousesStatus] = useState<HousesStatus>({})
-  const [houseTypes2, setHouseTypes] = useState<HouseTypes>({})
+  const [monthSummary, setMonthSummary] = useState<DashboardSummary>(defaultSummary)
+  const [housesStatus2, setHousesStatus] = useState<HousesStatusData>(defaultHousesStatus)
+  const [houseTypes2, setHouseTypes] = useState<HouseTypesData>(defaultHouseTypes)
 
   const searchParams = useSearchParams()
   const router = useRouter()

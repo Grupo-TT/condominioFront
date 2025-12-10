@@ -3,14 +3,14 @@ import apiClient from '@/lib/config/axios.config';
 import { useState, useEffect } from 'react';
 
 interface MemberResponse {
-  id: string | number;
+  id: number;
   nombre: string;
   parentesco: string;
   estado: boolean;
 }
 
 interface FormattedMember {
-  id: string | number;
+  id: number;
   nombre: string;
   parentesco: string;
   avatar: string;

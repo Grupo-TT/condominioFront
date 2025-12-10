@@ -1,7 +1,7 @@
 import { apiClient } from '../lib/config/axios.config'
 
 interface MemberResponse {
-    id: string | number;
+    id: number;
     nombre: string;
     parentesco: string;
     estado?: boolean;

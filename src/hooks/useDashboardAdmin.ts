@@ -1,8 +1,29 @@
 import { adminDashboardService } from '@/services/adminDashboard.service'
 import { useCallback } from 'react'
+import { HousesStatusData, HouseTypesData, DashboardSummary } from '@/types/dashboard.types'
+import { MonthlyData } from '@/data/dashboard.mock'
+
+const defaultHousesStatus: HousesStatusData = {
+    total: 0,
+    alDia: { count: 0, percentage: 0 },
+    morosas: { count: 0, percentage: 0 }
+}
+
+const defaultHouseTypes: HouseTypesData = {
+    total: 0,
+    arrendadas: { count: 0, percentage: 0 },
+    residenciales: { count: 0, percentage: 0 }
+}
+
+const defaultSummary: DashboardSummary = {
+    ingresos: 0,
+    egresos: 0,
+    balance: 0,
+    saldoActual: 0
+}
 
 export function useDashboardAdmin() {
-    const fetchResumenFinancieroAnio = useCallback(async (year: number) => {
+    const fetchResumenFinancieroAnio = useCallback(async (year: number): Promise<MonthlyData[]> => {
         try {
             const data = await adminDashboardService.financeResumenMes(year)
             return data
@@ -12,33 +33,33 @@ export function useDashboardAdmin() {
         }
     }, [])
 
-    const fetchResumenFinancieroMes = useCallback(async () => {
+    const fetchResumenFinancieroMes = useCallback(async (): Promise<DashboardSummary> => {
         try {
             const data = await adminDashboardService.currentMonthSummary()
-            return data
+            return data || defaultSummary
         } catch (err) {
             console.error('Error fetching current month summary:', err)
-            return []
+            return defaultSummary
         }
     }, [])
 
-    const fetchCasas = useCallback(async () => {
+    const fetchCasas = useCallback(async (): Promise<HousesStatusData> => {
         try {
             const data = await adminDashboardService.getHousesStatus()
-            return data
+            return data || defaultHousesStatus
         } catch (err) {
             console.error('Error fetching houses status:', err)
-            return []
+            return defaultHousesStatus
         }
     }, [])
 
-    const fetchTypes = useCallback(async () => {
+    const fetchTypes = useCallback(async (): Promise<HouseTypesData> => {
         try {
             const data = await adminDashboardService.getHousesTypes()
-            return data
+            return data || defaultHouseTypes
         } catch (err) {
             console.error('Error fetching houses types:', err)
-            return []
+            return defaultHouseTypes
         }
     }, [])
 
