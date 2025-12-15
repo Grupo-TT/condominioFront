@@ -57,6 +57,11 @@ const data = {
       icon: <HugeiconsIcon icon={Package01Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
     },
     {
+      title: "Solicitudes",
+      url: "/solicitudes",
+      icon: <HugeiconsIcon icon={File02Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
+    },
+    {
       title: "Asamblea",
       url: "/asamblea",
       icon: <HugeiconsIcon icon={PresentationLineChart02Icon} size={18} strokeWidth={1.8} style={{ width: 18, height: 18 }} />,
