@@ -15,7 +15,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3, Check } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Book02Icon, UserCheck02Icon, Delete02Icon, PencilEdit02Icon, FullScreenIcon, CheckmarkCircle04Icon } from '@hugeicons/core-free-icons';
 import { useAsamblea } from '@/hooks/useAsamblea';
