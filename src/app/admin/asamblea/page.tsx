@@ -969,7 +969,7 @@ export default function AsambleaPage() {
                       >
                         <ComboboxInput
                           id="asamblea-titulo"
-                          value={field.value}
+                          value={field.value || ''}
                           onChange={field.onChange}
                           placeholder="Ej: Asamblea Ordinaria 2024"
                           emptyMessage="Escribe tu título personalizado"
