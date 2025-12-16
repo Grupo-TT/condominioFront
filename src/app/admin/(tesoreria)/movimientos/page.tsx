@@ -79,6 +79,7 @@ import { Movimiento } from '@/types/cuotas.types'
 import { useMovimientosMes } from '@/hooks/useMovimientos'
 import { editarMovimiento, eliminarMovimiento, registrarMovimiento } from '@/lib/services/cuotas.service'
 import { toast } from 'sonner'
+import { NumericFormat } from 'react-number-format'
 
 const categoriaLabels: Record<string, string> = {
   ADMINISTRACION_CUOTAS: "Administración / Cuotas",
@@ -1291,15 +1292,18 @@ export default function MovimientosPage() {
                           }`}>
                           $
                         </div>
-                        <Input
+                        <NumericFormat
                           id="monto"
-                          type="number"
                           value={formMonto}
-                          onChange={(e) => setFormMonto(e.target.value)}
+                          onValueChange={(values) => {
+                            setFormMonto(values.value)
+                          }}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          decimalScale={0}
+                          allowNegative={false}
                           placeholder="0"
-                          min="0"
-                          required
-                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] bg-gray-50/50 hover:bg-white"
+                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border border-input rounded-md bg-gray-50/50 hover:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -1554,15 +1558,18 @@ export default function MovimientosPage() {
                           }`}>
                           $
                         </div>
-                        <Input
+                        <NumericFormat
                           id="edit-monto"
-                          type="number"
                           value={editMonto}
-                          onChange={(e) => setEditMonto(e.target.value)}
+                          onValueChange={(values) => {
+                            setEditMonto(values.value)
+                          }}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          decimalScale={0}
+                          allowNegative={false}
                           placeholder="0"
-                          min="0"
-                          required
-                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] bg-gray-50/50 hover:bg-white"
+                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border border-input rounded-md bg-gray-50/50 hover:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200"
                         />
                       </div>
                     </div>

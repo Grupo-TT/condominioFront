@@ -73,6 +73,7 @@ import { useMultas } from '@/hooks/useMultas'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import axios from 'axios'
+import { NumericFormat } from 'react-number-format'
 
 export default function MultasPage() {
   useDocumentTitle('Multas | Flor Digital');
@@ -934,14 +935,18 @@ export default function MultasPage() {
                   <Label htmlFor="valor" className="text-sm font-medium">
                     Valor (COP) <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <NumericFormat
                     id="valor"
-                    type="number"
                     value={formValor}
-                    onChange={(e) => setFormValor(e.target.value)}
-                    placeholder="Ej. 50000"
-                    min="0"
-                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onValueChange={(values) => {
+                      setFormValor(values.value)
+                    }}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={0}
+                    allowNegative={false}
+                    placeholder="Ej. 50.000"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   />
                 </div>
               </div>
@@ -1091,15 +1096,18 @@ export default function MultasPage() {
                   <Label htmlFor="edit-valor" className="text-sm font-medium">
                     Valor (COP) <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <NumericFormat
                     id="edit-valor"
-                    type="number"
                     value={editValor}
-                    onChange={(e) => setEditValor(e.target.value)}
-                    placeholder="Ej. 50000"
-                    min="0"
-                    required
-                    className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onValueChange={(values) => {
+                      setEditValor(values.value)
+                    }}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={0}
+                    allowNegative={false}
+                    placeholder="Ej. 50.000"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   />
                 </div>
               </div>

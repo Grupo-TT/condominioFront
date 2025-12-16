@@ -70,6 +70,7 @@ import { ObligacionCombobox } from '@/components/obligacion-combobox';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { enviarPazYSalvo } from '@/lib/services/cuotas.service';
+import { NumericFormat } from 'react-number-format';
 
 const ZERO_DEBT_THRESHOLD = 1; // pesos
 const isCasaAlDia = (saldoPendiente: number) =>
@@ -1204,7 +1205,7 @@ export default function CuotasPage() {
                       )}
                     />
                   </div>
-                  
+
                   <input type="hidden" {...form.register("tipoObligacion")} />
 
                   {/* Monto a pagar */}
@@ -1234,17 +1235,20 @@ export default function CuotasPage() {
                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
                               $
                             </span>
-                            <Input
+                            <NumericFormat
                               id="monto"
                               name="monto"
-                              type="number"
                               placeholder="0"
-                              value={field.value?.toString() || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                field.onChange(value ? parseFloat(value) : 0);
+                              value={field.value ?? ''}
+                              onValueChange={(values) => {
+                                const { floatValue } = values;
+                                field.onChange(floatValue ?? 0);
                               }}
-                              className={`w-full h-12 pl-8 text-lg font-medium [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${fieldState.invalid
+                              thousandSeparator="."
+                              decimalSeparator=","
+                              decimalScale={0}
+                              allowNegative={false}
+                              className={`flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-lg font-medium shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-8 ${fieldState.invalid
                                 ? 'border-red-500 focus:border-red-500'
                                 : ''
                                 }`}
