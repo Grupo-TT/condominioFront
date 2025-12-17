@@ -15,7 +15,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3, Check } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Book02Icon, UserCheck02Icon, Delete02Icon, PencilEdit02Icon, FullScreenIcon, CheckmarkCircle04Icon } from '@hugeicons/core-free-icons';
 import { useAsamblea } from '@/hooks/useAsamblea';
@@ -66,6 +66,7 @@ import { ButtonArrow } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
+import { ComboboxInput } from '@/components/ui/combobox-input';
 
 // Esquema de validación para nueva asamblea
 const asambleaSchema = z.object({
@@ -966,15 +967,20 @@ export default function AsambleaPage() {
                         error={form.formState.errors.titulo?.message}
                         className="space-y-1"
                       >
-                        <input
-                          {...field}
+                        <ComboboxInput
                           id="asamblea-titulo"
-                          type="text"
+                          value={field.value || ''}
+                          onChange={field.onChange}
                           placeholder="Ej: Asamblea Ordinaria 2024"
-                          className={cn(
-                            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                            fieldState.invalid && showErrors && "border-red-500 focus-visible:ring-red-500"
-                          )}
+                          emptyMessage="Escribe tu título personalizado"
+                          invalid={fieldState.invalid && showErrors}
+                          options={[
+                            { value: 'ordinaria-2025', label: `Asamblea Ordinaria ${new Date().getFullYear()}` },
+                            { value: 'ordinaria-2026', label: `Asamblea Ordinaria ${new Date().getFullYear() + 1}` },
+                            { value: 'extraordinaria', label: 'Asamblea Extraordinaria' },
+                            { value: 'informativa', label: 'Asamblea Informativa' },
+                            { value: 'emergencia', label: 'Asamblea de Emergencia' },
+                          ]}
                         />
                       </FormFieldWithTooltip>
                     )}
