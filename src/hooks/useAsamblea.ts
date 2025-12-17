@@ -7,7 +7,7 @@ import { AsambleaService } from '@/lib/services/asamblea.service';
 import { mockAsambleas, mockAsistentes } from '@/data/asamblea.mock';
 
 // TODO: Set to true to use mock data when API is unavailable
-const USE_MOCKS = true;
+const USE_MOCKS = false;
 
 export const useAsamblea = () => {
   // Usar contador para manejar múltiples operaciones concurrentes

@@ -3,7 +3,7 @@ import { Metricas, Movimiento } from "@/types/cuotas.types";
 import { useEffect, useState } from "react";
 
 // Flag para usar datos mock (cambiar a false cuando la API esté disponible)
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Datos mock para pruebas
 const generarMovimientosMock = (mes: number, anio: number): { movimientos: Movimiento[], metricas: Metricas } => {

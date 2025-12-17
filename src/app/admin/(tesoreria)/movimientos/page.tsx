@@ -9,7 +9,7 @@ import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Plus, Search, X, MoreVertical, Pencil, Trash2, Eye, ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, FileText, DollarSign, User, Loader2 } from 'lucide-react'
 import { generarHTMLReporte, DatosReporte } from '@/components/reportes/ReporteGastosHTML'
-import { generarMovimientosMock } from '@/hooks/useMovimientos'
+import { getMovimientosMes } from '@/lib/services/cuotas.service'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { TradeUpIcon, TradeDownIcon, BalanceScaleIcon, MoneyBag02Icon, MoneyReceiveSquareIcon, MoneySendSquareIcon, PrinterIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -201,20 +201,34 @@ export default function MovimientosPage() {
 
       const datosMensuales: { mes: number; nombreMes: string; ingresos: number; egresos: number }[] = []
 
-      // Obtener movimientos de cada mes del año usando datos mock
+      // Obtener movimientos de cada mes del año usando la API
       for (let mes = 1; mes <= 12; mes++) {
-        const mockData = generarMovimientosMock(mes, anio)
-        todosLosMovimientos = [...todosLosMovimientos, ...mockData.movimientos]
-        metricasAnuales.ingresos += mockData.metricas.ingresos
-        metricasAnuales.egresos += mockData.metricas.egresos
+        try {
+          const res = await getMovimientosMes(mes, anio)
+          const movimientosMes = res?.data?.movimientos ?? res?.movimientos ?? res?.data ?? []
+          const metricasMes = res?.data?.metricas ?? res?.metricas ?? { ingresos: 0, egresos: 0 }
 
-        // Guardar datos para la gráfica
-        datosMensuales.push({
-          mes,
-          nombreMes: nombresMeses[mes - 1],
-          ingresos: mockData.metricas.ingresos,
-          egresos: mockData.metricas.egresos,
-        })
+          todosLosMovimientos = [...todosLosMovimientos, ...movimientosMes]
+          metricasAnuales.ingresos += metricasMes.ingresos || 0
+          metricasAnuales.egresos += metricasMes.egresos || 0
+
+          // Guardar datos para la gráfica
+          datosMensuales.push({
+            mes,
+            nombreMes: nombresMeses[mes - 1],
+            ingresos: metricasMes.ingresos || 0,
+            egresos: metricasMes.egresos || 0,
+          })
+        } catch (error) {
+          console.warn(`No se pudieron obtener datos del mes ${mes}:`, error)
+          // Agregar mes vacío para la gráfica
+          datosMensuales.push({
+            mes,
+            nombreMes: nombresMeses[mes - 1],
+            ingresos: 0,
+            egresos: 0,
+          })
+        }
       }
 
       metricasAnuales.balance = metricasAnuales.ingresos - metricasAnuales.egresos
