@@ -4,10 +4,6 @@ import { useState, useCallback, useRef } from 'react';
 import { Asamblea, Asistente, CreateAsambleaData, UpdateAsambleaData } from '@/types/asamblea.types';
 import { toast } from 'sonner';
 import { AsambleaService } from '@/lib/services/asamblea.service';
-import { mockAsambleas, mockAsistentes } from '@/data/asamblea.mock';
-
-// TODO: Set to true to use mock data when API is unavailable
-const USE_MOCKS = false;
 
 export const useAsamblea = () => {
   // Usar contador para manejar múltiples operaciones concurrentes
@@ -30,14 +26,8 @@ export const useAsamblea = () => {
 
     startLoading();
     try {
-      if (USE_MOCKS) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setAsambleas([...mockAsambleas]);
-      } else {
-        const data = await AsambleaService.getAll();
-        setAsambleas(data);
-      }
+      const data = await AsambleaService.getAll();
+      setAsambleas(data);
     } catch {
       toast.error('Error al cargar las asambleas', { description: 'No se pudieron obtener los datos. Intenta de nuevo.' });
     } finally {
@@ -53,21 +43,9 @@ export const useAsamblea = () => {
 
     startLoading();
     try {
-      if (USE_MOCKS) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        // Create mock attendees for this assembly
-        const mockData = mockAsistentes.slice(0, 22).map((a, idx) => ({
-          ...a,
-          id: idx + 1,
-          nombre: `Propietario Casa ${idx + 1}`,
-        }));
-        setAsistentesPorAsamblea(prev => ({ ...prev, [id]: mockData }));
-      } else {
-        const res = await AsambleaService.getAsistentes(id);
-        // Guardar asistentes asociados a esta asamblea específica
-        setAsistentesPorAsamblea(prev => ({ ...prev, [id]: res }));
-      }
+      const res = await AsambleaService.getAsistentes(id);
+      // Guardar asistentes asociados a esta asamblea específica
+      setAsistentesPorAsamblea(prev => ({ ...prev, [id]: res }));
     } catch {
       toast.error('Error al cargar los asistentes', { description: 'No se pudieron obtener los datos de asistencia.' });
     } finally {
@@ -196,19 +174,10 @@ export const useAsamblea = () => {
 
     startLoading();
     try {
-      if (USE_MOCKS) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Update local state directly for mocks
-        setAsambleas(prev => prev.map(a =>
-          a.id === id ? { ...a, estado: nuevoEstado as Asamblea['estado'] } : a
-        ));
-      } else {
-        await AsambleaService.cambiarEstado(Number(id), nuevoEstado);
-        // Refrescar lista desde el servidor
-        const updatedList = await AsambleaService.getAll();
-        setAsambleas(updatedList);
-      }
+      await AsambleaService.cambiarEstado(Number(id), nuevoEstado);
+      // Refrescar lista desde el servidor
+      const updatedList = await AsambleaService.getAll();
+      setAsambleas(updatedList);
       toast.success('Estado actualizado', { description: 'La asamblea ha sido marcada como terminada.' });
     } catch {
       toast.error('Error al cambiar el estado', { description: 'No se pudo completar la operación.' });
