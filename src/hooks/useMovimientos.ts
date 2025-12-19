@@ -15,10 +15,10 @@ export function useMovimientosMes(periodo: Date) {
     const cargar = async () => {
       setLoading(true);
 
-      try {
-        const mes = periodo.getMonth() + 1;
-        const anio = periodo.getFullYear();
+      const mes = periodo.getMonth() + 1;
+      const anio = periodo.getFullYear();
 
+      try {
         const res = await getMovimientosMes(mes, anio);
 
         const metrics =

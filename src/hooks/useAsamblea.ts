@@ -167,6 +167,26 @@ export const useAsamblea = () => {
     [asistentesPorAsamblea]
   );
 
+  const cambiarEstadoAsamblea = useCallback(async (id: string, nuevoEstado: string) => {
+    const opKey = `cambiarEstado-${id}`;
+    if (operationInProgress.current[opKey]) return;
+    operationInProgress.current[opKey] = true;
+
+    startLoading();
+    try {
+      await AsambleaService.cambiarEstado(Number(id), nuevoEstado);
+      // Refrescar lista desde el servidor
+      const updatedList = await AsambleaService.getAll();
+      setAsambleas(updatedList);
+      toast.success('Estado actualizado', { description: 'La asamblea ha sido marcada como terminada.' });
+    } catch {
+      toast.error('Error al cambiar el estado', { description: 'No se pudo completar la operación.' });
+    } finally {
+      stopLoading();
+      operationInProgress.current[opKey] = false;
+    }
+  }, []);
+
   return {
     loading,
     asambleas,
@@ -177,5 +197,6 @@ export const useAsamblea = () => {
     deleteAsamblea,
     getAsistentesByAsamblea,
     markAsistencia,
+    cambiarEstadoAsamblea,
   };
 };

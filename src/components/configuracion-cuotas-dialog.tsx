@@ -29,6 +29,7 @@ import { useValoresConstantes } from '@/hooks/useConfiguracionFinanciera';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NumericFormat } from 'react-number-format';
 
 interface CollapsibleConfigCardProps {
   title: string;
@@ -164,37 +165,61 @@ function CollapsibleConfigCard({
                             $
                           </span>
                         )}
-                        <Input
-                          id={`value-${title}`}
-                          type="number"
-                          value={field.value?.toString() || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || value === '-') {
-                              field.onChange(undefined);
-                            } else {
-                              const numValue = parseFloat(value);
-                              if (!isNaN(numValue) && numValue >= 0) {
-                                field.onChange(numValue);
+                        {unit === '$' ? (
+                          <NumericFormat
+                            id={`value-${title}`}
+                            value={field.value ?? ''}
+                            onValueChange={(values) => {
+                              const { floatValue } = values;
+                              if (floatValue === undefined || floatValue < 0) {
+                                field.onChange(undefined);
+                              } else {
+                                field.onChange(floatValue);
                               }
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            // Prevenir entrada de signo negativo
-                            if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                              e.preventDefault();
-                            }
-                          }}
-                          placeholder="0"
-                          className={cn(
-                            "w-full h-9 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
-                            unit === '$' && "pl-8",
-                            unit === '%' && "pr-8",
-                            fieldState.invalid && "border-red-500 focus:border-red-500"
-                          )}
-                          min="0"
-                          step={unit === '%' ? '0.1' : '1000'}
-                        />
+                            }}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            decimalScale={0}
+                            allowNegative={false}
+                            placeholder="0"
+                            className={cn(
+                              "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+                              "pl-8",
+                              fieldState.invalid && "border-red-500 focus:border-red-500"
+                            )}
+                          />
+                        ) : (
+                          <Input
+                            id={`value-${title}`}
+                            type="number"
+                            value={field.value?.toString() || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === '' || value === '-') {
+                                field.onChange(undefined);
+                              } else {
+                                const numValue = parseFloat(value);
+                                if (!isNaN(numValue) && numValue >= 0) {
+                                  field.onChange(numValue);
+                                }
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              // Prevenir entrada de signo negativo
+                              if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                                e.preventDefault();
+                              }
+                            }}
+                            placeholder="0"
+                            className={cn(
+                              "w-full h-9 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
+                              "pr-8",
+                              fieldState.invalid && "border-red-500 focus:border-red-500"
+                            )}
+                            min="0"
+                            step="0.1"
+                          />
+                        )}
                         {unit === '%' && (
                           <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm z-10">
                             %

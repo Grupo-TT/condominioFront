@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, Users, Plus, CheckCircle, ChevronDown, BarChart3 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Book02Icon, UserCheck02Icon, Delete02Icon, PencilEdit02Icon, FullScreenIcon } from '@hugeicons/core-free-icons';
+import { Book02Icon, UserCheck02Icon, Delete02Icon, PencilEdit02Icon, FullScreenIcon, CheckmarkCircle04Icon } from '@hugeicons/core-free-icons';
 import { useAsamblea } from '@/hooks/useAsamblea';
 import {
   Sheet,
@@ -66,6 +66,7 @@ import { ButtonArrow } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
+import { ComboboxInput } from '@/components/ui/combobox-input';
 
 // Esquema de validación para nueva asamblea
 const asambleaSchema = z.object({
@@ -81,7 +82,7 @@ type AsambleaFormData = z.infer<typeof asambleaSchema>;
 export default function AsambleaPage() {
   useDocumentTitle('Asambleas | Flor Digital');
 
-  const { asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia } = useAsamblea();
+  const { asambleas, fetchAsambleas, fetchAsistentes, createAsamblea, updateAsamblea, deleteAsamblea, getAsistentesByAsamblea, markAsistencia, cambiarEstadoAsamblea } = useAsamblea();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [selectedAsamblea, setSelectedAsamblea] = useState<Asamblea | null>(null);
@@ -90,6 +91,8 @@ export default function AsambleaPage() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+  const [asambleaToComplete, setAsambleaToComplete] = useState<Asamblea | null>(null);
   const [activeTab, setActiveTab] = useState<'futuras' | 'pasadas'>('futuras');
   const [searchTerm, setSearchTerm] = useState('');
   const [yearFilter, setYearFilter] = useState<string>('todos');
@@ -159,8 +162,8 @@ export default function AsambleaPage() {
 
   useEffect(() => {
     const loadPastAssemblyAttendance = async () => {
-      const now = new Date();
-      const pastAsambleas = asambleas.filter(a => new Date(a.fecha) < now);
+      // Cargar asistentes de asambleas REALIZADAS
+      const pastAsambleas = asambleas.filter(a => a.estado === 'REALIZADA');
 
       // Cargar asistentes de cada asamblea pasada que no se haya cargado
       for (const asamblea of pastAsambleas) {
@@ -264,29 +267,21 @@ export default function AsambleaPage() {
 
   // Generar años disponibles de asambleas pasadas
   const availableYears = useMemo(() => {
-    const pastAssemblies = asambleas.filter(asamblea => {
-      const asambleaDate = new Date(asamblea.fecha);
-      const now = new Date();
-      return asambleaDate < now;
-    });
+    const pastAssemblies = asambleas.filter(asamblea => asamblea.estado === 'REALIZADA');
 
     const years = new Set(pastAssemblies.map(asamblea => new Date(asamblea.fecha).getFullYear()));
     return Array.from(years).sort((a, b) => b - a); // Más reciente primero
   }, [asambleas]);
 
-  // Filtrar asambleas por fecha, búsqueda y año
+  // Filtrar asambleas por estado, búsqueda y año
   const filteredAsambleas = asambleas.filter((asamblea) => {
-    const now = new Date();
-    const asambleaDate = new Date(asamblea.fecha);
-    const isFuture = asambleaDate >= now;
-    const isPast = asambleaDate < now;
-
-    // Filtrar por tab activo
-    if (activeTab === 'futuras' && !isFuture) return false;
-    if (activeTab === 'pasadas' && !isPast) return false;
+    // Filtrar por tab activo basado en el estado de la API
+    if (activeTab === 'futuras' && asamblea.estado !== 'PROGRAMADA') return false;
+    if (activeTab === 'pasadas' && asamblea.estado !== 'REALIZADA') return false;
 
     // Filtrar por año (solo para asambleas pasadas)
     if (activeTab === 'pasadas' && yearFilter !== 'todos') {
+      const asambleaDate = new Date(asamblea.fecha);
       const assemblyYear = asambleaDate.getFullYear();
       if (assemblyYear.toString() !== yearFilter) return false;
     }
@@ -329,6 +324,19 @@ export default function AsambleaPage() {
   const handleOpenDeleteDialog = (asamblea: Asamblea) => {
     setSelectedAsamblea(asamblea);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleOpenCompleteDialog = (asamblea: Asamblea) => {
+    setAsambleaToComplete(asamblea);
+    setIsCompleteDialogOpen(true);
+  };
+
+  const handleCompleteAsamblea = async () => {
+    if (asambleaToComplete) {
+      await cambiarEstadoAsamblea(asambleaToComplete.id, 'REALIZADA');
+      setIsCompleteDialogOpen(false);
+      setAsambleaToComplete(null);
+    }
   };
 
   const getEstadoColor = (estado: string) => {
@@ -540,7 +548,7 @@ export default function AsambleaPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="flex-1 h-11 rounded-lg bg-gray-800 text-white shadow-md hover:bg-gray-700 text-sm font-medium border-transparent"
+                  className="flex-1 h-11 rounded-lg bg-neutral-700 text-white shadow-md hover:bg-neutral-600 text-sm font-medium border-transparent"
                   onClick={() => (isPastCard ? handleOpenDetailSheet(asamblea) : handleOpenAttendanceSheet(asamblea))}
                 >
                   {isPastCard ? 'Ver detalle' : 'Gestionar Asistencia'}
@@ -549,6 +557,23 @@ export default function AsambleaPage() {
               <TooltipContent side="top">{isPastCard ? 'Ver detalle de la asamblea' : 'Gestionar asistencia'}</TooltipContent>
             </Tooltip>
             <div className="flex gap-2">
+              {/* Mark as complete button - only for PROGRAMADA */}
+              {asamblea.estado === 'PROGRAMADA' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-10 h-10 rounded-md border-gray-200 shadow-sm"
+                      aria-label="Marcar como terminada"
+                      onClick={() => handleOpenCompleteDialog(asamblea)}
+                    >
+                      <HugeiconsIcon icon={CheckmarkCircle04Icon} size={24} strokeWidth={2} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Marcar esta asamblea como terminada?</TooltipContent>
+                </Tooltip>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -562,7 +587,7 @@ export default function AsambleaPage() {
                     onClick={() => canEdit && handleEditAsamblea(asamblea)}
                     disabled={!canEdit}
                   >
-                    <HugeiconsIcon icon={PencilEdit02Icon} size={21} strokeWidth={1.8} />
+                    <HugeiconsIcon icon={PencilEdit02Icon} size={24} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">Editar asamblea</TooltipContent>
@@ -580,7 +605,7 @@ export default function AsambleaPage() {
                     )}
                     aria-label="Eliminar asamblea"
                   >
-                    <HugeiconsIcon icon={Delete02Icon} size={21} strokeWidth={1.8} />
+                    <HugeiconsIcon icon={Delete02Icon} size={24} strokeWidth={1.8} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">Eliminar asamblea</TooltipContent>
@@ -942,15 +967,20 @@ export default function AsambleaPage() {
                         error={form.formState.errors.titulo?.message}
                         className="space-y-1"
                       >
-                        <input
-                          {...field}
+                        <ComboboxInput
                           id="asamblea-titulo"
-                          type="text"
+                          value={field.value || ''}
+                          onChange={field.onChange}
                           placeholder="Ej: Asamblea Ordinaria 2024"
-                          className={cn(
-                            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                            fieldState.invalid && showErrors && "border-red-500 focus-visible:ring-red-500"
-                          )}
+                          emptyMessage="Escribe tu título personalizado"
+                          invalid={fieldState.invalid && showErrors}
+                          options={[
+                            { value: 'ordinaria-2025', label: `Asamblea Ordinaria ${new Date().getFullYear()}` },
+                            { value: 'ordinaria-2026', label: `Asamblea Ordinaria ${new Date().getFullYear() + 1}` },
+                            { value: 'extraordinaria', label: 'Asamblea Extraordinaria' },
+                            { value: 'informativa', label: 'Asamblea Informativa' },
+                            { value: 'emergencia', label: 'Asamblea de Emergencia' },
+                          ]}
                         />
                       </FormFieldWithTooltip>
                     )}
@@ -1489,6 +1519,28 @@ export default function AsambleaPage() {
               className="bg-red-600 hover:bg-red-800 text-white transition-colors"
             >
               Eliminar Asamblea
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de confirmación para marcar asamblea como terminada */}
+      <AlertDialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Marcar asamblea como terminada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de marcar la asamblea <span className="font-semibold">{asambleaToComplete?.titulo}</span> como terminada.
+              <span className="block mt-2 text-gray-600 font-medium">Esta acción no se puede revertir.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCompleteAsamblea}
+              className="bg-neutral-700 hover:bg-neutral-800 text-white transition-colors"
+            >
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

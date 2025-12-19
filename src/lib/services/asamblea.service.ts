@@ -71,5 +71,13 @@ export const AsambleaService = {
             console.error('No se pudo actualizar la asistencia.', error);
             throw error;
         }
+    },
+    async cambiarEstado(id: number, estado: string): Promise<void> {
+        try {
+            await apiClient.put(`/asamblea/cambiar-estado/${id}?estado=${estado}`);
+        } catch (error) {
+            console.error('No se pudo cambiar el estado de la asamblea.', error);
+            throw error;
+        }
     }
 }

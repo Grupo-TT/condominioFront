@@ -7,9 +7,11 @@ import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { Plus, Search, X, MoreVertical, Pencil, Trash2, Eye, ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, FileText, DollarSign, User } from 'lucide-react'
+import { Plus, Search, X, MoreVertical, Pencil, Trash2, Eye, ArrowDownCircle, ArrowUpCircle, ChevronLeft, ChevronRight, FileText, DollarSign, User, Loader2 } from 'lucide-react'
+import { generarHTMLReporte, DatosReporte } from '@/components/reportes/ReporteGastosHTML'
+import { getMovimientosMes } from '@/lib/services/cuotas.service'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { TradeUpIcon, TradeDownIcon, BalanceScaleIcon, MoneyBag02Icon, MoneyReceiveSquareIcon, MoneySendSquareIcon } from '@hugeicons/core-free-icons'
+import { TradeUpIcon, TradeDownIcon, BalanceScaleIcon, MoneyBag02Icon, MoneyReceiveSquareIcon, MoneySendSquareIcon, PrinterIcon } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -79,6 +81,8 @@ import { Movimiento } from '@/types/cuotas.types'
 import { useMovimientosMes } from '@/hooks/useMovimientos'
 import { editarMovimiento, eliminarMovimiento, registrarMovimiento } from '@/lib/services/cuotas.service'
 import { toast } from 'sonner'
+import { NumericFormat } from 'react-number-format'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const categoriaLabels: Record<string, string> = {
   ADMINISTRACION_CUOTAS: "Administración / Cuotas",
@@ -132,6 +136,144 @@ export default function MovimientosPage() {
   const [editCategoria, setEditCategoria] = useState('')
   const [editResponsable, setEditResponsable] = useState('')
   const [editCategoriaComboboxOpen, setEditCategoriaComboboxOpen] = useState(false)
+
+  // Estados para generación de reportes PDF
+  const [isGeneratingReportMensual, setIsGeneratingReportMensual] = useState(false)
+  const [isGeneratingReportAnual, setIsGeneratingReportAnual] = useState(false)
+
+  // Función para generar reporte mensual
+  const handleGenerarReporteMensual = async () => {
+    setIsGeneratingReportMensual(true)
+    try {
+      const datos: DatosReporte = {
+        movimientos,
+        metricas: metricas || { ingresos: 0, egresos: 0, balance: 0, saldoActual: 0 },
+        periodo: { mes: periodoSeleccionado.getMonth() + 1, anio: periodoSeleccionado.getFullYear() },
+        tipoReporte: 'mensual',
+        condominioNombre: 'Condominio Flor Digital',
+      }
+
+      const html = generarHTMLReporte(datos)
+      const nombreMes = periodoSeleccionado.toLocaleDateString('es-CO', { month: 'long' })
+      const nombreArchivo = `Reporte_Movimientos_${nombreMes}_${datos.periodo.anio}`
+
+      const response = await fetch('/api/reportes/generar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html, nombreArchivo }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al generar el PDF')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${nombreArchivo}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      toast.success('Reporte generado', { description: 'El PDF se ha descargado correctamente.' })
+    } catch (error) {
+      console.error('Error generando reporte:', error)
+      toast.error('Error al generar el reporte', { description: 'Intenta de nuevo más tarde.' })
+    } finally {
+      setIsGeneratingReportMensual(false)
+    }
+  }
+
+  // Función para generar reporte anual
+  const handleGenerarReporteAnual = async () => {
+    setIsGeneratingReportAnual(true)
+    try {
+      const anio = periodoSeleccionado.getFullYear()
+      let todosLosMovimientos: typeof movimientos = []
+      const metricasAnuales = { ingresos: 0, egresos: 0, balance: 0, saldoActual: 0 }
+
+      const nombresMeses = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ]
+
+      const datosMensuales: { mes: number; nombreMes: string; ingresos: number; egresos: number }[] = []
+
+      // Obtener movimientos de cada mes del año usando la API
+      for (let mes = 1; mes <= 12; mes++) {
+        try {
+          const res = await getMovimientosMes(mes, anio)
+          const movimientosMes = res?.data?.movimientos ?? res?.movimientos ?? res?.data ?? []
+          const metricasMes = res?.data?.metricas ?? res?.metricas ?? { ingresos: 0, egresos: 0 }
+
+          todosLosMovimientos = [...todosLosMovimientos, ...movimientosMes]
+          metricasAnuales.ingresos += metricasMes.ingresos || 0
+          metricasAnuales.egresos += metricasMes.egresos || 0
+
+          // Guardar datos para la gráfica
+          datosMensuales.push({
+            mes,
+            nombreMes: nombresMeses[mes - 1],
+            ingresos: metricasMes.ingresos || 0,
+            egresos: metricasMes.egresos || 0,
+          })
+        } catch (error) {
+          console.warn(`No se pudieron obtener datos del mes ${mes}:`, error)
+          // Agregar mes vacío para la gráfica
+          datosMensuales.push({
+            mes,
+            nombreMes: nombresMeses[mes - 1],
+            ingresos: 0,
+            egresos: 0,
+          })
+        }
+      }
+
+      metricasAnuales.balance = metricasAnuales.ingresos - metricasAnuales.egresos
+      metricasAnuales.saldoActual = metricas?.saldoActual || 5000000
+
+      const datos: DatosReporte = {
+        movimientos: todosLosMovimientos,
+        metricas: metricasAnuales,
+        periodo: { mes: 12, anio },
+        tipoReporte: 'anual',
+        condominioNombre: 'Condominio Flor Digital',
+        datosMensuales,
+      }
+
+      const html = generarHTMLReporte(datos)
+      const nombreArchivo = `Reporte_Anual_Movimientos_${anio}`
+
+      const response = await fetch('/api/reportes/generar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html, nombreArchivo }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al generar el PDF')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${nombreArchivo}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      toast.success('Reporte anual generado', { description: 'El PDF se ha descargado correctamente.' })
+    } catch (error) {
+      console.error('Error generando reporte anual:', error)
+      toast.error('Error al generar el reporte anual', { description: 'Intenta de nuevo más tarde.' })
+    } finally {
+      setIsGeneratingReportAnual(false)
+    }
+  }
 
   const handleViewDetail = useCallback((movimiento: Movimiento) => {
     setSelectedMovimiento(movimiento)
@@ -736,7 +878,7 @@ export default function MovimientosPage() {
               </div>
 
               {/* Búsqueda y botón a la derecha */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {/* Filtro de categoría */}
                 <Popover open={categoriaComboboxOpen} onOpenChange={setCategoriaComboboxOpen}>
                   <PopoverTrigger asChild>
@@ -829,6 +971,42 @@ export default function MovimientosPage() {
                     </Button>
                   )}
                 </div>
+
+                {/* Botón de Reportes */}
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-10 w-10">
+                          {(isGeneratingReportMensual || isGeneratingReportAnual) ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <HugeiconsIcon icon={PrinterIcon} size={22} strokeWidth={2} />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Descargar reportes en PDF</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={handleGenerarReporteMensual}
+                      disabled={isGeneratingReportMensual || isGeneratingReportAnual}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      {isGeneratingReportMensual ? 'Generando...' : 'Reporte Mensual'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleGenerarReporteAnual}
+                      disabled={isGeneratingReportMensual || isGeneratingReportAnual}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      {isGeneratingReportAnual ? 'Generando...' : 'Reporte Anual'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Popover open={registrarMenuOpen} onOpenChange={setRegistrarMenuOpen}>
                   <PopoverTrigger asChild>
@@ -1291,15 +1469,18 @@ export default function MovimientosPage() {
                           }`}>
                           $
                         </div>
-                        <Input
+                        <NumericFormat
                           id="monto"
-                          type="number"
                           value={formMonto}
-                          onChange={(e) => setFormMonto(e.target.value)}
+                          onValueChange={(values) => {
+                            setFormMonto(values.value)
+                          }}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          decimalScale={0}
+                          allowNegative={false}
                           placeholder="0"
-                          min="0"
-                          required
-                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] bg-gray-50/50 hover:bg-white"
+                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border border-input rounded-md bg-gray-50/50 hover:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -1554,15 +1735,18 @@ export default function MovimientosPage() {
                           }`}>
                           $
                         </div>
-                        <Input
+                        <NumericFormat
                           id="edit-monto"
-                          type="number"
                           value={editMonto}
-                          onChange={(e) => setEditMonto(e.target.value)}
+                          onValueChange={(values) => {
+                            setEditMonto(values.value)
+                          }}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          decimalScale={0}
+                          allowNegative={false}
                           placeholder="0"
-                          min="0"
-                          required
-                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] bg-gray-50/50 hover:bg-white"
+                          className="w-full h-14 pl-10 pr-4 text-xl font-semibold border border-input rounded-md bg-gray-50/50 hover:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all duration-200"
                         />
                       </div>
                     </div>
