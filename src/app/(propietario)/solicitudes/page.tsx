@@ -1,8 +1,11 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { MoreVertical, Search, X, Plus, Calendar as CalendarIcon, Pencil, Trash2, Eye, Info } from 'lucide-react'
+import { useSolicitudesPropietario } from '@/hooks/useSolicitudesPropietario'
+import { authService } from '@/lib/services/auth.service'
+import { toast } from 'sonner'
+import { MoreVertical, Search, X, Plus, Calendar as CalendarIcon, Pencil, Trash2, Eye, Info, Loader2 } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Wrench01Icon, Alert02Icon, NotificationCircleIcon, IdeaIcon, Delete02Icon } from '@hugeicons/core-free-icons'
 import { Button, ButtonArrow } from '@/components/ui/button'
@@ -13,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
     Sheet,
     SheetContent,
@@ -65,78 +69,39 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TabSliderIndicator } from '@/components/ui/tab-slider-indicator'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Solicitud, Trabajador } from '@/types/solicitud.types'
+import type { Solicitud, Trabajador } from '@/types/solicitud.types'
+import type { TipoSolicitudUI } from '@/types/propietario.solicitudes.types'
 
-
-// Mock data for owner solicitudes (subset of admin mock data - only this owner's solicitudes)
-const misSolicitudesData: Solicitud[] = [
-    {
-        id: '1',
-        casaId: '1',
-        numeroCasa: '15',
-        propietario: 'Jose Pérez Hurtado',
-        titulo: 'Solicitud de reparación en tubería principal',
-        tipo: 'reparacion-locativa',
-        fecha: '2024-02-10',
-        estado: 'pendiente',
-        descripcion: 'Se ha detectado una fuga de agua significativa en la tubería principal del segundo piso, específicamente en el área del baño principal.',
-        tipoObra: 'Hidráulica',
-        fechaInicio: '2024-02-15',
-        fechaFinalizacion: '2024-02-20',
-        trabajadores: [
-            { nombre: 'Juan Carlos Pérez', documento: '1023456789', arl: 'SURA' },
-            { nombre: 'Roberto Martínez', documento: '1034567890', arl: 'POSITIVA' }
-        ]
-    },
-    {
-        id: '4',
-        casaId: '1',
-        numeroCasa: '15',
-        propietario: 'Jose Pérez Hurtado',
-        titulo: 'Sugerencia para mejoras en áreas comunes',
-        tipo: 'sugerencia',
-        fecha: '2024-02-20',
-        estado: 'pendiente',
-        descripcion: 'Propuesta para mejorar la iluminación y el mantenimiento de las áreas verdes del conjunto residencial.'
-    },
-    {
-        id: '8',
-        casaId: '1',
-        numeroCasa: '15',
-        propietario: 'Jose Pérez Hurtado',
-        titulo: 'Queja por ruido excesivo del vecino',
-        tipo: 'queja',
-        fecha: '2024-01-28',
-        estado: 'revisada',
-        descripcion: 'Reporto que el vecino de la casa 16 genera ruidos excesivos durante horas de la noche, afectando el descanso de mi familia.'
-    },
-    {
-        id: '10',
-        casaId: '1',
-        numeroCasa: '15',
-        propietario: 'Jose Pérez Hurtado',
-        titulo: 'Petición para instalación de parqueadero de bicicletas',
-        tipo: 'peticion',
-        fecha: '2024-01-10',
-        estado: 'aprobada',
-        descripcion: 'Solicito la instalación de un parqueadero de bicicletas cerca de la entrada principal del conjunto para fomentar el uso de transporte ecológico.'
-    },
-    {
-        id: '12',
-        casaId: '1',
-        numeroCasa: '15',
-        propietario: 'Jose Pérez Hurtado',
-        titulo: 'Reparación de ventana dañada',
-        tipo: 'reparacion-locativa',
-        fecha: '2024-01-05',
-        estado: 'rechazada',
-        descripcion: 'Solicito la reparación de la ventana del tercer piso que presenta daños por humedad.',
-        tipoObra: 'Obra blanca'
-    }
-]
 
 export default function SolicitudesPropietarioPage() {
     useDocumentTitle('Mis Solicitudes | Flor Digital');
+
+    // API integration via hook
+    const {
+        solicitudes,
+        loading,
+        creating,
+        updating,
+        deleting,
+        loadingDetalle,
+        fetchSolicitudes,
+        fetchDetalle,
+        createSolicitud,
+        updateSolicitud,
+        deleteSolicitud,
+    } = useSolicitudesPropietario();
+
+    // Store idCasa for API calls
+    const [idCasa, setIdCasa] = useState<number | null>(null);
+
+    // Fetch solicitudes on mount
+    useEffect(() => {
+        const casaId = authService.getIdCasa();
+        if (casaId) {
+            setIdCasa(casaId);
+            fetchSolicitudes(casaId);
+        }
+    }, [fetchSolicitudes]);
 
     const [searchTerm, setSearchTerm] = useState('')
     const [filterType, setFilterType] = useState<'todas' | 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia'>('todas')
@@ -155,7 +120,7 @@ export default function SolicitudesPropietarioPage() {
     const [solicitudToDelete, setSolicitudToDelete] = useState<Solicitud | null>(null)
 
     // Form states
-    const [formTipo, setFormTipo] = useState<Solicitud['tipo']>('peticion')
+    const [formTipo, setFormTipo] = useState<Solicitud['tipo'] | ''>('')
     const [formTitulo, setFormTitulo] = useState('')
     const [formDescripcion, setFormDescripcion] = useState('')
 
@@ -169,8 +134,6 @@ export default function SolicitudesPropietarioPage() {
     const [newTrabajadorDocumento, setNewTrabajadorDocumento] = useState('')
     const [newTrabajadorArl, setNewTrabajadorArl] = useState('')
 
-    // Data state
-    const [solicitudes, setSolicitudes] = useState<Solicitud[]>(misSolicitudesData)
 
     const handleClearSearch = useCallback(() => {
         setSearchTerm('')
@@ -180,7 +143,7 @@ export default function SolicitudesPropietarioPage() {
     }, [])
 
     const handleOpenCreate = useCallback(() => {
-        setFormTipo('peticion')
+        setFormTipo('')
         setFormTitulo('')
         setFormDescripcion('')
         // Reset reparación locativa fields
@@ -195,10 +158,20 @@ export default function SolicitudesPropietarioPage() {
         setIsCreateSheetOpen(true)
     }, [])
 
-    const handleViewDetail = useCallback((solicitud: Solicitud) => {
-        setSelectedSolicitud(solicitud)
-        setIsDetailSheetOpen(true)
-    }, [])
+    const handleViewDetail = useCallback(async (solicitud: Solicitud) => {
+        // For reparacion-locativa, fetch full details including trabajadores
+        if (solicitud.tipo === 'reparacion-locativa') {
+            setIsDetailSheetOpen(true);
+            setSelectedSolicitud(solicitud); // Show basic info while loading
+            const detalle = await fetchDetalle(solicitud.id);
+            if (detalle) {
+                setSelectedSolicitud(detalle as Solicitud);
+            }
+        } else {
+            setSelectedSolicitud(solicitud);
+            setIsDetailSheetOpen(true);
+        }
+    }, [fetchDetalle]);
 
     const handleOpenEdit = useCallback((solicitud: Solicitud) => {
         setSelectedSolicitud(solicitud)
@@ -215,8 +188,8 @@ export default function SolicitudesPropietarioPage() {
             setFormTipoObra('Otra')
             setFormTipoObraOtra(tipoObra)
         }
-        setFormFechaInicio(solicitud.fechaInicio ? new Date(solicitud.fechaInicio) : undefined)
-        setFormFechaFinalizacion(solicitud.fechaFinalizacion ? new Date(solicitud.fechaFinalizacion) : undefined)
+        setFormFechaInicio(solicitud.fechaInicio ? new Date(solicitud.fechaInicio + 'T12:00:00') : undefined)
+        setFormFechaFinalizacion(solicitud.fechaFinalizacion ? new Date(solicitud.fechaFinalizacion + 'T12:00:00') : undefined)
         setFormTrabajadores(solicitud.trabajadores || [])
         setNewTrabajadorNombre('')
         setNewTrabajadorDocumento('')
@@ -229,13 +202,20 @@ export default function SolicitudesPropietarioPage() {
         setShowDeleteDialog(true)
     }, [])
 
-    const confirmDelete = useCallback(() => {
-        if (solicitudToDelete) {
-            setSolicitudes(prev => prev.filter(s => s.id !== solicitudToDelete.id))
-            setShowDeleteDialog(false)
-            setSolicitudToDelete(null)
+    const confirmDelete = useCallback(async () => {
+        if (solicitudToDelete && idCasa) {
+            try {
+                await deleteSolicitud(solicitudToDelete.id);
+                toast.success('Solicitud eliminada', { description: 'La solicitud ha sido removida correctamente.' });
+                fetchSolicitudes(idCasa);
+            } catch (error) {
+                toast.error('Error al eliminar', { description: error instanceof Error ? error.message : 'No se pudo eliminar la solicitud.' });
+            } finally {
+                setShowDeleteDialog(false);
+                setSolicitudToDelete(null);
+            }
         }
-    }, [solicitudToDelete])
+    }, [solicitudToDelete, idCasa, deleteSolicitud, fetchSolicitudes]);
 
     // Trabajador management functions
     const handleAddTrabajador = useCallback(() => {
@@ -255,57 +235,67 @@ export default function SolicitudesPropietarioPage() {
         setFormTrabajadores(prev => prev.filter((_, i) => i !== index))
     }, [])
 
-    const handleCreateSubmit = useCallback(() => {
-        const newSolicitud: Solicitud = {
-            id: String(Date.now()),
-            casaId: '1',
-            numeroCasa: '15',
-            propietario: 'Jose Pérez Hurtado',
-            titulo: formTitulo,
-            tipo: formTipo,
-            fecha: new Date().toISOString().split('T')[0],
-            estado: 'pendiente',
-            descripcion: formDescripcion,
-            // Campos de reparación locativa (solo si es ese tipo)
-            ...(formTipo === 'reparacion-locativa' && {
-                tipoObra: formTipoObra === 'Otra' ? formTipoObraOtra : formTipoObra,
-                fechaInicio: formFechaInicio?.toISOString().split('T')[0],
-                fechaFinalizacion: formFechaFinalizacion?.toISOString().split('T')[0],
-                trabajadores: formTrabajadores
-            })
+    const handleCreateSubmit = useCallback(async () => {
+        if (!idCasa) {
+            toast.error('Error de autenticación', { description: 'No se pudo identificar tu casa. Por favor, inicia sesión nuevamente.' });
+            return;
         }
-        setSolicitudes(prev => [newSolicitud, ...prev])
-        setIsCreateSheetOpen(false)
-    }, [formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
 
-    const handleEditSubmit = useCallback(() => {
-        if (selectedSolicitud) {
-            setSolicitudes(prev => prev.map(s =>
-                s.id === selectedSolicitud.id
-                    ? {
-                        ...s,
-                        titulo: formTitulo,
-                        tipo: formTipo,
-                        descripcion: formDescripcion,
-                        // Campos de reparación locativa (solo si es ese tipo)
-                        ...(formTipo === 'reparacion-locativa' ? {
-                            tipoObra: formTipoObra === 'Otra' ? formTipoObraOtra : formTipoObra,
-                            fechaInicio: formFechaInicio?.toISOString().split('T')[0],
-                            fechaFinalizacion: formFechaFinalizacion?.toISOString().split('T')[0],
-                            trabajadores: formTrabajadores
-                        } : {
-                            tipoObra: undefined,
-                            fechaInicio: undefined,
-                            fechaFinalizacion: undefined,
-                            trabajadores: undefined
-                        })
-                    }
-                    : s
-            ))
-            setIsEditSheetOpen(false)
-            setSelectedSolicitud(null)
+        try {
+            await createSolicitud({
+                titulo: formTitulo,
+                descripcion: formDescripcion,
+                tipo: formTipo as TipoSolicitudUI,
+                tipoObra: formTipo === 'reparacion-locativa'
+                    ? (formTipoObra === 'Otra' ? formTipoObraOtra : formTipoObra)
+                    : undefined,
+                fechaInicio: formTipo === 'reparacion-locativa' && formFechaInicio
+                    ? formFechaInicio.toISOString().split('T')[0]
+                    : undefined,
+                fechaFinalizacion: formTipo === 'reparacion-locativa' && formFechaFinalizacion
+                    ? formFechaFinalizacion.toISOString().split('T')[0]
+                    : undefined,
+                trabajadores: formTipo === 'reparacion-locativa' ? formTrabajadores : undefined,
+            });
+            toast.success('Solicitud creada', { description: 'Tu solicitud ha sido registrada y está pendiente de revisión.' });
+            setIsCreateSheetOpen(false);
+            fetchSolicitudes(idCasa);
+        } catch (error) {
+            toast.error('Error al crear', { description: error instanceof Error ? error.message : 'No se pudo crear la solicitud.' });
         }
-    }, [selectedSolicitud, formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores])
+    }, [idCasa, formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores, createSolicitud, fetchSolicitudes]);
+
+    const handleEditSubmit = useCallback(async () => {
+        if (!selectedSolicitud || !idCasa) {
+            toast.error('Error de validación', { description: 'No se pudo identificar la solicitud o tu casa.' });
+            return;
+        }
+
+        try {
+            await updateSolicitud({
+                id: selectedSolicitud.id,
+                titulo: formTitulo,
+                descripcion: formDescripcion,
+                tipo: formTipo as TipoSolicitudUI,
+                tipoObra: formTipo === 'reparacion-locativa'
+                    ? (formTipoObra === 'Otra' ? formTipoObraOtra : formTipoObra)
+                    : undefined,
+                fechaInicio: formTipo === 'reparacion-locativa' && formFechaInicio
+                    ? formFechaInicio.toISOString().split('T')[0]
+                    : undefined,
+                fechaFinalizacion: formTipo === 'reparacion-locativa' && formFechaFinalizacion
+                    ? formFechaFinalizacion.toISOString().split('T')[0]
+                    : undefined,
+                trabajadores: formTipo === 'reparacion-locativa' ? formTrabajadores : undefined,
+            });
+            toast.success('Solicitud actualizada', { description: 'Los cambios han sido guardados correctamente.' });
+            setIsEditSheetOpen(false);
+            setSelectedSolicitud(null);
+            fetchSolicitudes(idCasa);
+        } catch (error) {
+            toast.error('Error al actualizar', { description: error instanceof Error ? error.message : 'No se pudo actualizar la solicitud.' });
+        }
+    }, [selectedSolicitud, idCasa, formTitulo, formTipo, formDescripcion, formTipoObra, formTipoObraOtra, formFechaInicio, formFechaFinalizacion, formTrabajadores, updateSolicitud, fetchSolicitudes]);
 
     // Filtrar datos basándose en el término de búsqueda, tipo y estado
     const filteredSolicitudes = useMemo(() => {
@@ -338,7 +328,8 @@ export default function SolicitudesPropietarioPage() {
     const hasResults = filteredSolicitudes.length > 0
 
     // Función para obtener el nombre del tipo
-    const getTipoNombre = (tipo: Solicitud['tipo']) => {
+    const getTipoNombre = (tipo: Solicitud['tipo'] | '') => {
+        if (!tipo) return 'Tipo de solicitud'
         const tipos: Record<Solicitud['tipo'], string> = {
             'reparacion-locativa': 'Reparación Locativa',
             'queja': 'Queja',
@@ -349,7 +340,8 @@ export default function SolicitudesPropietarioPage() {
     }
 
     // Función para obtener la definición de cada tipo
-    const getTipoDefinicion = useCallback((tipo: Solicitud['tipo']) => {
+    const getTipoDefinicion = useCallback((tipo: Solicitud['tipo'] | '') => {
+        if (!tipo) return 'Selecciona un tipo de solicitud para ver su descripción.'
         const definiciones: Record<Solicitud['tipo'], string> = {
             'peticion': 'Solicitudes formales para pedir información, ayuda o algún servicio por parte de la administración.',
             'queja': 'Comunica inconformidades o molestias relacionadas con servicios, normas o comportamientos dentro del condominio que requieran intervención de la administración.',
@@ -359,7 +351,8 @@ export default function SolicitudesPropietarioPage() {
         return definiciones[tipo]
     }, [])
 
-    const getTipoIcono = useCallback((tipo: Solicitud['tipo']) => {
+    const getTipoIcono = useCallback((tipo: Solicitud['tipo'] | '') => {
+        if (!tipo) return NotificationCircleIcon // Default icon
         const iconos: Record<Solicitud['tipo'], typeof Wrench01Icon> = {
             'reparacion-locativa': Wrench01Icon,
             'queja': Alert02Icon,
@@ -369,7 +362,9 @@ export default function SolicitudesPropietarioPage() {
         return iconos[tipo]
     }, [])
 
-    const getTipoColor = useCallback((tipo: Solicitud['tipo']) => {
+    const getTipoColor = useCallback((tipo: Solicitud['tipo'] | '') => {
+        // Default neutral colors for empty/unselected state
+        if (!tipo) return { bg: '#F3F4F6', text: '#6B7280', border: '#D1D5DB' }
         const tipoColors: Record<Solicitud['tipo'], { bg: string; text: string; border: string }> = {
             'reparacion-locativa': {
                 bg: '#E3E4EA',
@@ -405,10 +400,10 @@ export default function SolicitudesPropietarioPage() {
             badgeVariant = 'success'
             dotColor = 'bg-green-500'
             estadoTexto = 'Aprobada'
-        } else if (estado === 'rechazada') {
+        } else if (estado === 'desaprobada') {
             badgeVariant = 'destructive'
             dotColor = 'bg-red-500'
-            estadoTexto = 'Rechazada'
+            estadoTexto = 'Desaprobada'
         } else if (estado === 'revisada') {
             badgeVariant = 'warning'
             dotColor = 'bg-blue-500'
@@ -612,7 +607,41 @@ export default function SolicitudesPropietarioPage() {
                         {/* Cards Grid */}
                         {['todas', 'pendiente', 'aprobada', 'rechazada', 'revisada'].map((tabValue) => (
                             <TabsContent key={tabValue} value={tabValue}>
-                                {hasResults ? (
+                                {loading ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {/* Skeleton cards */}
+                                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                                            <Card key={i} className="border py-0 h-full flex flex-col bg-gray-50">
+                                                <CardContent className="p-4 flex flex-col h-full">
+                                                    {/* Header skeleton */}
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <Skeleton className="w-10 h-10 rounded-lg" />
+                                                            <div className="flex flex-col gap-1.5">
+                                                                <Skeleton className="h-4 w-32" />
+                                                                <Skeleton className="h-3 w-16" />
+                                                            </div>
+                                                        </div>
+                                                        <Skeleton className="h-5 w-20 rounded-full" />
+                                                    </div>
+                                                    {/* Description skeleton */}
+                                                    <div className="bg-white/90 rounded-lg p-3 mb-3 flex-1">
+                                                        <Skeleton className="h-3 w-full mb-2" />
+                                                        <Skeleton className="h-3 w-4/5" />
+                                                    </div>
+                                                    {/* Footer skeleton */}
+                                                    <div className="pt-2 border-t border-gray-200 flex items-center justify-between mt-auto">
+                                                        <div className="flex items-center gap-3">
+                                                            <Skeleton className="h-4 w-24" />
+                                                            <Skeleton className="h-5 w-16 rounded-full" />
+                                                        </div>
+                                                        <Skeleton className="h-8 w-8 rounded-md" />
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                ) : hasResults ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {filteredSolicitudes.map((solicitud) => (
                                             <Card
@@ -684,7 +713,7 @@ export default function SolicitudesPropietarioPage() {
                                                             >
                                                                 <CalendarIcon className="w-3.5 h-3.5" />
                                                                 <span>
-                                                                    {new Date(solicitud.fecha).toLocaleDateString('es-CO', {
+                                                                    {new Date(solicitud.fecha + 'T12:00:00').toLocaleDateString('es-CO', {
                                                                         day: 'numeric',
                                                                         month: 'short',
                                                                         year: 'numeric',
@@ -865,7 +894,7 @@ export default function SolicitudesPropietarioPage() {
                                         placeholder="Describe tu solicitud en detalle..."
                                         value={formDescripcion}
                                         onChange={(e) => setFormDescripcion(e.target.value)}
-                                        className="min-h-[150px]"
+                                        className="min-h-[80px]"
                                     />
                                 </div>
                             </div>
@@ -991,7 +1020,8 @@ export default function SolicitudesPropietarioPage() {
                                                 <Input
                                                     placeholder="Documento"
                                                     value={newTrabajadorDocumento}
-                                                    onChange={(e) => setNewTrabajadorDocumento(e.target.value)}
+                                                    inputMode="numeric"
+                                                    onChange={(e) => setNewTrabajadorDocumento(e.target.value.replace(/\D/g, ''))}
                                                 />
                                                 <Input
                                                     placeholder="ARL"
@@ -1025,9 +1055,16 @@ export default function SolicitudesPropietarioPage() {
                         <Button
                             className="flex-1"
                             onClick={handleCreateSubmit}
-                            disabled={!formTitulo.trim()}
+                            disabled={!formTitulo.trim() || creating}
                         >
-                            Crear Solicitud
+                            {creating ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Creando...
+                                </>
+                            ) : (
+                                'Crear Solicitud'
+                            )}
                         </Button>
                     </SheetFooter>
                 </SheetContent>
@@ -1147,7 +1184,7 @@ export default function SolicitudesPropietarioPage() {
                                         placeholder="Describe tu solicitud en detalle..."
                                         value={formDescripcion}
                                         onChange={(e) => setFormDescripcion(e.target.value)}
-                                        className="min-h-[150px]"
+                                        className="min-h-[80px]"
                                     />
                                 </div>
                             </div>
@@ -1273,7 +1310,8 @@ export default function SolicitudesPropietarioPage() {
                                                 <Input
                                                     placeholder="Documento"
                                                     value={newTrabajadorDocumento}
-                                                    onChange={(e) => setNewTrabajadorDocumento(e.target.value)}
+                                                    inputMode="numeric"
+                                                    onChange={(e) => setNewTrabajadorDocumento(e.target.value.replace(/\D/g, ''))}
                                                 />
                                                 <Input
                                                     placeholder="ARL"
@@ -1307,9 +1345,16 @@ export default function SolicitudesPropietarioPage() {
                         <Button
                             className="flex-1"
                             onClick={handleEditSubmit}
-                            disabled={!formTitulo.trim()}
+                            disabled={!formTitulo.trim() || updating}
                         >
-                            Guardar Cambios
+                            {updating ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Guardando...
+                                </>
+                            ) : (
+                                'Guardar Cambios'
+                            )}
                         </Button>
                     </SheetFooter>
                 </SheetContent>
@@ -1416,7 +1461,7 @@ export default function SolicitudesPropietarioPage() {
                                                         <div className="bg-gray-50 rounded-lg p-3">
                                                             <p className="text-xs text-gray-500 mb-1">Fecha inicio</p>
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                {new Date(selectedSolicitud.fechaInicio).toLocaleDateString('es-CO', {
+                                                                {new Date(selectedSolicitud.fechaInicio + 'T12:00:00').toLocaleDateString('es-CO', {
                                                                     day: 'numeric',
                                                                     month: 'short',
                                                                     year: 'numeric'
@@ -1428,7 +1473,7 @@ export default function SolicitudesPropietarioPage() {
                                                         <div className="bg-gray-50 rounded-lg p-3">
                                                             <p className="text-xs text-gray-500 mb-1">Fecha fin</p>
                                                             <p className="text-sm font-medium text-gray-900">
-                                                                {new Date(selectedSolicitud.fechaFinalizacion).toLocaleDateString('es-CO', {
+                                                                {new Date(selectedSolicitud.fechaFinalizacion + 'T12:00:00').toLocaleDateString('es-CO', {
                                                                     day: 'numeric',
                                                                     month: 'short',
                                                                     year: 'numeric'
@@ -1441,7 +1486,15 @@ export default function SolicitudesPropietarioPage() {
                                         )}
 
                                         {/* Tabla de trabajadores */}
-                                        {selectedSolicitud.trabajadores && selectedSolicitud.trabajadores.length > 0 && (
+                                        {loadingDetalle ? (
+                                            <div className="px-6 py-4">
+                                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Trabajadores</h4>
+                                                <div className="flex items-center justify-center py-8 text-gray-500">
+                                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                                    <span className="text-sm">Cargando trabajadores...</span>
+                                                </div>
+                                            </div>
+                                        ) : selectedSolicitud.trabajadores && selectedSolicitud.trabajadores.length > 0 ? (
                                             <div className="px-6 py-4">
                                                 <h4 className="text-sm font-semibold text-gray-900 mb-3">
                                                     Trabajadores ({selectedSolicitud.trabajadores.length})
@@ -1466,6 +1519,11 @@ export default function SolicitudesPropietarioPage() {
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                            </div>
+                                        ) : (
+                                            <div className="px-6 py-4">
+                                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Trabajadores</h4>
+                                                <p className="text-sm text-gray-500">No hay trabajadores registrados</p>
                                             </div>
                                         )}
                                     </>
@@ -1507,8 +1565,19 @@ export default function SolicitudesPropietarioPage() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                            Eliminar
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                            disabled={deleting}
+                        >
+                            {deleting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Eliminando...
+                                </>
+                            ) : (
+                                'Eliminar'
+                            )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
