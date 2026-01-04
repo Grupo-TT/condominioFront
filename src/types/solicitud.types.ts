@@ -12,7 +12,7 @@ export interface Solicitud {
   titulo: string
   tipo: 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia'
   fecha: string
-  estado: 'pendiente' | 'aprobada' | 'rechazada' | 'revisada'
+  estado: 'pendiente' | 'aprobada' | 'revisada' | 'desaprobada'
   descripcion?: string
   // Campos específicos para reparaciones locativas
   tipoObra?: 'Eléctrica' | 'Hidráulica' | 'Alturas (superior a 1.50m)' | 'Obra blanca' | 'Obra gris' | 'Otra' | string
