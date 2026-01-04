@@ -22,7 +22,6 @@ import {
   AccountStatusCard,
   MembersCard,
   ReservationsCard,
-  RequestsCard,
 } from "@/components/owner-dashboard"
 import { useDashboardProp } from '@/hooks/useDashboardProp';
 
@@ -79,12 +78,10 @@ export default function PropietarioDashboard() {
     ownerInfo,
     accountStatus,
     reservations,
-    solicitudes,
     loadingMembers,
     loadingOwnerInfo,
     loadingAccountStatus,
     loadingReservations,
-    loadingSolicitudes,
     setIdCasa,
   } = useDashboardProp();
 

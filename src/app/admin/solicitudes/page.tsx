@@ -82,7 +82,6 @@ export default function SolicitudesPage() {
     solicitudes,
     loading,
     loadingDetalle,
-    updatingEstado,
     deleting,
     fetchSolicitudes,
     fetchDetalle,
@@ -590,7 +589,7 @@ export default function SolicitudesPage() {
         enableSorting: false,
       },
     ],
-    [handleViewDetail, handleAprobarSolicitud, handleRechazarSolicitud, handleMarcarRevisadaSolicitud, getTipoIcono, getTipoColor]
+    [handleViewDetail, handleAprobarSolicitud, handleRechazarSolicitud, handleMarcarRevisadaSolicitud, handleEliminarSolicitud, getTipoIcono, getTipoColor]
   )
 
   const table = useReactTable({
