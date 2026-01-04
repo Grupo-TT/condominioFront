@@ -15,7 +15,7 @@
 export type TipoPqrsAPI = 'QUEJA' | 'PETICION' | 'SUGERENCIA' | 'REPARACION_LOCATIVA';
 
 /** PQRS status as returned by the API */
-export type EstadoPqrsAPI = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'REVISADA';
+export type EstadoPqrsAPI = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'REVISADA' | 'DESAPROBADA';
 
 /** Casa info in PQRS response */
 export interface PqrsCasa {
