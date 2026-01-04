@@ -197,6 +197,7 @@ export default function ReservasPropietarioPage() {
       if (axiosError?.response?.data?.message) {
         msg = axiosError.response.data.message;
       }
+      toast.error(msg, { description: 'No se pudo crear la reserva.' });
     }
   };
 

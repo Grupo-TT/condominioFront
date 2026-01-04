@@ -132,7 +132,7 @@ export const solicitudesData: Solicitud[] = [
     titulo: 'Reparación locativa en sistema eléctrico',
     tipo: 'reparacion-locativa',
     fecha: '2024-01-15',
-    estado: 'rechazada',
+    estado: 'desaprobada',
     descripcion: 'Solicitud de reparación del sistema eléctrico del apartamento debido a múltiples cortocircuitos y sobrecargas.\n\nProblemas detectados:\n- Interruptores que se activan frecuentemente\n- Varios tomacorrientes sin funcionamiento\n- Instalación eléctrica antigua que no cumple con normativas actuales\n- Riesgo de incendio por sobrecarga\n\nLa reparación requiere actualización completa del sistema eléctrico incluyendo tablero principal, cableado y tomacorrientes.\n\nDespués de la evaluación técnica, se determinó que el problema es responsabilidad del propietario y no corresponde a reparación locativa, por lo que la solicitud fue rechazada.',
     tipoObra: 'Eléctrica',
     fechaInicio: '2024-01-20',

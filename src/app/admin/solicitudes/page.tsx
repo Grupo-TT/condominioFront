@@ -1,13 +1,15 @@
 'use client'
 
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useSolicitudesAdmin, SolicitudAdmin } from '@/hooks/useSolicitudesAdmin'
+import { toast } from 'sonner'
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid'
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header'
 import { DataGridPagination } from '@/components/ui/data-grid-pagination'
 import { DataGridTable } from '@/components/ui/data-grid-table'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { MoreVertical, Eye, Check, X as XIcon, Search, X } from 'lucide-react'
+import { MoreVertical, Eye, Check, X as XIcon, Search, X, Loader2, Trash2 } from 'lucide-react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Wrench01Icon, Alert02Icon, NotificationCircleIcon, IdeaIcon, Home07Icon } from '@hugeicons/core-free-icons'
 import { Button, ButtonArrow } from '@/components/ui/button'
@@ -68,13 +70,30 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Solicitud } from '@/types/solicitud.types'
-import { solicitudesData } from '@/data/solicitudes.mock'
 import { TabSliderIndicator } from '@/components/ui/tab-slider-indicator'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SolicitudesPage() {
   useDocumentTitle('Solicitudes PQRS | Flor Digital');
-  
+
+  // API integration via hook
+  const {
+    solicitudes,
+    loading,
+    loadingDetalle,
+    deleting,
+    fetchSolicitudes,
+    fetchDetalle,
+    cambiarEstado,
+    eliminarSolicitud,
+  } = useSolicitudesAdmin();
+
+  // Fetch solicitudes on mount
+  useEffect(() => {
+    fetchSolicitudes();
+  }, [fetchSolicitudes]);
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -82,18 +101,18 @@ export default function SolicitudesPage() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'todas' | 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia'>('todas')
-  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'pendiente' | 'aprobada' | 'rechazada' | 'revisada'>('todas')
+  const [estadoFilter, setEstadoFilter] = useState<'todas' | 'pendiente' | 'aprobada' | 'revisada' | 'desaprobada'>('todas')
   const [estadoComboboxOpen, setEstadoComboboxOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false)
-  const [selectedSolicitud, setSelectedSolicitud] = useState<Solicitud | null>(null)
-  const [solicitudes, setSolicitudes] = useState<Solicitud[]>(solicitudesData)
+  const [selectedSolicitud, setSelectedSolicitud] = useState<SolicitudAdmin | null>(null)
 
   // Estados para los diálogos de confirmación
   const [showAprobarDialog, setShowAprobarDialog] = useState(false)
   const [showRechazarDialog, setShowRechazarDialog] = useState(false)
   const [showRevisadaDialog, setShowRevisadaDialog] = useState(false)
-  const [solicitudToAction, setSolicitudToAction] = useState<Solicitud | null>(null)
+  const [showEliminarDialog, setShowEliminarDialog] = useState(false)
+  const [solicitudToAction, setSolicitudToAction] = useState<SolicitudAdmin | null>(null)
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm('')
@@ -102,21 +121,20 @@ export default function SolicitudesPage() {
     }
   }, [])
 
-  const handleViewDetail = useCallback((solicitud: Solicitud) => {
-    setSelectedSolicitud(solicitud)
-    setIsDetailSheetOpen(true)
-  }, [])
-
-  // Función auxiliar para actualizar una solicitud
-  const updateSolicitud = useCallback((id: string, estado: 'aprobada' | 'rechazada' | 'revisada') => {
-    setSolicitudes(prev => prev.map(s =>
-      s.id === id ? { ...s, estado } : s
-    ))
-    // Si la solicitud está abierta en el sheet, actualizarla también
-    if (selectedSolicitud?.id === id) {
-      setSelectedSolicitud({ ...selectedSolicitud, estado })
+  const handleViewDetail = useCallback(async (solicitud: SolicitudAdmin) => {
+    // For reparacion-locativa, fetch full details including trabajadores
+    if (solicitud.tipo === 'reparacion-locativa') {
+      setIsDetailSheetOpen(true);
+      setSelectedSolicitud(solicitud); // Show basic info while loading
+      const detalle = await fetchDetalle(solicitud.id);
+      if (detalle) {
+        setSelectedSolicitud(detalle);
+      }
+    } else {
+      setSelectedSolicitud(solicitud);
+      setIsDetailSheetOpen(true);
     }
-  }, [selectedSolicitud])
+  }, [fetchDetalle])
 
   // Funciones para abrir los diálogos de confirmación
   const handleAprobar = useCallback(() => {
@@ -141,51 +159,96 @@ export default function SolicitudesPage() {
   }, [selectedSolicitud])
 
   // Funciones para trabajar directamente con una solicitud (desde el menú de acciones)
-  const handleAprobarSolicitud = useCallback((solicitud: Solicitud) => {
+  const handleAprobarSolicitud = useCallback((solicitud: SolicitudAdmin) => {
     setSolicitudToAction(solicitud)
     setShowAprobarDialog(true)
   }, [])
 
-  const handleRechazarSolicitud = useCallback((solicitud: Solicitud) => {
+  const handleRechazarSolicitud = useCallback((solicitud: SolicitudAdmin) => {
     setSolicitudToAction(solicitud)
     setShowRechazarDialog(true)
   }, [])
 
-  const handleMarcarRevisadaSolicitud = useCallback((solicitud: Solicitud) => {
+  const handleMarcarRevisadaSolicitud = useCallback((solicitud: SolicitudAdmin) => {
     setSolicitudToAction(solicitud)
     setShowRevisadaDialog(true)
   }, [])
 
+  const handleEliminarSolicitud = useCallback((solicitud: SolicitudAdmin) => {
+    setSolicitudToAction(solicitud)
+    setShowEliminarDialog(true)
+  }, [])
+
   // Funciones de confirmación que ejecutan la acción
-  const confirmAprobar = useCallback(() => {
+  const confirmAprobar = useCallback(async () => {
     if (solicitudToAction) {
-      console.log('Aprobar solicitud:', solicitudToAction.id)
-      // Aquí iría la llamada a la API para aprobar la solicitud
-      updateSolicitud(solicitudToAction.id, 'aprobada')
-      setShowAprobarDialog(false)
-      setSolicitudToAction(null)
+      try {
+        await cambiarEstado(solicitudToAction.id, 'aprobada');
+        toast.success('Solicitud aprobada', { description: 'La reparación locativa ha sido aprobada.' });
+        // Si la solicitud está abierta en el sheet, actualizarla también
+        if (selectedSolicitud?.id === solicitudToAction.id) {
+          setSelectedSolicitud({ ...selectedSolicitud, estado: 'aprobada' });
+        }
+      } catch (error) {
+        toast.error('Error al aprobar', { description: error instanceof Error ? error.message : 'No se pudo aprobar la solicitud.' });
+      } finally {
+        setShowAprobarDialog(false);
+        setSolicitudToAction(null);
+      }
     }
-  }, [solicitudToAction, updateSolicitud])
+  }, [solicitudToAction, selectedSolicitud, cambiarEstado])
 
-  const confirmRechazar = useCallback(() => {
+  const confirmDesaprobar = useCallback(async () => {
     if (solicitudToAction) {
-      console.log('Rechazar solicitud:', solicitudToAction.id)
-      // Aquí iría la llamada a la API para rechazar la solicitud
-      updateSolicitud(solicitudToAction.id, 'rechazada')
-      setShowRechazarDialog(false)
-      setSolicitudToAction(null)
+      try {
+        await cambiarEstado(solicitudToAction.id, 'desaprobada');
+        toast.success('Solicitud desaprobada', { description: 'La reparación locativa ha sido desaprobada.' });
+        if (selectedSolicitud?.id === solicitudToAction.id) {
+          setSelectedSolicitud({ ...selectedSolicitud, estado: 'desaprobada' });
+        }
+      } catch (error) {
+        toast.error('Error al desaprobar', { description: error instanceof Error ? error.message : 'No se pudo desaprobar la solicitud.' });
+      } finally {
+        setShowRechazarDialog(false);
+        setSolicitudToAction(null);
+      }
     }
-  }, [solicitudToAction, updateSolicitud])
+  }, [solicitudToAction, selectedSolicitud, cambiarEstado])
 
-  const confirmRevisada = useCallback(() => {
+  const confirmRevisada = useCallback(async () => {
     if (solicitudToAction) {
-      console.log('Marcar como revisada solicitud:', solicitudToAction.id)
-      // Aquí iría la llamada a la API para marcar como revisada
-      updateSolicitud(solicitudToAction.id, 'revisada')
-      setShowRevisadaDialog(false)
-      setSolicitudToAction(null)
+      try {
+        await cambiarEstado(solicitudToAction.id, 'revisada');
+        toast.success('Solicitud revisada', { description: 'La solicitud ha sido marcada como revisada.' });
+        if (selectedSolicitud?.id === solicitudToAction.id) {
+          setSelectedSolicitud({ ...selectedSolicitud, estado: 'revisada' });
+        }
+      } catch (error) {
+        toast.error('Error al actualizar', { description: error instanceof Error ? error.message : 'No se pudo marcar como revisada.' });
+      } finally {
+        setShowRevisadaDialog(false);
+        setSolicitudToAction(null);
+      }
     }
-  }, [solicitudToAction, updateSolicitud])
+  }, [solicitudToAction, selectedSolicitud, cambiarEstado])
+
+  const confirmEliminar = useCallback(async () => {
+    if (solicitudToAction) {
+      try {
+        await eliminarSolicitud(solicitudToAction.id);
+        toast.success('Solicitud eliminada', { description: 'La solicitud ha sido eliminada correctamente.' });
+        if (selectedSolicitud?.id === solicitudToAction.id) {
+          setIsDetailSheetOpen(false);
+          setSelectedSolicitud(null);
+        }
+      } catch (error) {
+        toast.error('Error al eliminar', { description: error instanceof Error ? error.message : 'No se pudo eliminar la solicitud.' });
+      } finally {
+        setShowEliminarDialog(false);
+        setSolicitudToAction(null);
+      }
+    }
+  }, [solicitudToAction, selectedSolicitud, eliminarSolicitud])
 
   // Filtrar datos basándose en el término de búsqueda, tipo y estado
   const filteredSolicitudes = useMemo(() => {
@@ -205,10 +268,11 @@ export default function SolicitudesPage() {
       // Filtrar por término de búsqueda
       if (searchTerm) {
         return (
-          solicitud.propietario.toLowerCase().includes(searchLower) ||
+          (solicitud.propietario?.toLowerCase() || '').includes(searchLower) ||
           solicitud.numeroCasa.toLowerCase().includes(searchLower) ||
           solicitud.titulo.toLowerCase().includes(searchLower) ||
-          solicitud.tipo.toLowerCase().includes(searchLower)
+          solicitud.tipo.toLowerCase().includes(searchLower) ||
+          solicitud.id.includes(searchLower)
         )
       }
 
@@ -266,7 +330,7 @@ export default function SolicitudesPage() {
     return tipoColors[tipo]
   }, [])
 
-  const columns = useMemo<ColumnDef<Solicitud>[]>(
+  const columns = useMemo<ColumnDef<SolicitudAdmin>[]>(
     () => [
       {
         accessorKey: 'titulo',
@@ -364,7 +428,7 @@ export default function SolicitudesPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          const fecha = new Date(row.original.fecha)
+          const fecha = new Date(row.original.fecha + 'T12:00:00')
           return (
             <div className="text-sm text-gray-600">
               {fecha.toLocaleDateString('es-CO', {
@@ -390,8 +454,14 @@ export default function SolicitudesPage() {
               className="text-gray-400"
             />
             <div>
-              <div className="font-medium text-gray-900">{row.original.propietario}</div>
-              <div className="text-xs text-gray-500">Casa No.{row.original.numeroCasa}</div>
+              {row.original.propietario ? (
+                <>
+                  <div className="font-medium text-gray-900">{row.original.propietario}</div>
+                  <div className="text-xs text-gray-500">Casa No.{row.original.numeroCasa}</div>
+                </>
+              ) : (
+                <div className="text-sm font-medium text-gray-700">Casa No.{row.original.numeroCasa}</div>
+              )}
             </div>
           </div>
         ),
@@ -415,10 +485,11 @@ export default function SolicitudesPage() {
             badgeVariant = 'success'
             dotColor = 'bg-green-500'
             estadoTexto = 'Aprobada'
-          } else if (estado === 'rechazada') {
+
+          } else if (estado === 'desaprobada') {
             badgeVariant = 'destructive'
             dotColor = 'bg-red-500'
-            estadoTexto = 'Rechazada'
+            estadoTexto = 'Desaprobada'
           } else if (estado === 'revisada') {
             badgeVariant = 'warning'
             dotColor = 'bg-blue-500'
@@ -487,7 +558,7 @@ export default function SolicitudesPage() {
                         className="hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700"
                       >
                         <XIcon className="mr-2 h-4 w-4" />
-                        Rechazar
+                        Desaprobar
                       </DropdownMenuItem>
                     </>
                   )}
@@ -500,6 +571,15 @@ export default function SolicitudesPage() {
                       Marcar como revisada
                     </DropdownMenuItem>
                   )}
+                  {solicitud.estado === 'pendiente' && (
+                    <DropdownMenuItem
+                      onClick={() => handleEliminarSolicitud(solicitud)}
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -509,14 +589,14 @@ export default function SolicitudesPage() {
         enableSorting: false,
       },
     ],
-    [handleViewDetail, handleAprobarSolicitud, handleRechazarSolicitud, handleMarcarRevisadaSolicitud, getTipoIcono, getTipoColor]
+    [handleViewDetail, handleAprobarSolicitud, handleRechazarSolicitud, handleMarcarRevisadaSolicitud, handleEliminarSolicitud, getTipoIcono, getTipoColor]
   )
 
   const table = useReactTable({
     columns,
     data: filteredSolicitudes,
     pageCount: Math.ceil((filteredSolicitudes?.length || 0) / pagination.pageSize),
-    getRowId: (row: Solicitud) => row.id,
+    getRowId: (row: SolicitudAdmin) => row.id,
     state: {
       pagination,
       sorting,
@@ -594,13 +674,13 @@ export default function SolicitudesPage() {
                             'ms-0.5 size-1.5 rounded-full',
                             estadoFilter === 'pendiente' ? 'bg-yellow-500' :
                               estadoFilter === 'aprobada' ? 'bg-green-500' :
-                                estadoFilter === 'rechazada' ? 'bg-red-500' :
+                                estadoFilter === 'desaprobada' ? 'bg-red-500' :
                                   'bg-blue-500'
                           )}></span>
                           <span className="truncate">
                             {estadoFilter === 'pendiente' ? 'Pendientes' :
                               estadoFilter === 'aprobada' ? 'Aprobadas' :
-                                estadoFilter === 'rechazada' ? 'Rechazadas' :
+                                estadoFilter === 'desaprobada' ? 'Desaprobadas' :
                                   'Revisadas'}
                           </span>
                         </span>
@@ -655,19 +735,7 @@ export default function SolicitudesPage() {
                             </span>
                             {estadoFilter === 'aprobada' && <CommandCheck />}
                           </CommandItem>
-                          <CommandItem
-                            value="rechazada"
-                            onSelect={() => {
-                              setEstadoFilter('rechazada')
-                              setEstadoComboboxOpen(false)
-                            }}
-                          >
-                            <span className="flex items-center gap-2.5">
-                              <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
-                              <span className="truncate">Rechazadas</span>
-                            </span>
-                            {estadoFilter === 'rechazada' && <CommandCheck />}
-                          </CommandItem>
+
                           <CommandItem
                             value="revisada"
                             onSelect={() => {
@@ -680,6 +748,19 @@ export default function SolicitudesPage() {
                               <span className="truncate">Revisadas</span>
                             </span>
                             {estadoFilter === 'revisada' && <CommandCheck />}
+                          </CommandItem>
+                          <CommandItem
+                            value="desaprobada"
+                            onSelect={() => {
+                              setEstadoFilter('desaprobada')
+                              setEstadoComboboxOpen(false)
+                            }}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <span className="ms-1 size-1.5 rounded-full bg-red-500"></span>
+                              <span className="truncate">Desaprobadas</span>
+                            </span>
+                            {estadoFilter === 'desaprobada' && <CommandCheck />}
                           </CommandItem>
                         </CommandGroup>
                       </CommandList>
@@ -712,7 +793,23 @@ export default function SolicitudesPage() {
             </div>
 
             <TabsContent value="todas">
-              {hasResults ? (
+              {loading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+                      <Skeleton className="w-10 h-10 rounded-lg" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-3 w-2/3" />
+                      </div>
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                      <Skeleton className="h-8 w-8 rounded-md" />
+                    </div>
+                  ))}
+                </div>
+              ) : hasResults ? (
                 <DataGrid
                   table={table}
                   recordCount={filteredSolicitudes?.length || 0}
@@ -997,60 +1094,60 @@ export default function SolicitudesPage() {
               {/* Contenido */}
               <div className="flex-1 overflow-y-auto px-6 pt-2 pb-4">
                 <div className="space-y-4">
-                  {/* Grid 4 columnas: ID, Fecha, Tipo, Estado */}
-                  <div className="grid grid-cols-[auto_auto_auto_auto] gap-4">
+                  {/* Grid de información con cards */}
+                  <div className="grid grid-cols-2 gap-3">
                     {/* ID Solicitud */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">ID Solicitud</div>
-                      <div className="text-sm text-gray-900">#{selectedSolicitud.id}</div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">ID Solicitud</p>
+                      <p className="text-sm font-medium text-gray-900">#{selectedSolicitud.id}</p>
                     </div>
 
                     {/* Fecha */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Fecha:</div>
-                      <div className="text-sm text-gray-900 whitespace-nowrap">
-                        {new Date(selectedSolicitud.fecha).toLocaleDateString('es-CO', {
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">Fecha de creación</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(selectedSolicitud.fecha + 'T12:00:00').toLocaleDateString('es-CO', {
                           day: 'numeric',
-                          month: 'short',
+                          month: 'long',
                           year: 'numeric',
                         })}
-                      </div>
+                      </p>
                     </div>
 
-                    {/* Tipo */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Tipo:</div>
-                      <div className="flex items-center h-5">
-                        <Badge
-                          className="border"
-                          style={{
-                            backgroundColor: selectedSolicitud.tipo === 'reparacion-locativa'
-                              ? '#E3E4EA'
-                              : selectedSolicitud.tipo === 'queja'
-                                ? '#F1E8D6'
-                                : '#E6EFEA',
-                            color: selectedSolicitud.tipo === 'reparacion-locativa'
-                              ? '#595D75'
-                              : selectedSolicitud.tipo === 'queja'
-                                ? '#A39170'
-                                : '#4C6C5A',
-                            borderColor: selectedSolicitud.tipo === 'reparacion-locativa'
-                              ? '#595D75'
-                              : selectedSolicitud.tipo === 'queja'
-                                ? '#A39170'
-                                : '#4C6C5A'
-                          }}
-                          size="sm"
-                        >
-                          {getTipoNombre(selectedSolicitud.tipo)}
-                        </Badge>
+                    {/* Casa */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">Casa</p>
+                      <p className="text-sm font-medium text-gray-900">Casa No. {selectedSolicitud.numeroCasa}</p>
+                    </div>
+
+                    {/* Propietario */}
+                    {selectedSolicitud.propietario && (
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 mb-1">Propietario</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedSolicitud.propietario}</p>
                       </div>
+                    )}
+
+                    {/* Tipo */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">Tipo</p>
+                      <Badge
+                        className="border mt-1"
+                        style={{
+                          backgroundColor: getTipoColor(selectedSolicitud.tipo).bg,
+                          color: getTipoColor(selectedSolicitud.tipo).text,
+                          borderColor: getTipoColor(selectedSolicitud.tipo).border,
+                        }}
+                        size="sm"
+                      >
+                        {getTipoNombre(selectedSolicitud.tipo)}
+                      </Badge>
                     </div>
 
                     {/* Estado */}
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Estado:</div>
-                      <div className="flex items-center h-5">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">Estado</p>
+                      <div className="mt-1">
                         {(() => {
                           const estado = selectedSolicitud.estado
                           let badgeVariant: 'success' | 'destructive' | 'warning' = 'warning'
@@ -1062,10 +1159,11 @@ export default function SolicitudesPage() {
                             badgeVariant = 'success'
                             dotColor = 'bg-green-500'
                             estadoTexto = 'Aprobada'
-                          } else if (estado === 'rechazada') {
+
+                          } else if (estado === 'desaprobada') {
                             badgeVariant = 'destructive'
                             dotColor = 'bg-red-500'
-                            estadoTexto = 'Rechazada'
+                            estadoTexto = 'Desaprobada'
                           } else if (estado === 'revisada') {
                             badgeVariant = 'warning'
                             dotColor = 'bg-blue-500'
@@ -1094,36 +1192,37 @@ export default function SolicitudesPage() {
                     <>
                       {/* Tipo de obra y fechas */}
                       {(selectedSolicitud.tipoObra || selectedSolicitud.fechaInicio || selectedSolicitud.fechaFinalizacion) && (
-                        <div className="pt-3 border-t border-gray-200">
-                          <div className="grid grid-cols-3 gap-4">
+                        <div className="pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-3">Información de la Obra</h4>
+                          <div className="grid grid-cols-3 gap-3">
                             {selectedSolicitud.tipoObra && (
-                              <div>
-                                <div className="text-xs text-gray-500 mb-1">Tipo de obra:</div>
-                                <div className="text-sm text-gray-900">{selectedSolicitud.tipoObra}</div>
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-500 mb-1">Tipo de obra</p>
+                                <p className="text-sm font-medium text-gray-900">{selectedSolicitud.tipoObra}</p>
                               </div>
                             )}
                             {selectedSolicitud.fechaInicio && (
-                              <div>
-                                <div className="text-xs text-gray-500 mb-1">Fecha de inicio:</div>
-                                <div className="text-sm text-gray-900 whitespace-nowrap">
-                                  {new Date(selectedSolicitud.fechaInicio).toLocaleDateString('es-CO', {
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-500 mb-1">Fecha inicio</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {new Date(selectedSolicitud.fechaInicio + 'T12:00:00').toLocaleDateString('es-CO', {
                                     day: 'numeric',
                                     month: 'short',
                                     year: 'numeric',
                                   })}
-                                </div>
+                                </p>
                               </div>
                             )}
                             {selectedSolicitud.fechaFinalizacion && (
-                              <div>
-                                <div className="text-xs text-gray-500 mb-1">Fecha de finalización:</div>
-                                <div className="text-sm text-gray-900 whitespace-nowrap">
-                                  {new Date(selectedSolicitud.fechaFinalizacion).toLocaleDateString('es-CO', {
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-xs text-gray-500 mb-1">Fecha fin</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {new Date(selectedSolicitud.fechaFinalizacion + 'T12:00:00').toLocaleDateString('es-CO', {
                                     day: 'numeric',
                                     month: 'short',
                                     year: 'numeric',
                                   })}
-                                </div>
+                                </p>
                               </div>
                             )}
                           </div>
@@ -1131,31 +1230,42 @@ export default function SolicitudesPage() {
                       )}
 
                       {/* Tabla de trabajadores */}
-                      {selectedSolicitud.trabajadores && selectedSolicitud.trabajadores.length > 0 && (
-                        <div className="pt-3 border-t border-gray-200">
-                          <div className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Trabajadores</div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="text-left text-xs font-medium text-gray-500 py-2 px-3">Nombre</th>
-                                  <th className="text-left text-xs font-medium text-gray-500 py-2 px-3">Documento</th>
-                                  <th className="text-left text-xs font-medium text-gray-500 py-2 px-3">ARL</th>
+                      <div className="pt-4 border-t border-gray-200">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                          Trabajadores {selectedSolicitud.trabajadores && selectedSolicitud.trabajadores.length > 0 &&
+                            `(${selectedSolicitud.trabajadores.length})`
+                          }
+                        </h4>
+                        {loadingDetalle ? (
+                          <div className="flex items-center justify-center py-8 text-gray-500">
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            <span className="text-sm">Cargando trabajadores...</span>
+                          </div>
+                        ) : selectedSolicitud.trabajadores && selectedSolicitud.trabajadores.length > 0 ? (
+                          <div className="border rounded-lg overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 border-b">
+                                <tr>
+                                  <th className="text-left px-4 py-2 font-medium text-gray-600">Nombre</th>
+                                  <th className="text-left px-4 py-2 font-medium text-gray-600">Documento</th>
+                                  <th className="text-left px-4 py-2 font-medium text-gray-600">ARL</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {selectedSolicitud.trabajadores.map((trabajador, index) => (
-                                  <tr key={index} className="border-b border-gray-100 last:border-b-0">
-                                    <td className="text-sm text-gray-900 py-2 px-3">{trabajador.nombre}</td>
-                                    <td className="text-sm text-gray-900 py-2 px-3">{trabajador.documento}</td>
-                                    <td className="text-sm text-gray-900 py-2 px-3">{trabajador.arl}</td>
+                                  <tr key={index} className="border-b last:border-b-0">
+                                    <td className="px-4 py-2 text-gray-900">{trabajador.nombre}</td>
+                                    <td className="px-4 py-2 text-gray-600">{trabajador.documento}</td>
+                                    <td className="px-4 py-2 text-gray-600">{trabajador.arl}</td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <p className="text-sm text-gray-500 py-2">No hay trabajadores registrados</p>
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
@@ -1186,7 +1296,7 @@ export default function SolicitudesPage() {
                           onClick={handleDesaprobar}
                         >
                           <XIcon className="w-4 h-4 mr-2" />
-                          Rechazar
+                          Desaprobar
                         </Button>
                         <Button
                           className="flex-1"
@@ -1254,9 +1364,9 @@ export default function SolicitudesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Rechazar solicitud?</AlertDialogTitle>
+            <AlertDialogTitle>¿Desaprobar solicitud?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que deseas rechazar la solicitud &quot;{solicitudToAction?.titulo}&quot;?
+              ¿Estás seguro de que deseas desaprobar la solicitud &quot;{solicitudToAction?.titulo}&quot;?
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1264,8 +1374,8 @@ export default function SolicitudesPage() {
             <AlertDialogCancel>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRechazar} className="bg-red-600 hover:bg-red-700">
-              Rechazar
+            <AlertDialogAction onClick={confirmDesaprobar} className="bg-red-600 hover:bg-red-700">
+              Desaprobar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1294,6 +1404,34 @@ export default function SolicitudesPage() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={confirmRevisada} className="bg-blue-600 hover:bg-blue-700">
               Marcar como revisada
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showEliminarDialog}
+        onOpenChange={(open) => {
+          setShowEliminarDialog(open)
+          if (!open) {
+            setSolicitudToAction(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar solicitud?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar la solicitud &quot;{solicitudToAction?.titulo}&quot;?
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmEliminar} className="bg-red-600 hover:bg-red-700">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
