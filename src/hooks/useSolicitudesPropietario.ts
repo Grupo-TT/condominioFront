@@ -48,8 +48,9 @@ const mapEstadoToUI = (estadoPqrs: PqrsItem['estadoPqrs']): EstadoSolicitudUI =>
     const mapping: Record<PqrsItem['estadoPqrs'], EstadoSolicitudUI> = {
         PENDIENTE: 'pendiente',
         APROBADA: 'aprobada',
-        RECHAZADA: 'rechazada',
+        RECHAZADA: 'desaprobada',
         REVISADA: 'revisada',
+        DESAPROBADA: 'desaprobada',
     };
     return mapping[estadoPqrs] || 'pendiente';
 };

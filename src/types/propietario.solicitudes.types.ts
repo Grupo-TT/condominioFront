@@ -164,7 +164,7 @@ export interface PqrsDetalleResponse {
 export type TipoSolicitudUI = 'reparacion-locativa' | 'queja' | 'peticion' | 'sugerencia';
 
 /** UI type mapping for solicitud estado */
-export type EstadoSolicitudUI = 'pendiente' | 'aprobada' | 'rechazada' | 'revisada';
+export type EstadoSolicitudUI = 'pendiente' | 'aprobada' | 'revisada' | 'desaprobada';
 
 /** Worker info adapted for UI (matches existing Trabajador interface) */
 export interface TrabajadorUI {

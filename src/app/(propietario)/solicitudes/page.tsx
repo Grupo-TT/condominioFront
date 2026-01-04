@@ -400,10 +400,10 @@ export default function SolicitudesPropietarioPage() {
             badgeVariant = 'success'
             dotColor = 'bg-green-500'
             estadoTexto = 'Aprobada'
-        } else if (estado === 'rechazada') {
+        } else if (estado === 'desaprobada') {
             badgeVariant = 'destructive'
             dotColor = 'bg-red-500'
-            estadoTexto = 'Rechazada'
+            estadoTexto = 'Desaprobada'
         } else if (estado === 'revisada') {
             badgeVariant = 'warning'
             dotColor = 'bg-blue-500'
