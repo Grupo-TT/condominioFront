@@ -48,7 +48,7 @@ export default function Page() {
   useDocumentTitle('Dashboard Admin | Flor Digital');
 
   const { fetchResumenFinancieroAnio, fetchResumenFinancieroMes, fetchCasas, fetchTypes } = useDashboardAdmin()
-  const [selectedYear, setSelectedYear] = useState<number>(2025)
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [monthlyData2, setMonthlyData] = useState<MonthlyData[]>([])
   const [monthSummary, setMonthSummary] = useState<DashboardSummary>(defaultSummary)
   const [housesStatus2, setHousesStatus] = useState<HousesStatusData>(defaultHousesStatus)
