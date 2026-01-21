@@ -1,4 +1,4 @@
-// middleware.ts (en la raíz del proyecto, NO dentro de src/)
+// middleware.ts (Ubicado en src/middleware.ts para que Next.js lo detecte correctamente)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { shouldRedirectToCorrectRoute, getDashboardRoute } from '@/lib/utils/role-routes';
@@ -22,6 +22,20 @@ const ownerOnlyRoutes = [
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  // 0. Evitar bucles infinitos para la página de mantenimiento y archivos estáticos
+  if (path === '/mantenimiento' || path.startsWith('/_next') || path.includes('.')) {
+    return NextResponse.next();
+  }
+
+  // 1. Verificar modo mantenimiento
+  const maintenanceEnv = process.env.NEXT_PUBLIC_MAINTENANCE_MODE || process.env.MAINTENANCE_MODE;
+  const isMaintenanceMode = maintenanceEnv === 'true';
+
+  if (isMaintenanceMode) {
+    // Si estamos en mantenimiento, "reescribir" la URL internamente a /mantenimiento
+    return NextResponse.rewrite(new URL('/mantenimiento', req.url));
+  }
 
   // 4. Obtener el token y el rol de las cookies
   const token = req.cookies.get('access_token')?.value;
