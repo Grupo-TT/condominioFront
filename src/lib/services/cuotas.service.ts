@@ -1,4 +1,4 @@
-import { CreateMovimiento, PagoPayload } from "@/types/cuotas.types";
+import { AbonoPayload, CreateMovimiento, PagoPayload } from "@/types/cuotas.types";
 import apiClient from "../config/axios.config";
 import { isAxiosError } from "axios";
 
@@ -14,8 +14,8 @@ export const getPorCobrar = async () => {
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al obtener las casas por cobrar:", message);
     throw error;
   }
@@ -28,9 +28,24 @@ export const registrarPago = async (payload: PagoPayload) => {
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al registrar el pago:", message);
+    throw error;
+  }
+};
+
+export const abonoCasa = async (payload: AbonoPayload) => {
+  try {
+    const { data } = await apiClient.post("/pago/abono-casa", payload);
+    return data;
+  } catch (error: unknown) {
+    const message = isAxiosError(error)
+      ? error.response?.data || error.message
+      : error instanceof Error
+        ? error.message
+        : "Error desconocido";
+    console.error("Error al realizar el abono en cascada:", message);
     throw error;
   }
 };
@@ -45,8 +60,8 @@ export const enviarPazYSalvo = async (idCasa: number): Promise<PazYSalvoResponse
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al llamar al endpoint paz y salvo:", message);
     throw error;
   }
@@ -65,8 +80,8 @@ export const getMovimientosMes = async (mes: number, anio: number) => {
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al obtener los movimientos del mes:", message);
     throw error;
   }
@@ -80,8 +95,8 @@ export const registrarMovimiento = async (payload: CreateMovimiento) => {
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al registrar el movimiento:", message);
     throw error;
   }
@@ -95,8 +110,8 @@ export const editarMovimiento = async (id: number | string, payload: CreateMovim
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
     console.error("Error al modificar el movimiento:", message);
     throw error;
   }
@@ -110,8 +125,8 @@ export const eliminarMovimiento = async (id: number | string) => {
     const message = isAxiosError(error)
       ? error.response?.data || error.message
       : error instanceof Error
-      ? error.message
-      : "Error desconocido";
+        ? error.message
+        : "Error desconocido";
 
     console.error("Error al eliminar el movimiento:", message);
     throw error;

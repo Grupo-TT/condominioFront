@@ -282,12 +282,8 @@ export default function MovimientosPage() {
 
   const handleEdit = useCallback((movimiento: Movimiento) => {
     setEditingMovimiento(movimiento)
-    // Fix: Create date using local components to avoid timezone shift
     const dateStr = movimiento.fecha as string;
-    const [year, month, day] = dateStr.includes('T')
-      ? dateStr.split('T')[0].split('-').map(Number)
-      : dateStr.split('-').map(Number);
-    setEditFecha(new Date(year, month - 1, day));
+    setEditFecha(new Date(dateStr));
 
     setEditTipo(movimiento.tipo)
     setEditDescripcion(movimiento.descripcion || movimiento.concepto || '')
@@ -467,14 +463,8 @@ export default function MovimientosPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          // Fix: Parse YYYY-MM-DD manually to prevent UTC timezone shift
           const dateStr = row.original.fecha as string;
-          // Ensure we're dealing with a string date in YYYY-MM-DD format
-          const [year, month, day] = dateStr.includes('T')
-            ? dateStr.split('T')[0].split('-').map(Number)
-            : dateStr.split('-').map(Number);
-
-          const fecha = new Date(year, month - 1, day);
+          const fecha = new Date(dateStr);
 
           return (
             <div className="text-sm text-gray-600">
