@@ -135,8 +135,8 @@ export function AgregarMiembroSheet({
 
     if (!formDocumento.trim()) {
       newErrors.documento = "El número de documento es obligatorio";
-    } else if (!/^[0-9]{6,12}$/.test(formDocumento.replace(/\s/g, ""))) {
-      newErrors.documento = "El documento debe tener entre 6 y 12 dígitos";
+    } else if (!/^[0-9]{7,12}$/.test(formDocumento.replace(/\s/g, ""))) {
+      newErrors.documento = "El documento debe tener entre 7 y 12 dígitos";
     }
 
     setErrors(newErrors);
@@ -502,7 +502,7 @@ export function AgregarMiembroSheet({
                           }
                         }
                       }}
-                      placeholder="Ej: 1234567890"
+                      placeholder="Ej: 1234567"
                       required
                       invalid={!!errors.documento}
                       error={errors.documento}

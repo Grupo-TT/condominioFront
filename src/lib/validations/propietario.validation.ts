@@ -7,7 +7,7 @@ export const propietarioSchema = z.object({
     .min(1, "Primer nombre es obligatorio")
     .min(1, "Primer nombre debe tener al menos 1 caracter")
     .max(25, "Primer nombre debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Primer nombre solo puede contener letras sin espacios"),
+    .regex(/^[A-Za-zÀ-ÿÑñ\s]+$/, "Primer nombre solo puede contener letras y espacios"),
 
   segundoNombre: z
     .string()
@@ -21,12 +21,12 @@ export const propietarioSchema = z.object({
     .min(1, "Primer apellido es obligatorio")
     .min(1, "Primer apellido debe tener al menos 1 caracter")
     .max(25, "Primer apellido debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Primer apellido solo puede contener letras sin espacios"),
+    .regex(/^[A-Za-zÀ-ÿÑñ\s]+$/, "Primer apellido solo puede contener letras y espacios"),
 
   segundoApellido: z
     .string()
     .max(25, "Segundo apellido debe tener máximo 25 caracteres")
-    .regex(/^[A-Za-zÀ-ÿÑñ]+$/, "Segundo apellido solo puede contener letras sin espacios")
+    .regex(/^[A-Za-zÀ-ÿÑñ\s]+$/, "Segundo apellido solo puede contener letras y espacios")
     .optional()
     .or(z.literal("")),
 
@@ -41,7 +41,7 @@ export const propietarioSchema = z.object({
     .string()
     .min(1, "El número de documento es obligatorio")
     .regex(/^\d+$/, "El número de documento solo puede contener números")
-    .min(8, "El número de documento debe tener mínimo 8 dígitos")
+    .min(7, "El número de documento debe tener mínimo 7 dígitos")
     .max(10, "El número de documento debe tener máximo 10 dígitos"),
 
   email: z

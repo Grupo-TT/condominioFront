@@ -208,7 +208,7 @@ export function PropietarioForm({ onSubmit, onCancel, initialCasa, initialRol }:
                       name="numeroDocumento"
                       label="Número de Documento"
                       required={true}
-                      placeholder="Ej: 12345678"
+                      placeholder="Ej: 1234567"
                       type="text"
                       autoComplete="off"
                       invalid={fieldState.invalid}
