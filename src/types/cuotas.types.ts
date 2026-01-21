@@ -34,6 +34,11 @@ export interface PagoPayload {
   montoAPagar: number;
 }
 
+export interface AbonoPayload {
+  idCasa: number;
+  montoAbono: number;
+}
+
 export interface Multa {
   id: string;
   casaId: string;

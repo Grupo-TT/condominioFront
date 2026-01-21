@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { getPorCobrar, registrarPago } from '@/lib/services/cuotas.service'
-import { CuotaCasa, PagoPayload } from '@/types/cuotas.types'
+import { getPorCobrar, registrarPago, abonoCasa } from '@/lib/services/cuotas.service'
+import { AbonoPayload, CuotaCasa, PagoPayload } from '@/types/cuotas.types'
 import axios from 'axios'
 
 export const useCuotas = () => {
@@ -19,8 +19,8 @@ export const useCuotas = () => {
       setCasas(response?.data || [])
     } catch (err) {
       // Si el error es 400 con mensaje de "no hay casas", simplemente establecer casas vacías
-      if (axios.isAxiosError(err) && err.response?.status === 400 && 
-          (err.response?.data as { message?: string })?.message?.includes('No hay casas')) {
+      if (axios.isAxiosError(err) && err.response?.status === 400 &&
+        (err.response?.data as { message?: string })?.message?.includes('No hay casas')) {
         setCasas([])
         return
       }
@@ -57,11 +57,36 @@ export const useCuotas = () => {
     }
   }, [fetchCasas])
 
+  /**
+   * Realizar abono en cascada
+   */
+  const handleAbonoCasa = useCallback(async (payload: AbonoPayload) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await abonoCasa(payload)
+      // Actualizar la lista de casas después del abono
+      await fetchCasas()
+      return data
+    } catch (err) {
+      const errorMessage = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message || err.message || 'Error al realizar el abono'
+        : err instanceof Error
+          ? err.message
+          : 'Error al realizar el abono'
+      setError(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [fetchCasas])
+
   return {
     casas,
-    loading, 
+    loading,
     error,
     fetchCasas,
-    handleRegistrarPago 
+    handleRegistrarPago,
+    handleAbonoCasa
   }
 }

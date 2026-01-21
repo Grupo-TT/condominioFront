@@ -339,7 +339,11 @@ export default function CuotasPage() {
   const [detailObligacion, setDetailObligacion] = useState<Obligacion | null>(null);
   const [detailCasa, setDetailCasa] = useState<CuotaCasa | null>(null);
 
-  const { casas, loading, error, fetchCasas, handleRegistrarPago } =
+  // Estados para el sheet de abono en cascada
+  const [isAbonoSheetOpen, setIsAbonoSheetOpen] = useState(false);
+  const [abonoAmount, setAbonoAmount] = useState(0);
+
+  const { casas, loading, error, fetchCasas, handleRegistrarPago, handleAbonoCasa } =
     useCuotas();
   // Función para limpiar búsqueda
   const handleClearSearch = () => {
@@ -392,21 +396,7 @@ export default function CuotasPage() {
     },
   });
 
-  // Función para abrir el sheet desde una casa
-  const handleCasaClick = useCallback(
-    (casa: CuotaCasa) => {
-      setSelectedCasa(casa);
-      setSelectedObligacion(null); // No preseleccionar obligación
-      form.reset({
-        obligacionId: '',
-        tipoObligacion: '',
-        monto: 0,
-      });
-      setShowAllErrors(false);
-      setIsSheetOpen(true);
-    },
-    [form]
-  );
+
 
   // Función para abrir el sheet desde una obligación específica
   const handleObligacionClick = useCallback(
@@ -433,6 +423,54 @@ export default function CuotasPage() {
     },
     []
   );
+
+  // Función para abrir el sheet de abono único (cascada)
+  const handleAbonoClick = useCallback(
+    (casa: CuotaCasa) => {
+      setSelectedCasa(casa);
+      setAbonoAmount(0);
+      setIsAbonoSheetOpen(true);
+    },
+    []
+  );
+
+  // Función para procesar el abono en cascada
+  const handleAbonoSubmit = async () => {
+    if (!selectedCasa || abonoAmount <= 0) return;
+
+    if (abonoAmount > selectedCasa.saldoPendiente) {
+      toast.error('El monto supera la deuda total de la casa');
+      return;
+    }
+
+    try {
+      await handleAbonoCasa({
+        idCasa: selectedCasa.numeroCasa,
+        montoAbono: abonoAmount,
+      });
+
+      toast.success('Abono registrado exitosamente', {
+        description: 'El abono ha sido distribuido correctamente en las obligaciones.',
+        duration: 5000,
+      });
+
+      setIsAbonoSheetOpen(false);
+      setAbonoAmount(0);
+    } catch (error: unknown) {
+      const errorMessage = axios.isAxiosError(error)
+        ? (error.response?.data as { message?: string })?.message ||
+        error.message ||
+        'Error al registrar el abono.'
+        : error instanceof Error
+          ? error.message
+          : 'Error al registrar el abono.';
+
+      toast.error(errorMessage, {
+        description: 'No se pudo completar la operación.',
+        duration: 5000,
+      });
+    }
+  };
 
   const handleFormSubmit = async (data: PagoFormData) => {
     // Validación adicional: verificar que el monto no supere el saldo pendiente
@@ -492,10 +530,12 @@ export default function CuotasPage() {
   // Función para cancelar
   const handleCancelar = () => {
     setIsSheetOpen(false);
+    setIsAbonoSheetOpen(false);
     setSelectedCasa(null);
     setSelectedObligacion(null);
     form.reset();
-    console.log("Registro de pago cancelado.");
+    setAbonoAmount(0);
+    console.log("Acción de pago cancelada.");
     setShowAllErrors(false);
   };
 
@@ -539,6 +579,28 @@ export default function CuotasPage() {
       });
     }
   }, [error]);
+
+  // Cálculo de la distribución del abono para la vista previa
+  const abonoDistribution = useMemo(() => {
+    if (!selectedCasa || abonoAmount <= 0) return [];
+
+    // Ordenar obligaciones por ID (de la más vieja a la más nueva)
+    const sortedObligaciones = [...selectedCasa.obligacionesPendientes].sort((a, b) => a.id - b.id);
+
+    let remainingAmount = abonoAmount;
+    return sortedObligaciones.map(ob => {
+      const applyToThis = Math.min(remainingAmount, ob.valorPendiente);
+      const newSaldo = ob.valorPendiente - applyToThis;
+      remainingAmount -= applyToThis;
+
+      return {
+        ...ob,
+        abonoAplicado: applyToThis,
+        nuevoSaldo: newSaldo,
+        isFullyPaid: newSaldo === 0
+      };
+    }).filter(distribution => distribution.abonoAplicado > 0);
+  }, [selectedCasa, abonoAmount]);
 
   const columns = useMemo<ColumnDef<CuotaCasa>[]>(
     () => [
@@ -662,9 +724,8 @@ export default function CuotasPage() {
           <DataGridColumnHeader title="Último Pago" column={column} />
         ),
         cell: ({ row }) => {
-          // Agregar T12:00:00 para evitar desfase de zona horaria
           const fechaStr = row.original.ultimoPago;
-          const fecha = fechaStr ? new Date(`${fechaStr}T12:00:00`) : null;
+          const fecha = fechaStr ? new Date(fechaStr) : null;
           return (
             <div className="text-sm text-gray-600">
               {fecha && !isNaN(fecha.getTime())
@@ -695,7 +756,7 @@ export default function CuotasPage() {
                     size="sm"
                     variant="primary"
                     className="gap-2 items-center justify-center"
-                    onClick={() => handleCasaClick(row.original)}
+                    onClick={() => handleAbonoClick(row.original)}
                   >
                     <div className="flex items-center gap-2">
                       <HugeiconsIcon
@@ -708,7 +769,7 @@ export default function CuotasPage() {
                         }}
                       />
                       <span style={{ paddingTop: '2px', paddingBottom: '0px' }}>
-                        Registrar
+                        Abonar
                       </span>
                     </div>
                   </Button>
@@ -809,7 +870,7 @@ export default function CuotasPage() {
         },
       },
     ],
-    [handleCasaClick, handleObligacionClick, handleViewObligacionDetail, sendingPazYSalvoCasaId]
+    [handleAbonoClick, handleObligacionClick, handleViewObligacionDetail, sendingPazYSalvoCasaId]
   );
 
   const table = useReactTable({
@@ -1292,6 +1353,211 @@ export default function CuotasPage() {
                 className="flex-1 h-10 font-medium"
               >
                 Registrar Pago
+              </Button>
+            </SheetFooter>
+          </TooltipProvider>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet de Abono Único (Cascada) */}
+      <Sheet open={isAbonoSheetOpen} onOpenChange={setIsAbonoSheetOpen}>
+        <SheetContent
+          side="right"
+          className="data-[state=open]:duration-300 data-[state=closed]:duration-250 flex flex-col p-0 rounded-lg! top-2! bottom-2! right-2! h-[calc(100vh-1rem)]! overflow-hidden"
+          style={{ width: '550px', maxWidth: 'none' }}
+        >
+          <TooltipProvider>
+            {/* Header con icono mejorado */}
+            <div className="px-6 pt-6 pb-5 border-b border-gray-100 rounded-t-lg">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-green-50">
+                  <HugeiconsIcon icon={MoneyReceiveFlow01Icon} size={24} className="text-green-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-base font-semibold text-gray-900 mb-0.5">
+                    Abono en Cascada
+                  </SheetTitle>
+                  <SheetDescription className="text-sm text-gray-500">
+                    Se aplica automáticamente a la deuda más antigua.
+                  </SheetDescription>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="space-y-6 px-6 py-6">
+                {/* Información de la casa - Diseño estandarizado */}
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-gray-700 block text-left">
+                    Casa seleccionada
+                  </span>
+                  <div className="relative bg-white border border-gray-200 rounded-xl p-6 shadow-sm overflow-hidden">
+                    {/* Background pattern */}
+                    <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/10"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/10 rounded-full translate-y-12 -translate-x-12"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 text-left">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                          <HugeiconsIcon
+                            icon={Home01Icon}
+                            className="w-6 h-6 text-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Casa No. {selectedCasa?.numeroCasa}
+                          </h3>
+                          <p className="text-sm text-gray-600 font-medium">
+                            {selectedCasa?.propietario?.nombreCompleto ?? "Sin Propietario"}
+                          </p>
+                        </div>
+                        <div className="ml-auto text-right">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Saldo Pendiente</span>
+                          <span className="text-lg font-bold text-red-600">
+                            {new Intl.NumberFormat('es-CO', {
+                              style: 'currency',
+                              currency: 'COP',
+                              maximumFractionDigits: 0
+                            }).format(selectedCasa?.saldoPendiente || 0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Monto a abonar */}
+                <div className="space-y-3">
+                  <Label
+                    htmlFor="abono-monto"
+                    className="text-sm font-medium text-gray-700 block text-left"
+                  >
+                    Monto a abonar
+                    <span className="text-red-500 ml-1">*</span>
+                  </Label>
+                  <div className="relative group">
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-2xl font-medium focus-within:text-primary transition-colors">
+                      $
+                    </span>
+                    <NumericFormat
+                      id="abono-monto"
+                      placeholder="0"
+                      value={abonoAmount || ''}
+                      onValueChange={(values) => {
+                        const { floatValue } = values;
+                        setAbonoAmount(floatValue ?? 0);
+                      }}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      decimalScale={0}
+                      allowNegative={false}
+                      className={`flex h-14 w-full rounded-xl border bg-white px-4 py-2 text-2xl font-bold shadow-xs transition-all placeholder:text-gray-200 focus-visible:outline-none focus-visible:ring-2 pl-10 ${selectedCasa && abonoAmount > selectedCasa.saldoPendiente
+                        ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-100'
+                        : 'border-gray-200 focus-visible:border-primary focus-visible:ring-primary/10'
+                        }`}
+                    />
+                  </div>
+                  {selectedCasa && abonoAmount > selectedCasa.saldoPendiente && (
+                    <p className="text-sm font-medium text-red-600 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                      <HugeiconsIcon icon={InformationCircleIcon} size={16} />
+                      El monto supera la deuda total de la casa.
+                    </p>
+                  )}
+                  {selectedCasa && selectedCasa.saldoPendiente > 0 && (
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary hover:text-green-700 h-auto p-0 font-semibold"
+                        onClick={() => setAbonoAmount(selectedCasa.saldoPendiente)}
+                      >
+                        Abonar saldo total
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Vista previa de distribución */}
+                {abonoDistribution.length > 0 && (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <span className="text-sm font-medium text-gray-700 block text-left">
+                      Aplicación del pago
+                    </span>
+                    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 font-medium h-10">
+                            <tr>
+                              <th className="pl-4 font-semibold">Obligación</th>
+                              <th className="font-semibold text-right">Abono</th>
+                              <th className="pr-4 font-semibold text-right">Nuevo Saldo</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-50">
+                            {abonoDistribution.map((item) => (
+                              <tr key={item.id} className="h-12 hover:bg-gray-50/30 transition-colors">
+                                <td className="pl-4">
+                                  <div className="flex flex-col">
+                                    <span className={`font-medium ${item.isFullyPaid ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                      {item.titulo || item.motivo}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 uppercase">{formatTipoObligacion(item.tipoObligacion)}</span>
+                                  </div>
+                                </td>
+                                <td className="text-right font-bold text-primary">
+                                  +{new Intl.NumberFormat('es-CO', {
+                                    style: 'currency',
+                                    currency: 'COP',
+                                    maximumFractionDigits: 0
+                                  }).format(item.abonoAplicado)}
+                                </td>
+                                <td className="pr-4 text-right">
+                                  {item.isFullyPaid ? (
+                                    <Badge variant="outline" className="bg-gray-100 border-gray-300 text-green-800 px-3 py-1 rounded-md text-xs font-bold">
+                                      Pagado
+                                    </Badge>
+                                  ) : (
+                                    <span className="font-medium text-gray-600">
+                                      {new Intl.NumberFormat('es-CO', {
+                                        style: 'currency',
+                                        currency: 'COP',
+                                        maximumFractionDigits: 0
+                                      }).format(item.nuevoSaldo)}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <SheetFooter className="flex flex-row gap-3 mt-auto px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
+              <SheetClose asChild>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelar}
+                  className="flex-1 h-10 font-medium"
+                  type="button"
+                >
+                  Cancelar
+                </Button>
+              </SheetClose>
+              <Button
+                type="button"
+                onClick={handleAbonoSubmit}
+                disabled={abonoAmount <= 0 || (selectedCasa !== null && abonoAmount > selectedCasa.saldoPendiente)}
+                className="flex-1 h-10 font-medium"
+              >
+                Confirmar Abono
               </Button>
             </SheetFooter>
           </TooltipProvider>
