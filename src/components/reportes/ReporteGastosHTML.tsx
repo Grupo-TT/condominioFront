@@ -18,29 +18,49 @@ export interface DatosReporte {
 }
 
 const categoriaLabels: Record<string, string> = {
-  ADMINISTRACION_CUOTAS: 'Administración / Cuotas',
-  SERVICIOS_PUBLICOS: 'Servicios Públicos',
-  ASEO_JARDINERIA: 'Aseo y Jardinería',
-  MANTENIMIENTO_REPARACIONES: 'Mantenimiento y Reparaciones',
-  PISCINA: 'Piscina',
-  SEGURIDAD_ACCESO: 'Seguridad / Acceso',
-  EVENTOS_DECORACION: 'Eventos / Decoración',
-  PERSONAL_MANO_OBRA: 'Personal / Mano de Obra',
-  MULTAS: 'Multas',
-  OTROS: 'Otros',
+  ADMINISTRACION_CUOTAS: "Administrador / Cuotas (Ingreso)",
+  MULTAS: "Multas (Ingreso)",
+  SERVICIOS_ADMINISTRADOR: "Servicios de Administrador",
+  SERVICIO_ASEO_LIMPIEZA: "Servicio de Aseo y limpieza",
+  SERVICIO_TODERO: "Servicio de Todero",
+  FACTURACION_CONTABILIDAD: "Servicio de Facturación y Contabilidad",
+  VIGILANCIA_PORTERIA: "Servicio de Vigilancia o Portería",
+  ACUEDUCTO_ALCANTARILLADO: "Acueducto y alcantarillado",
+  ENERGIA_ELECTRICA: "Energía Eléctrica Zonas comunes",
+  TELEFONO_INTERNET: "Teléfono Internet",
+  MANTENIMIENTO_PISCINA: "Mantenimiento Sistema Hidráulico (Piscina)",
+  LAVADO_TANQUES: "Lavado de Tanques",
+  ELECTRICO_ELECTRONICOS: "Eléctrico y Electrónicos",
+  EQUIPOS_MUEBLES: "Equipos y Muebles",
+  EXTINTORES: "Extintores",
+  REPARACIONES_LOCATIVAS: "Reparaciones Locativas Zonas Comunes",
+  SUMINISTROS_ASEO: "Suministros Implementos de aseo",
+  HERRAMIENTAS_REPARACIONES: "Herramientas Reparaciones Locativas",
+  FOTOCOPIAS_COMUNICACIONES: "Fotocopias Circulares e Impresiones",
+  BOTIQUIN_PRIMEROS_AUXILIOS: "Botiquín Primeros Auxilios",
+  PRIMAS_SEGUROS: "Primas de Seguros",
+  GASTOS_BANCARIOS: "Bancarios libretas cheques",
+  TRANSPORTE_GASOLINA: "Transporte diligencia flete Gasolina",
+  ACTIVIDADES_SOCIALES: "Actividades Sociales Recreativas",
+  HONORARIOS_PROFESIONALES: "Honorarios Profesionales",
+  CORREOS_PORTES: "Correos y Portes",
+  GASTOS_LEGALES: "Gastos Legales",
+  IMPREVISTOS: "Imprevistos",
+  VARIOS: "Varios",
+  GASTOS_ASAMBLEA: "Gastos Asamblea General",
+  PERSONAL_MANO_OBRA: "Mano de Obra",
 };
 
 const categoriaColores: Record<string, string> = {
-  ADMINISTRACION_CUOTAS: '#3b82f6',
-  SERVICIOS_PUBLICOS: '#f97316',
-  ASEO_JARDINERIA: '#22c55e',
-  MANTENIMIENTO_REPARACIONES: '#ef4444',
-  PISCINA: '#06b6d4',
-  SEGURIDAD_ACCESO: '#8b5cf6',
-  EVENTOS_DECORACION: '#ec4899',
-  PERSONAL_MANO_OBRA: '#14b8a6',
-  MULTAS: '#f59e0b',
-  OTROS: '#6b7280',
+  ADMINISTRACION_CUOTAS: '#10B981',
+  MULTAS: '#059669',
+  ACUEDUCTO_ALCANTARILLADO: '#0EA5E9',
+  ENERGIA_ELECTRICA: '#F59E0B',
+  SERVICIO_ASEO_LIMPIEZA: '#84CC16',
+  MANTENIMIENTO_PISCINA: '#06B6D4',
+  REPARACIONES_LOCATIVAS: '#B45309',
+  ACTIVIDADES_SOCIALES: '#EC4899',
+  GASTOS_ASAMBLEA: '#7C3AED',
 };
 
 function formatCurrency(value: number): string {
@@ -74,7 +94,7 @@ function calcularResumenCategorias(movimientos: Movimiento[]): { categoria: stri
   let totalGeneral = 0;
 
   movimientos.forEach((mov) => {
-    const cat = mov.categoria || 'OTROS';
+    const cat = mov.categoria || 'VARIOS';
     if (!totalesPorCategoria[cat]) {
       totalesPorCategoria[cat] = { total: 0, cantidad: 0 };
     }
