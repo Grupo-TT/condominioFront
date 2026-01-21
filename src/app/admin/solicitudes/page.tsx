@@ -428,7 +428,7 @@ export default function SolicitudesPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          const fecha = new Date(row.original.fecha + 'T12:00:00')
+          const fecha = new Date(row.original.fecha)
           return (
             <div className="text-sm text-gray-600">
               {fecha.toLocaleDateString('es-CO', {
