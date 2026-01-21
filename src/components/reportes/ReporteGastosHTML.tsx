@@ -1,4 +1,5 @@
 import { Movimiento, Metricas } from '@/types/cuotas.types';
+import { parseSafeDate } from '@/lib/utils/date';
 
 export interface DatosMensuales {
   mes: number;
@@ -52,10 +53,7 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.includes('T')
-    ? dateStr.split('T')[0].split('-').map(Number)
-    : dateStr.split('-').map(Number);
-  const fecha = new Date(year, month - 1, day);
+  const fecha = parseSafeDate(dateStr);
   return fecha.toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',

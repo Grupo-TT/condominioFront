@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { PeriodoCombobox } from '@/components/periodo-combobox'
 import { cn } from '@/lib/utils'
+import { parseSafeDate, formatDateShort } from '@/lib/utils/date'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Command,
@@ -282,8 +283,7 @@ export default function MovimientosPage() {
 
   const handleEdit = useCallback((movimiento: Movimiento) => {
     setEditingMovimiento(movimiento)
-    const dateStr = movimiento.fecha as string;
-    setEditFecha(new Date(dateStr));
+    setEditFecha(parseSafeDate(movimiento.fecha))
 
     setEditTipo(movimiento.tipo)
     setEditDescripcion(movimiento.descripcion || movimiento.concepto || '')
@@ -463,16 +463,9 @@ export default function MovimientosPage() {
         id: 'fecha',
         header: ({ column }) => <DataGridColumnHeader title="Fecha" column={column} />,
         cell: ({ row }) => {
-          const dateStr = row.original.fecha as string;
-          const fecha = new Date(dateStr);
-
           return (
             <div className="text-sm text-gray-600">
-              {fecha.toLocaleDateString('es-CO', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
+              {formatDateShort(row.original.fecha)}
             </div>
           )
         },

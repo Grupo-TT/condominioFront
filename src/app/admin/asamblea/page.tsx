@@ -67,6 +67,7 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from "sonner";
 import { ComboboxInput } from '@/components/ui/combobox-input';
+import { parseSafeDate } from '@/lib/utils/date';
 
 // Esquema de validación para nueva asamblea
 const asambleaSchema = z.object({
@@ -360,7 +361,7 @@ export default function AsambleaPage() {
   };
 
   const formatPrettyDate = (dateString: string) => {
-    const date = new Date(`${dateString}`);
+    const date = parseSafeDate(dateString);
     if (isNaN(date.getTime())) return dateString;
     const monthFormatter = new Intl.DateTimeFormat('es-ES', { month: 'short' });
     const month = monthFormatter.format(date);
