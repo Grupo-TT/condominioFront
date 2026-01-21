@@ -543,7 +543,7 @@ export function generarHTMLReporte(datos: DatosReporte): string {
                   <th style="width: 130px">Categoría</th>
                   <th>Descripción</th>
                   <th style="width: 60px">Tipo</th>
-                  <th style="width: 80px">Responsable</th>
+                  <th style="width: 80px">Proveedor</th>
                   <th style="width: 90px">Monto</th>
                 </tr>
               </thead>
@@ -571,7 +571,7 @@ export function generarHTMLReporte(datos: DatosReporte): string {
           <th style="width: 140px">Categoría</th>
           <th>Descripción</th>
           <th style="width: 70px">Tipo</th>
-          <th style="width: 90px">Responsable</th>
+          <th style="width: 90px">Proveedor</th>
           <th style="width: 100px">Monto</th>
         </tr>
       </thead>

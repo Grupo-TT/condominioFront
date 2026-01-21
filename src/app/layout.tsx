@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
+import { MobileDeviceWarning } from "@/components/MobileDeviceWarning";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           {children}
+          <MobileDeviceWarning />
         </AuthProvider>
         <Toaster position="top-right" style={{ width: '400px' }} />
       </body>

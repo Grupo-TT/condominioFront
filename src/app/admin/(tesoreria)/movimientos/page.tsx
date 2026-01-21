@@ -519,17 +519,24 @@ export default function MovimientosPage() {
           const colors = getCategoriaColors(row.original.categoria)
 
           return (
-            <Badge
-              className="border"
-              style={{
-                backgroundColor: colors.bg,
-                color: colors.text,
-                borderColor: colors.border,
-              }}
-              size="md"
-            >
-              {categoria}
-            </Badge>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Badge
+                  className="border"
+                  style={{
+                    backgroundColor: colors.bg,
+                    color: colors.text,
+                    borderColor: colors.border,
+                  }}
+                  size="md"
+                >
+                  {categoria.length > 32 ? `${categoria.substring(0, 29)}...` : categoria}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-xs font-medium">{categoria}</p>
+              </TooltipContent>
+            </Tooltip>
           )
         },
         size: 170,
@@ -607,10 +614,10 @@ export default function MovimientosPage() {
       {
         accessorKey: 'responsable',
         id: 'responsable',
-        header: ({ column }) => <DataGridColumnHeader title="Responsable" column={column} />,
+        header: ({ column }) => <DataGridColumnHeader title="Proveedor" column={column} />,
         cell: ({ row }) => (
           <div className={`text-sm text-gray-600 truncate ${!row.original.responsable ? 'opacity-50' : ''}`}>
-            {row.original.responsable || 'Sin responsable'}
+            {row.original.responsable || 'Sin proveedor'}
           </div>
         ),
         size: 160,
@@ -1250,7 +1257,7 @@ export default function MovimientosPage() {
                     {selectedMovimiento.responsable && (
                       <div className="pt-2 border-t border-gray-100">
                         <div className="space-y-1">
-                          <div className="text-xs text-gray-500">Responsable</div>
+                          <div className="text-xs text-gray-500">Proveedor</div>
                           <div className="text-sm font-medium text-gray-900">{selectedMovimiento.responsable}</div>
                         </div>
                       </div>
@@ -1507,13 +1514,13 @@ export default function MovimientosPage() {
                     <div className="space-y-2">
                       <Label htmlFor="responsable" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
                         <User className="w-4 h-4 text-gray-400" />
-                        Responsable
+                        Proveedor
                       </Label>
                       <Input
                         id="responsable"
                         value={formResponsable}
                         onChange={(e) => setFormResponsable(e.target.value)}
-                        placeholder="Ej. Juan Pérez"
+                        placeholder="Ej. Juan Pérez o Empresa SAS"
                         maxLength={100}
                         className="h-10 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
@@ -1774,13 +1781,13 @@ export default function MovimientosPage() {
                     <div className="space-y-2">
                       <Label htmlFor="edit-responsable" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
                         <User className="w-4 h-4 text-gray-400" />
-                        Responsable
+                        Proveedor
                       </Label>
                       <Input
                         id="edit-responsable"
                         value={editResponsable}
                         onChange={(e) => setEditResponsable(e.target.value)}
-                        placeholder="Ej. Juan Pérez"
+                        placeholder="Ej. Juan Pérez o Empresa SAS"
                         maxLength={100}
                         className="h-10 border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       />
