@@ -382,6 +382,40 @@ export default function MovimientosPage() {
     return periodoTexto.charAt(0).toUpperCase() + periodoTexto.slice(1)
   }, [periodoSeleccionado])
 
+  const categoriaLabels: Record<string, string> = {
+    ADMINISTRACION_CUOTAS: "Administrador / Cuotas (Ingreso)",
+    MULTAS: "Multas (Ingreso)",
+    SERVICIOS_ADMINISTRADOR: "Servicios de Administrador",
+    SERVICIO_ASEO_LIMPIEZA: "Servicio de Aseo y limpieza",
+    SERVICIO_TODERO: "Servicio de Todero",
+    FACTURACION_CONTABILIDAD: "Servicio de Facturación y Contabilidad",
+    VIGILANCIA_PORTERIA: "Servicio de Vigilancia o Portería",
+    ACUEDUCTO_ALCANTARILLADO: "Acueducto y alcantarillado",
+    ENERGIA_ELECTRICA: "Energía Eléctrica Zonas comunes",
+    TELEFONO_INTERNET: "Teléfono Internet",
+    MANTENIMIENTO_PISCINA: "Mantenimiento Sistema Hidráulico (Piscina)",
+    LAVADO_TANQUES: "Lavado de Tanques",
+    ELECTRICO_ELECTRONICOS: "Eléctrico y Electrónicos",
+    EQUIPOS_MUEBLES: "Equipos y Muebles",
+    EXTINTORES: "Extintores",
+    REPARACIONES_LOCATIVAS: "Reparaciones Locativas Zonas Comunes",
+    SUMINISTROS_ASEO: "Suministros Implementos de aseo",
+    HERRAMIENTAS_REPARACIONES: "Herramientas Reparaciones Locativas",
+    FOTOCOPIAS_COMUNICACIONES: "Fotocopias Circulares e Impresiones",
+    BOTIQUIN_PRIMEROS_AUXILIOS: "Botiquín Primeros Auxilios",
+    PRIMAS_SEGUROS: "Primas de Seguros",
+    GASTOS_BANCARIOS: "Bancarios libretas cheques",
+    TRANSPORTE_GASOLINA: "Transporte diligencia flete Gasolina",
+    ACTIVIDADES_SOCIALES: "Actividades Sociales Recreativas",
+    HONORARIOS_PROFESIONALES: "Honorarios Profesionales",
+    CORREOS_PORTES: "Correos y Portes",
+    GASTOS_LEGALES: "Gastos Legales",
+    IMPREVISTOS: "Imprevistos",
+    VARIOS: "Varios",
+    GASTOS_ASAMBLEA: "Gastos Asamblea General",
+    PERSONAL_MANO_OBRA: "Mano de Obra",
+  }
+
   const categoriasOptions = [
     { value: "todas", label: "Todas las categorías" },
     ...Object.entries(categoriaLabels).map(([value, label]) => ({
@@ -401,59 +435,58 @@ export default function MovimientosPage() {
     }
 
     const categoriaColors: Record<string, { bg: string; text: string; border: string }> = {
-      'ADMINISTRACION_CUOTAS': {
-        bg: '#F5F6FA', // Versión muy clara de #ADB2D4
-        text: '#659287', // Verde azulado apagado
-        border: '#ADB2D4', // Lavanda/periwinkle azul claro
-      },
-      'SERVICIOS_PUBLICOS': {
-        bg: '#F5E6D8', // Versión muy clara de #E2B59A
-        text: '#957C62', // Verde oliva apagado/marrón grisáceo
-        border: '#E2B59A', // Beige/durazno claro
-      },
-      'ASEO_JARDINERIA': {
-        bg: '#F0F4EC', // Versión muy clara de #B1C29E
-        text: '#659287', // Verde azulado apagado
-        border: '#B1C29E', // Verde salvia apagado
-      },
-      'MANTENIMIENTO_REPARACIONES': {
-        bg: '#F5E8E0', // Versión muy clara de #B77466
-        text: '#957C62', // Verde oliva apagado/marrón grisáceo
-        border: '#B77466', // Rojo terracota
-      },
-      'PISCINA': {
-        bg: '#E8F2EF', // Versión muy clara de #659287
-        text: '#659287', // Verde azulado apagado
-        border: '#659287', // Verde azulado apagado/teal
-      },
-      'SEGURIDAD_ACCESO': {
-        bg: '#F5F0E8', // Versión muy clara de #DEAA79
-        text: '#957C62', // Verde oliva apagado/marrón grisáceo
-        border: '#DEAA79', // Marrón arenoso claro
-      },
-      'EVENTOS_DECORACION': {
-        bg: '#FFF9E6', // Versión muy clara de #FFE6A9
-        text: '#957C62', // Verde oliva apagado/marrón grisáceo
-        border: '#FFE6A9', // Amarillo muy pálido/crema
-      },
-      'PERSONAL_MANO_OBRA': {
-        bg: '#F5F0F7', // Versión muy clara de #D4C5E8
-        text: '#957C62', // Verde oliva apagado/marrón grisáceo
-        border: '#D4C5E8', // Lila suave apagado
-      },
-      'MULTAS': {
-        bg: '#F0F5F6', // Versión muy clara de #C7D9DD
-        text: '#659287', // Verde azulado apagado
-        border: '#C7D9DD', // Azul-verde muy claro/teal pálido
-      },
-      'OTROS': {
-        bg: '#EEEEEE', // Gris muy claro
-        text: '#777C6D', // Verde oliva apagado
-        border: '#CBCBCB', // Gris medio
-      },
+      // INGRESOS & FINANZAS (Verdes/Esmeraldas)
+      'ADMINISTRACION_CUOTAS': { bg: '#ECFDF5', text: '#10B981', border: '#10B981' },
+      'MULTAS': { bg: '#F0FDF4', text: '#16A34A', border: '#16A34A' },
+      'GASTOS_BANCARIOS': { bg: '#F8FAFC', text: '#0F172A', border: '#1E293B' },
+      'FACTURACION_CONTABILIDAD': { bg: '#F5F3FF', text: '#7C3AED', border: '#7C3AED' },
+
+      // SERVICIOS PÚBLICOS (Colores funcionales brillantes)
+      'ACUEDUCTO_ALCANTARILLADO': { bg: '#F0F9FF', text: '#0EA5E9', border: '#0EA5E9' },
+      'ENERGIA_ELECTRICA': { bg: '#FFFBEB', text: '#D97706', border: '#F59E0B' },
+      'TELEFONO_INTERNET': { bg: '#EEF2FF', text: '#6366F1', border: '#6366F1' },
+
+      // SERVICIOS & MANTENIMIENTO GENERAL (Verdes tierra/Cálidos)
+      'SERVICIOS_ADMINISTRADOR': { bg: '#F1F5F9', text: '#1E293B', border: '#334155' },
+      'SERVICIO_ASEO_LIMPIEZA': { bg: '#F7FEE7', text: '#4D7C0F', border: '#84CC16' },
+      'SERVICIO_TODERO': { bg: '#FEF3C7', text: '#92400E', border: '#D97706' },
+      'VIGILANCIA_PORTERIA': { bg: '#F8FAFC', text: '#475569', border: '#64748B' },
+      'PERSONAL_MANO_OBRA': { bg: '#FFF7ED', text: '#78350F', border: '#92400E' },
+      'SUMINISTROS_ASEO': { bg: '#F5F5F4', text: '#57534E', border: '#A8A29E' },
+
+      // ADMINISTRATIVO & LEGAL (Morados/Indigos)
+      'HONORARIOS_PROFESIONALES': { bg: '#EEF2FF', text: '#4F46E5', border: '#4F46E5' },
+      'GASTOS_LEGALES': { bg: '#EDEAFF', text: '#4338CA', border: '#4338CA' },
+      'GASTOS_ASAMBLEA': { bg: '#FAF5FF', text: '#6D28D9', border: '#6D28D9' },
+      'FOTOCOPIAS_COMUNICACIONES': { bg: '#F1F5F9', text: '#64748B', border: '#94A3B8' },
+
+      // INFRAESTRUCTURA & TÉCNICO (Cianes/Naranjas/Rojos)
+      'MANTENIMIENTO_PISCINA': { bg: '#ECFEFF', text: '#0891B2', border: '#06B6D4' },
+      'LAVADO_TANQUES': { bg: '#E0F7FA', text: '#007C91', border: '#00ACC1' },
+      'ELECTRICO_ELECTRONICOS': { bg: '#FFF4ED', text: '#EA580C', border: '#F97316' },
+      'EXTINTORES': { bg: '#FEF2F2', text: '#DC2626', border: '#EF4444' },
+      'REPARACIONES_LOCATIVAS': { bg: '#FFF7ED', text: '#9A3412', border: '#C2410C' },
+      'EQUIPOS_MUEBLES': { bg: '#FDF2F8', text: '#9D174D', border: '#DB2777' },
+
+      // SOCIAL & OTROS (Rosas/Neutros)
+      'ACTIVIDADES_SOCIALES': { bg: '#FCE7F3', text: '#DB2777', border: '#EC4899' },
+      'BOTIQUIN_PRIMEROS_AUXILIOS': { bg: '#FFF1F2', text: '#E11D48', border: '#F43F5E' },
+      'IMPREVISTOS': { bg: '#F9FAFB', text: '#4B5563', border: '#9CA3AF' },
     }
 
-    return categoriaColors[categoria] || categoriaColors['Otros']
+    if (categoriaColors[categoria]) return categoriaColors[categoria];
+
+    // Fallback for subcategories that share similar styles
+    if (categoria.includes('SERVICIO')) return categoriaColors['SERVICIO_ASEO_LIMPIEZA'];
+    if (categoria.includes('REPARACION') || categoria.includes('HERRAMIENTA')) return categoriaColors['REPARACIONES_LOCATIVAS'];
+    if (categoria.includes('GASTO') || categoria.includes('HONORARIO')) return categoriaColors['GASTOS_LEGALES'];
+    if (categoria.includes('OTRO')) return { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' }; // Minimal fallback for 'Otros' data
+
+    return {
+      bg: '#F9FAFB',
+      text: '#4B5563',
+      border: '#E5E7EB'
+    };
   }
 
   const columns = useMemo<ColumnDef<Movimiento>[]>(
@@ -891,7 +924,8 @@ export default function MovimientosPage() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-(--radix-popover-trigger-width) p-0"
+                    className="w-[320px] p-0"
+                    align="end"
                     onWheel={(e) => e.stopPropagation()}
                   >
                     <Command>
@@ -910,7 +944,7 @@ export default function MovimientosPage() {
                                 }}
                                 className="flex items-center gap-2.5 min-w-0 max-w-full"
                               >
-                                <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-8 max-w-full overflow-hidden">
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
                                   {option.value !== 'todas' && (
                                     <span
                                       className="size-1.5 rounded-full shrink-0"
@@ -919,7 +953,7 @@ export default function MovimientosPage() {
                                       }}
                                     ></span>
                                   )}
-                                  <span className="truncate min-w-0 block max-w-[calc(100%-2rem)]">{option.label}</span>
+                                  <span className="truncate min-w-0 flex-1">{option.label}</span>
                                 </div>
                                 {filterCategoria === option.value && <CommandCheck className="shrink-0 ml-auto" />}
                               </CommandItem>
@@ -1371,7 +1405,8 @@ export default function MovimientosPage() {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-(--radix-popover-trigger-width) p-0"
+                          className="w-[320px] p-0"
+                          align="end"
                           onWheel={(e) => e.stopPropagation()}
                         >
                           <Command>
@@ -1385,7 +1420,7 @@ export default function MovimientosPage() {
                                     const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
 
                                     if (formTipo === 'ENTRADA') {
-                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                      return entradaKeys.includes(opt.value) || opt.value === 'VARIOS';
                                     } else {
                                       return !entradaKeys.includes(opt.value);
                                     }
@@ -1637,7 +1672,8 @@ export default function MovimientosPage() {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-(--radix-popover-trigger-width) md:w-[calc(var(--radix-popover-trigger-width)-1rem)]"
+                          className="w-[320px] p-0"
+                          align="end"
                           onWheel={(e) => e.stopPropagation()}
                         >
                           <Command>
@@ -1651,7 +1687,7 @@ export default function MovimientosPage() {
                                     const entradaKeys = ['ADMINISTRACION_CUOTAS', 'MULTAS'];
 
                                     if (editTipo === 'ENTRADA') {
-                                      return entradaKeys.includes(opt.value) || opt.value === 'OTROS';
+                                      return entradaKeys.includes(opt.value) || opt.value === 'VARIOS';
                                     } else {
                                       return !entradaKeys.includes(opt.value);
                                     }
